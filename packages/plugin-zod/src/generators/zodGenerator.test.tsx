@@ -1816,3 +1816,55 @@ describe('zodGenerator — Compile Option', () => {
     expect(source).toContain('export const miniMapSchema = z.compile(z.record(z.string(), z.int()))')
   })
 })
+
+describe('custom imports', () => {
+  const codecImport = ast.factory.createImport({ name: ['myCodec'], path: 'my-codec/zod' })
+  const bigintSchema = ast.factory.createSchema({ type: 'bigint', name: 'Counter' })
+
+  async function render(schema: ast.SchemaNode, options: Partial<PluginZod['resolvedOptions']>) {
+    const resolved: PluginZod['resolvedOptions'] = { ...defaultOptions, ...options }
+    const plugin = createMockedPlugin<PluginZod>({ name: 'plugin-zod', options: resolved, resolver: resolverZod })
+    const driver = createMockedPluginDriver({ name: 'customImports' })
+
+    await renderGeneratorSchema(zodGenerator, schema, {
+      config: testConfig,
+      adapter: createMockedAdapter({ resolvedOptions: { dateType: 'string' } }),
+      driver,
+      plugin,
+      options: resolved,
+      resolver: resolverZod,
+    })
+
+    return driver.fileManager.files
+  }
+
+  test('`this.import` in a printer.nodes handler adds the import to the file', async () => {
+    const files = await render(bigintSchema, {
+      printer: {
+        nodes: {
+          bigint() {
+            this.import(codecImport)
+            return 'myCodec.uint64()'
+          },
+        },
+      },
+    })
+
+    expect(files[0]?.imports.map((imp) => imp.path)).toContain('my-codec/zod')
+  })
+
+  test('files whose schema does not reach the handler get no import', async () => {
+    const files = await render(ast.factory.createSchema({ type: 'string', name: 'PetName' }), {
+      printer: {
+        nodes: {
+          bigint() {
+            this.import(codecImport)
+            return 'myCodec.uint64()'
+          },
+        },
+      },
+    })
+
+    expect(files[0]?.imports.map((imp) => imp.path)).not.toContain('my-codec/zod')
+  })
+})
