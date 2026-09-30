@@ -19,7 +19,10 @@ import type { ContractClientFactory } from '../types.ts'
  * generator `name` differs between plugins. Every other resolution, import, and rendering step is
  * identical.
  */
-export function createClientGenerator<TFactory extends ContractClientFactory>(name: string): Generator<TFactory> {
+export function createClientGenerator<TFactory extends ContractClientFactory>(
+  name: string,
+  resolveClientPath?: (options: TFactory['resolvedOptions'], root: string) => string,
+): Generator<TFactory> {
   return defineGenerator<TFactory>({
     name,
     renderer: jsxRenderer,
@@ -71,9 +74,29 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(na
         path: node.path,
       })
 
-      const clientPath = path.resolve(root, '.kubb/client.ts')
-      const standardSchemaPath = path.resolve(root, '.kubb/standardSchema.ts')
+      // A custom client module is emitted verbatim, so `importPath` is used exactly as configured.
+      // The default `.kubb/client.ts` is a file path and is made relative to the operation file.
+      const customClientPath = resolveClientPath?.(ctx.options, root)
+      const clientPath = customClientPath ?? path.resolve(root, '.kubb/client.ts')
+      const clientRoot = customClientPath === undefined ? meta.file.path : undefined
+      // The headers validator helper ships in `.kubb/standardSchema.ts`; a custom client module exports it
+      // alongside its other runtime helpers.
+      const standardSchemaPath = customClientPath ?? path.resolve(root, '.kubb/standardSchema.ts')
       const eventStream = isEventStream(node)
+
+      const clientValueImports = (() => {
+        if (eventStream) return ['client', 'toEventStream']
+        if (returnType === 'plain') return ['client']
+        if (returnType === 'data') return ['client', 'unwrapResult']
+        return ['client', 'withUnwrap']
+      })()
+
+      const clientTypeImports = (() => {
+        if (eventStream) return ['Options', 'EventStreamResult', 'SuccessOf']
+        if (returnType === 'plain') return ['Options', 'RequestResult']
+        if (returnType === 'data') return ['Options', 'UnwrappedResult']
+        return ['Options', 'Unwrappable', 'RequestResult']
+      })()
 
       return (
         <File
@@ -83,30 +106,15 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(na
           banner={resolver.default.banner(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
           footer={resolver.default.footer(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
         >
-          <File.Import
-            name={eventStream ? ['client', 'toEventStream'] : ['client', returnType === 'data' ? 'unwrapResult' : 'withUnwrap']}
-            root={meta.file.path}
-            path={clientPath}
-          />
-          <File.Import
-            name={
-              eventStream
-                ? ['Options', 'EventStreamResult', 'SuccessOf']
-                : returnType === 'data'
-                  ? ['Options', 'UnwrappedResult']
-                  : ['Options', 'Unwrappable', 'RequestResult']
-            }
-            root={meta.file.path}
-            path={clientPath}
-            isTypeOnly
-          />
+          <File.Import name={clientValueImports} root={clientRoot} path={clientPath} />
+          <File.Import name={clientTypeImports} root={clientRoot} path={clientPath} isTypeOnly />
 
           {meta.fileTypes && importedTypeNames.length > 0 && (
             <File.Import name={Array.from(new Set(importedTypeNames))} root={meta.file.path} path={meta.fileTypes.path} isTypeOnly />
           )}
 
           {meta.fileZod && importedZodNames.length > 0 && <File.Import name={importedZodNames} root={meta.file.path} path={meta.fileZod.path} />}
-          {validatorHooks.headers && <File.Import name={['toCaseInsensitiveLooseObjectStandardSchema']} root={meta.file.path} path={standardSchemaPath} />}
+          {validatorHooks.headers && <File.Import name={['toCaseInsensitiveLooseObjectStandardSchema']} root={clientRoot} path={standardSchemaPath} />}
 
           <Operation
             name={meta.name}

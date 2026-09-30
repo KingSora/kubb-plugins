@@ -46,6 +46,7 @@ type Props = {
 
 export function Zod({ name, node, printer, types = [], typeGuards, isName, assertName, mini, cyclic, compile }: Props): KubbReactNode {
   const output = printer.print(node)
+  const printerImports = printer.drainImports()
 
   if (!output) {
     return
@@ -67,6 +68,16 @@ export function Zod({ name, node, printer, types = [], typeGuards, isName, asser
 
   return (
     <>
+      {printerImports.map((imp) => (
+        <File.Import
+          key={[name, imp.path, imp.name].join('-')}
+          name={imp.name}
+          path={imp.path}
+          root={imp.root}
+          isTypeOnly={imp.isTypeOnly}
+          isNameSpace={imp.isNameSpace}
+        />
+      ))}
       <File.Source name={name} isExportable isIndexable>
         <Const export name={name} type={needsAnnotation ? 'z.ZodType' : undefined}>
           {value}
