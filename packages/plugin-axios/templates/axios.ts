@@ -310,6 +310,8 @@ export type Interceptors<TRequest = AxiosRequestConfig, TResponse = AxiosRespons
   error: InterceptorChannel<AxiosError, TRequest, TResponse>
 }
 
+export type UrlConfig = Pick<RequestConfig, 'baseURL' | 'url' | 'path' | 'query' | 'params' | 'serializer' | 'styles'>
+
 /**
  * A client instance: the callable send plus configuration, interceptors, and an isolated
  * `createClient` factory.
@@ -318,7 +320,7 @@ export type ClientInstance<TRequest = AxiosRequestConfig, TResponse = AxiosRespo
   <TBody = unknown>(config: RequestConfig<TBody, TRequest, TResponse>): Promise<CallResult<TRequest, TResponse>>
   getConfig: () => ClientConfig
   setConfig: (config: ClientConfig) => ClientConfig
-  getUrl: <TBody = unknown>(config: RequestConfig<TBody, TRequest, TResponse>) => string
+  getUrl: (config: UrlConfig) => string
   interceptors: Interceptors<TRequest, TResponse>
   createClient: (config?: ClientConfig) => ClientInstance<TRequest, TResponse>
 }

@@ -336,6 +336,8 @@ export type Interceptors<TRequest = Request, TResponse = Response> = {
   error: InterceptorStack<ResponseError<unknown, TRequest, TResponse>, RequestConfig<unknown, TRequest, TResponse>>
 }
 
+export type UrlConfig = Pick<RequestConfig, 'baseURL' | 'url' | 'path' | 'query' | 'params' | 'serializer' | 'styles'>
+
 /**
  * A client instance: the callable send plus configuration, interceptors, and an isolated
  * `createClient` factory bound to the same transport.
@@ -344,7 +346,7 @@ export type ClientInstance<TRequest = Request, TResponse = Response> = {
   <TBody = unknown>(config: RequestConfig<TBody, TRequest, TResponse>): Promise<CallResult<TRequest, TResponse>>
   getConfig: () => ClientConfig<TRequest, TResponse>
   setConfig: (config: ClientConfig<TRequest, TResponse>) => ClientConfig<TRequest, TResponse>
-  getUrl: <TBody = unknown>(config: RequestConfig<TBody, TRequest, TResponse>) => string
+  getUrl: (config: UrlConfig) => string
   interceptors: Interceptors<TRequest, TResponse>
   createClient: (config?: ClientConfig<TRequest, TResponse>) => ClientInstance<TRequest, TResponse>
 }
