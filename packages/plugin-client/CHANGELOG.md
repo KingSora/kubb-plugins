@@ -1,6 +1,6 @@
 # @kubb/plugin-client
 
-## 5.6.0
+## 5.5.2
 
 ### Minor Changes
 
