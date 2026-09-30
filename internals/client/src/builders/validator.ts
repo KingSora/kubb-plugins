@@ -80,5 +80,7 @@ export function buildValidatorHooks({
     (name): name is string => Boolean(name),
   )
 
-  return { request, path, query, headers, response, error, importedZodNames }
+  const headersValidator = headers ? `toCaseInsensitiveLooseObjectStandardSchema(${headers}, ${headers}.shape)` : null
+
+  return { request, path, query, headers: headersValidator, response, error, importedZodNames }
 }

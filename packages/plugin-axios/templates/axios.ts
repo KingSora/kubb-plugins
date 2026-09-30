@@ -383,6 +383,24 @@ function mergeHeaders(...sources: Array<HeadersInit | undefined>): Record<string
   return Object.assign({}, ...sources.map(serializeHeaders))
 }
 
+function collectHeadersCaseInsensitive(...sources: Array<unknown>): Record<string, unknown> {
+  const keys = new Map<string, string>()
+  const result: Record<string, unknown> = {}
+  for (const source of sources) {
+    if (!source) continue
+    const entries: Array<[string, unknown]> = Array.isArray(source) ? source : Object.entries(source)
+    for (const [key, value] of entries) {
+      if (value === undefined || value === null) continue
+      const lowerCase = key.toLowerCase()
+      const previous = keys.get(lowerCase)
+      if (previous !== undefined) delete result[previous]
+      keys.set(lowerCase, key)
+      result[key] = value
+    }
+  }
+  return result
+}
+
 function getHeader(headers: Record<string, string>, name: string): string | undefined {
   const key = Object.keys(headers).find((k) => k.toLowerCase() === name.toLowerCase())
   return key ? headers[key] : undefined
@@ -510,30 +528,6 @@ async function runValidator<T>({
 }
 
 /**
- * Runs a path, query, or headers group through its validator. The group is validated as a plain object,
- * an absent one as `{}` so a missing required param still fails. Keys the schema does not declare are
- * kept, so an extra header or query value the caller adds is not stripped.
- */
-async function runParamsValidator({
-  validator,
-  value,
-  source,
-  context,
-  onValidationError,
-}: {
-  validator: Validator | undefined
-  value: unknown
-  source: 'path' | 'query' | 'headers'
-  context: Omit<ValidationErrorContext, 'value' | 'source'>
-  onValidationError: ValidationErrorHandler | undefined
-}): Promise<unknown> {
-  if (!validator) return value
-  const params: Record<string, unknown> = Array.isArray(value) ? Object.fromEntries(value) : { ...(value as Record<string, unknown> | undefined) }
-  const validated = await runValidator({ validator, value: params, context: { ...context, source }, onValidationError })
-  return { ...params, ...(validated as Record<string, unknown> | undefined) }
-}
-
-/**
  * The base media type of a `Content-Type` value, lowercased and stripped of any `; charset=...` parameters.
  */
 function baseContentType(value: string | null | undefined): string | undefined {
@@ -589,24 +583,27 @@ async function resolveRequest<TBody, TRequest, TResponse>({
 
   // Params are encoded before anything reads them: headers before styling, query before auth adds its values.
   const [validatedPath, validatedQuery, validatedHeaders] = await Promise.all([
-    runParamsValidator({ validator: requestConfig.validator?.path, value: requestConfig.path, source: 'path', context: validationContext, onValidationError }),
-    runParamsValidator({
-      validator: requestConfig.validator?.query,
-      value: requestConfig.query ?? requestConfig.params,
-      source: 'query',
-      context: validationContext,
+    runValidator({
+      validator: requestConfig.validator?.path,
+      value: { ...(requestConfig.path as Record<string, unknown> | undefined) },
+      context: { ...validationContext, source: 'path' },
       onValidationError,
     }),
-    runParamsValidator({
+    runValidator({
+      validator: requestConfig.validator?.query,
+      value: { ...((requestConfig.query ?? requestConfig.params) as Record<string, unknown> | undefined) },
+      context: { ...validationContext, source: 'query' },
+      onValidationError,
+    }),
+    runValidator({
       validator: requestConfig.validator?.headers,
-      value: requestConfig.headers,
-      source: 'headers',
-      context: validationContext,
+      value: collectHeadersCaseInsensitive(config.headers, requestConfig.headers),
+      context: { ...validationContext, source: 'headers' },
       onValidationError,
     }),
   ])
 
-  const headers = mergeHeaders(config.headers, applyHeaderStyles(validatedHeaders as HeadersInit | undefined, requestConfig.styles?.header))
+  const headers = mergeHeaders(applyHeaderStyles(validatedHeaders as HeadersInit | undefined, requestConfig.styles?.header))
   const { request: requestContentTypeOption, response: responseContentType } = resolveContentType(requestConfig.contentType)
   const requestContentType = requestContentTypeOption ?? getHeader(headers, 'content-type')
   if (responseContentType && !hasHeader(headers, 'accept')) {

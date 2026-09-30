@@ -148,6 +148,7 @@ export function createSdkGenerator<TFactory extends ContractClientFactory>(): Ge
 
       const controllers = buildControllers(nodes, ctx, types)
       const clientPath = path.resolve(root, '.kubb/client.ts')
+      const standardSchemaPath = path.resolve(root, '.kubb/standardSchema.ts')
 
       const banner = (file: ast.FileNode) => resolver.default.banner(ctx.meta, { output, config, file: { path: file.path, baseName: file.baseName } })
       const footer = (file: ast.FileNode) => resolver.default.footer(ctx.meta, { output, config, file: { path: file.path, baseName: file.baseName } })
@@ -188,6 +189,10 @@ export function createSdkGenerator<TFactory extends ContractClientFactory>(): Ge
               Array.from(zodNamesByPath.entries()).map(([filePath, set]) => (
                 <File.Import key={filePath} name={Array.from(set)} root={file.path} path={zodFilesByPath.get(filePath)!.path} />
               ))}
+
+            {ops.some((op) => op.zodResolver && buildValidatorHooks({ node: op.node, validator, zodResolver: op.zodResolver }).headers) && (
+              <File.Import name={['toCaseInsensitiveLooseObjectStandardSchema']} root={file.path} path={standardSchemaPath} />
+            )}
 
             <SdkClient name={className} operations={ops} validator={validator} returnType={returnType} throwOnErrorDefault={throwOnErrorDefault} />
           </File>

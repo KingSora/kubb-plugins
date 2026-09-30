@@ -40,7 +40,8 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(na
 
       const importedTypeNames = [types.response.options(node), types.response.responses(node)]
 
-      const importedZodNames = buildValidatorHooks({ node, validator, zodResolver }).importedZodNames
+      const validatorHooks = buildValidatorHooks({ node, validator, zodResolver })
+      const importedZodNames = validatorHooks.importedZodNames
 
       const meta = {
         name: resolver.name(node.operationId),
@@ -71,6 +72,7 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(na
       })
 
       const clientPath = path.resolve(root, '.kubb/client.ts')
+      const standardSchemaPath = path.resolve(root, '.kubb/standardSchema.ts')
       const eventStream = isEventStream(node)
 
       return (
@@ -104,6 +106,7 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(na
           )}
 
           {meta.fileZod && importedZodNames.length > 0 && <File.Import name={importedZodNames} root={meta.file.path} path={meta.fileZod.path} />}
+          {validatorHooks.headers && <File.Import name={['toCaseInsensitiveLooseObjectStandardSchema']} root={meta.file.path} path={standardSchemaPath} />}
 
           <Operation
             name={meta.name}
