@@ -12,7 +12,6 @@
   },
   "sideEffects": false,
   "scripts": {
-    "clean": "node -e \"require('node:fs').rmSync('./dist', {recursive:true,force:true})\"",
     "generate": "KUBB_DISABLE_TELEMETRY=1 kubb generate",
     "studio": "KUBB_DISABLE_TELEMETRY=1 kubb studio",
     "validate": "kubb validate petStore.yaml",
@@ -21,8 +20,7 @@
     "generate:debug": "NODE_OPTIONS='--inspect-brk' KUBB_DISABLE_TELEMETRY=1 kubb generate",
     "init": "kubb init -y",
     "generate:ts": "KUBB_DISABLE_TELEMETRY=1 kubb generate --config configs/kubb.config.ts",
-    "test": "vitest",
-    "typecheck": "tsc -p ./tsconfig.json --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@faker-js/faker": "^10.6.0",
