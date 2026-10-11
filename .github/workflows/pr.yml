@@ -8,8 +8,6 @@ on:
       - '**/*.md'
       - '.agents/**'
       - '.claude/**'
-      - '.github/ISSUE_TEMPLATE/**'
-      - '.github/FUNDING.yml'
       - 'assets/**'
       - 'LICENSE'
 
@@ -29,7 +27,8 @@ jobs:
     outputs:
       packages: ${{ steps.filter.outputs.packages }}
     steps:
-      - name: Check out code
+      - &checkout
+        name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Filter paths
@@ -51,18 +50,19 @@ jobs:
       contents: read
     if: github.actor != 'github-actions[bot]'
     steps:
-      - name: Check out code
+      - &checkout-full
+        name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
+      - &setup
+        name: Setup Tools
+        uses: kubb-labs/config/.github/setup@f1710c1732b46c33bf590d8ff1ac59bf17a53247 # main
 
-      - name: Build
-        run: pnpm build
+      - &build
+        name: Build
+        run: pnpm build --concurrency=3
 
   typecheck:
     name: Typecheck
@@ -70,21 +70,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: github.actor != 'github-actions[bot]'
     needs: build
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
-
-      - name: Build
-        run: pnpm build
+      - *checkout-full
+      - *setup
+      - *build
 
       - name: Typecheck
         run: pnpm typecheck
@@ -98,25 +88,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: github.actor != 'github-actions[bot]'
     needs: build
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
+      - *checkout-full
+      - *setup
 
       - name: Test
         run: pnpm run test --coverage
 
       - name: Upload coverage reports to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
@@ -128,15 +110,8 @@ jobs:
       contents: read
     if: github.actor != 'github-actions[bot]'
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 1
-
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
+      - *checkout
+      - *setup
 
       - name: Linting
         env:
@@ -149,21 +124,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: github.actor != 'github-actions[bot]'
     needs: build
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 1
-
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
-
-      - name: Build
-        run: pnpm build
+      - *checkout
+      - *setup
+      - *build
 
       - name: Run Vitest benchmarks
         run: pnpm run test:bench
@@ -184,13 +149,8 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
-
-      - name: Build
-        run: pnpm run build
+      - *setup
+      - *build
 
       - name: Publish preview packages
         run: pnpx pkg-pr-new publish --pnpm --owner=stijnvanhulle --repo=https://github.com/kubb-labs/plugins.git './packages/*' --template './examples/*'
@@ -204,13 +164,10 @@ jobs:
       pull-requests: write
     if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
+      - *checkout-full
 
       - name: Analyze dependency changes
-        uses: e18e/action-dependency-diff@5d3c6ac2ad2de2eaca1dc120c5accfd9590764b6 # v1
+        uses: e18e/action-dependency-diff@9a7f09f5f2993256322e0db17ee4c8d9339dab77 # v1
         continue-on-error: true
         with:
           duplicate-threshold: 5
@@ -226,18 +183,11 @@ jobs:
     if: github.actor != 'github-actions[bot]' && github.event_name == 'pull_request'
     needs: build
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
+      - *checkout-full
+      - *setup
 
       - name: Report compressed bundle size
-        uses: preactjs/compressed-size-action@66325aad6443cb7cf89c4bfcd414aea2367cda94 # v2
+        uses: preactjs/compressed-size-action@f322c295dde06a1cb7ccaef105732dd8a726d1d9 # v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           build-script: 'build'
@@ -255,35 +205,12 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 1
-
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
-
-      - name: Build
-        run: pnpm run build
+      - *checkout
+      - *setup
+      - *build
 
       - name: Generate examples
-        id: generate
         run: pnpm run generate
-        env:
-          KUBB_DISABLE_TELEMETRY: '1'
-
-      - name: Check for changes
-        id: check_changes
-        run: |
-          if [[ -n $(git status --porcelain examples/) ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Changes detected in examples/"
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No changes detected in examples/"
-          fi
 
       - name: Create Pull Request with generated files
         if: github.event.pull_request.head.repo.full_name == github.repository
@@ -304,37 +231,24 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    if: github.actor != 'github-actions[bot]'
     needs: build
     strategy:
-      fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node-version: ['22.22.3']
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 1
-
-      - name: Setup Tools
-        uses: kubb-labs/config/.github/setup@ec40df0e3e54565e006f6d92a2fce16ff43b14d8 # main
-        with:
-          node-version: '22.22.3'
-
-      - name: Build
-        run: pnpm run build
+      - *checkout
+      - *setup
+      - *build
 
       - name: Run E2E tests
         working-directory: ./tests/e2e
         env:
           NODE_OPTIONS: '--max_old_space_size=4096'
           KUBB_DISABLE_TELEMETRY: '1'
-        run: |
-          pnpm run generate --reporter file
+        run: pnpm run generate --reporter file
 
   comment-ratio:
     name: Comment ratio
@@ -345,10 +259,7 @@ jobs:
       pull-requests: write
     if: github.actor != 'github-actions[bot]' && github.event_name == 'pull_request'
     steps:
-      - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
+      - *checkout-full
 
       - name: Check comment ratio
         uses: IgnaceMaes/comment-ratio@8667d710c02c19dcca42be02f97d5f6824012932 # v1.0.0

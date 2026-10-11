@@ -80,7 +80,8 @@ export type ResolverVueQuery = Resolver & {
 }
 
 /**
- * Builds the `queryKey` used by each generated query composable.
+ * Builds the `queryKey` used by each generated query composable. `variant` tells which composable
+ * the key is for, so infinite keys can stay apart from plain ones.
  *
  * @note String values are inlined verbatim into generated code. Wrap literal
  * strings in `JSON.stringify(...)`.
@@ -154,8 +155,8 @@ export type Options = OutputOptions & {
    */
   resolver?: ResolverPatch<ResolverVueQuery>
   /**
-   * Set to `false` to skip generating `use*` composable functions. `queryOptions`,
-   * `queryKey`, and `mutationKey` helpers are still emitted.
+   * Set to `true` to also generate `use*` composable functions. By default only the
+   * `queryOptions`, `queryKey`, and `mutationKey` helpers are emitted.
    *
    * @default false
    */

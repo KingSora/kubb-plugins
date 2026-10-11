@@ -181,7 +181,8 @@ export type ResolverReactQuery = Resolver & {
 type Suspense = object
 
 /**
- * Builds the `queryKey` used by each generated query hook.
+ * Builds the `queryKey` used by each generated query hook. `variant` tells which hook the key is for,
+ * so infinite keys can stay apart from plain ones.
  *
  * @note String values are inlined verbatim into generated code. Wrap literal
  * strings in `JSON.stringify(...)`.
@@ -285,11 +286,12 @@ export type Options = OutputOptions & {
    */
   resolver?: ResolverPatch<ResolverReactQuery>
   /**
-   * Set to `false` to skip generating `use*` hook functions. `queryOptions`,
-   * `mutationOptions`, `queryKey`, and `mutationKey` helpers are still emitted.
-   * The resulting output uses only `@tanstack/react-query` factory imports
-   * (`queryOptions`, `infiniteQueryOptions`, `mutationOptions`) that are
-   * adapter-portable across React, Vue, Solid, and Svelte.
+   * Set to `true` to also generate `use*` hook functions. By default only the
+   * `queryOptions`, `mutationOptions`, `queryKey`, and `mutationKey` helpers are
+   * emitted, using `@tanstack/react-query` factory imports (`queryOptions`,
+   * `infiniteQueryOptions`, `mutationOptions`) that are adapter-portable across
+   * React, Vue, Solid, and Svelte. Infinite, suspense, and `customOptions` output
+   * needs `hooks: true` too.
    *
    * @default false
    */

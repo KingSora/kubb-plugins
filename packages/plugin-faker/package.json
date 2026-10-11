@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-faker",
-  "version": "5.0.13",
+  "version": "5.1.0",
   "description": "Generate Faker.js mock data factories with Kubb. Produces realistic seed data and fixtures for development and testing.",
   "keywords": [
     "code-generation",
@@ -73,11 +73,8 @@
   "scripts": {
     "build": "tsdown",
     "clean": "node -e \"require('node:fs').rmSync('./dist', {recursive:true,force:true})\"",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint --fix .",
     "start": "tsdown --watch",
-    "test": "vitest --passWithNoTests",
-    "typecheck": "tsc -p ./tsconfig.json --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@kubb/plugin-ts": "workspace:^"

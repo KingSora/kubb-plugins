@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-ts",
-  "version": "5.0.4",
+  "version": "5.0.5",
   "description": "Generate TypeScript types, interfaces, and enums with Kubb. The base plugin other Kubb plugins build on for type safety.",
   "keywords": [
     "code-generation",
@@ -61,11 +61,8 @@
   "scripts": {
     "build": "tsdown",
     "clean": "node -e \"require('node:fs').rmSync('./dist', {recursive:true,force:true})\"",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint --fix .",
     "start": "tsdown --watch",
-    "test": "vitest --passWithNoTests",
-    "typecheck": "tsc -p ./tsconfig.json --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@kubb/parser-ts": "catalog:",
