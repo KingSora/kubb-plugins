@@ -17,3 +17,11 @@ export const updatePetResponseSchema = updatePetStatus200Schema
 export const updatePetBodySchema = z.object({
   name: z.string(),
 })
+
+export const updatePetPathSchema = z.object({
+  pet_id: z.string(),
+})
+
+export const updatePetQuerySchema = z.object({
+  include_deleted: z.boolean().optional(),
+})

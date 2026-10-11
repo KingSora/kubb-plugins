@@ -191,7 +191,7 @@ export function createSdkGenerator<TFactory extends ContractClientFactory>(): Ge
               ))}
 
             {ops.some((op) => op.zodResolver && buildValidatorHooks({ node: op.node, validator, zodResolver: op.zodResolver }).headers) && (
-              <File.Import name={['toCaseInsensitiveLooseObjectStandardSchema']} root={file.path} path={standardSchemaPath} />
+              <File.Import name={['toHeadersStandardSchema']} root={file.path} path={standardSchemaPath} />
             )}
 
             <SdkClient name={className} operations={ops} validator={validator} returnType={returnType} throwOnErrorDefault={throwOnErrorDefault} />

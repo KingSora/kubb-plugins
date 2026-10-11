@@ -63,10 +63,10 @@ export async function validateStandardSchema<TOutput>(schema: StandardSchemaVali
  * @param entries The record of keys the passed object schema validates.
  * @example
  * ```ts
- * validator: { headers: toCaseInsensitiveLooseObjectStandardSchema(putEventHeadersSchema, putEventHeadersSchema.shape) }
+ * validator: { headers: toHeadersStandardSchema(putEventHeadersSchema, putEventHeadersSchema.shape) }
  * ```
  */
-export function toCaseInsensitiveLooseObjectStandardSchema(schema: StandardSchemaValidator, entries: Record<string, unknown>): StandardSchemaValidator {
+export function toHeadersStandardSchema(schema: StandardSchemaValidator, entries: Record<string, unknown>): StandardSchemaValidator {
   const declared = new Map(Object.keys(entries).map((name) => [name.toLowerCase(), name]))
 
   function validate(value: unknown): StandardSchemaResult<unknown> | Promise<StandardSchemaResult<unknown>> {

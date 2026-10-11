@@ -25,10 +25,29 @@ const addPetWithError = ast.factory.createOperation({
   ],
 })
 
+const putEvent = ast.factory.createOperation({
+  operationId: 'putEvent',
+  method: 'PUT',
+  path: '/events/{day}',
+  tags: ['event'],
+  parameters: [
+    ast.factory.createParameter({ name: 'day', in: 'path', required: true, schema: ast.factory.createSchema({ type: 'string' }) }),
+    ast.factory.createParameter({ name: 'after', in: 'query', required: false, schema: ast.factory.createSchema({ type: 'string' }) }),
+    ast.factory.createParameter({ name: 'X-Trace', in: 'header', required: false, schema: ast.factory.createSchema({ type: 'string' }) }),
+  ],
+  requestBody: {
+    content: [ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'object', properties: [] }) })],
+  },
+  responses: [ast.factory.createResponse({ statusCode: '200', schema: ast.factory.createSchema({ type: 'object', properties: [] }), description: 'ok' })],
+})
+
 describe('buildValidatorHooks', () => {
   test('emits no parsers when the validator is off', () => {
     expect(buildValidatorHooks({ node: addPet, validator: false, zodResolver: resolverZod })).toStrictEqual({
       request: null,
+      path: null,
+      query: null,
+      headers: null,
       response: null,
       error: null,
       importedZodNames: [],
@@ -63,6 +82,31 @@ describe('buildValidatorHooks', () => {
     expect(hooks.request).toBe('addPetBodySchema')
     expect(hooks.response).toBe('addPetResponseSchema')
     expect(hooks.error).toBeNull()
-    expect(hooks.importedZodNames).toStrictEqual(['addPetBodySchema', 'addPetResponseSchema'])
+    expect(hooks.importedZodNames).toStrictEqual(['addPetResponseSchema', 'addPetBodySchema'])
+  })
+
+  test('params wires the grouped path, query, and headers schemas', () => {
+    const hooks = buildValidatorHooks({ node: putEvent, validator: { params: 'zod' }, zodResolver: resolverZod })
+    expect(hooks.request).toBeNull()
+    expect(hooks.path).toBe('putEventPathSchema')
+    expect(hooks.query).toBe('putEventQuerySchema')
+    expect(hooks.headers).toBe('toHeadersStandardSchema(putEventHeadersSchema, putEventHeadersSchema.shape)')
+    expect(hooks.importedZodNames).toStrictEqual(['putEventPathSchema', 'putEventQuerySchema', 'putEventHeadersSchema'])
+  })
+
+  test('params skips the groups an operation has no params in', () => {
+    const hooks = buildValidatorHooks({ node: addPet, validator: { params: 'zod' }, zodResolver: resolverZod })
+    expect(hooks.path).toBeNull()
+    expect(hooks.query).toBeNull()
+    expect(hooks.headers).toBeNull()
+    expect(hooks.importedZodNames).toStrictEqual([])
+  })
+
+  test('request alone leaves the params unvalidated', () => {
+    const hooks = buildValidatorHooks({ node: putEvent, validator: { request: 'zod' }, zodResolver: resolverZod })
+    expect(hooks.request).toBe('putEventBodySchema')
+    expect(hooks.path).toBeNull()
+    expect(hooks.query).toBeNull()
+    expect(hooks.headers).toBeNull()
   })
 })

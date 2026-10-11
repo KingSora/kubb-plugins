@@ -114,7 +114,7 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(
           )}
 
           {meta.fileZod && importedZodNames.length > 0 && <File.Import name={importedZodNames} root={meta.file.path} path={meta.fileZod.path} />}
-          {validatorHooks.headers && <File.Import name={['toCaseInsensitiveLooseObjectStandardSchema']} root={clientRoot} path={standardSchemaPath} />}
+          {validatorHooks.headers && <File.Import name={['toHeadersStandardSchema']} root={clientRoot} path={standardSchemaPath} />}
 
           <Operation
             name={meta.name}
