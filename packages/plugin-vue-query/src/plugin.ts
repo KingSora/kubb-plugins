@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setOptions, setResolver, useConfig, usePlugin } from 'kubb/kit'
+import { addGenerator, definePlugin, requirePlugin, Resolver, setMacros, setOptions, setResolver, useConfig } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { mutationKeyTransformer, queryKeyTransformer, resolveInfiniteConfig, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
 import { resolveContractClient } from '@internals/client'
@@ -65,7 +65,7 @@ export const pluginVueQuery = definePlugin<PluginVueQuery>((options) => {
     dependencies: [pluginTsName],
     hooks: {
       'kubb:plugin:setup'() {
-        usePlugin(pluginTsName)
+        requirePlugin(pluginTsName)
 
         const resolver = userResolver ? Resolver.merge<ResolverVueQuery>(resolverVueQuery, userResolver) : resolverVueQuery
 

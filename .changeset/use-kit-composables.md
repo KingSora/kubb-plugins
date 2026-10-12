@@ -14,4 +14,4 @@
 '@kubb/plugin-zod': patch
 ---
 
-Set up each plugin with the `kubb/kit` composables, such as `addGenerator()`, `setOptions()`, and `usePlugin()`, instead of the `ctx` argument. The generated code is unchanged. These plugins now need Kubb 5.7.0 or later.
+Set up each plugin with the `kubb/kit` composables, such as `addGenerator()`, `setOptions()`, and `requirePlugin()`, instead of the `ctx` argument. The generated code is unchanged. These plugins now need Kubb 5.7.0 or later.
