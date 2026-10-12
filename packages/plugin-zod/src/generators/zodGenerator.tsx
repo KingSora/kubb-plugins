@@ -10,7 +10,7 @@ import {
 } from '@internals/shared'
 import { ast, defineGenerator } from 'kubb/kit'
 import { File, jsxRenderer } from 'kubb/jsx'
-import { Zod, type ZodTypeAlias } from '../components/Zod.tsx'
+import { Zod } from '../components/Zod.tsx'
 import { ZOD_NAMESPACE_IMPORTS } from '../constants.ts'
 import { collectDirectionalRefNames, containsDirectionalNode, printerZod } from '../printers/printerZod.ts'
 import type { PrinterZodOptions } from '../printers/printerZod.ts'
@@ -22,7 +22,7 @@ import { buildGroupedParamsSchema } from '../utils.ts'
  * The helper an inferred alias is printed with. `'direction'` reads a request (encode) schema from its
  * input and a response (decode) schema from its output; `true` keeps `z.infer` for both.
  */
-function aliasKind(inferred: PluginZod['resolvedOptions']['inferred'], direction: 'encode' | 'decode'): ZodTypeAlias['kind'] {
+function aliasKind(inferred: PluginZod['resolvedOptions']['inferred'], direction: 'encode' | 'decode'): 'infer' | 'input' | 'output' {
   if (inferred !== 'direction') return 'infer'
   return direction === 'encode' ? 'input' : 'output'
 }
@@ -165,7 +165,8 @@ export const zodGenerator = defineGenerator<PluginZod>({
           name={meta.name}
           node={node}
           printer={schemaPrinter}
-          types={inferred ? [{ name: resolver.schema.typeName(node.name), kind: aliasKind(inferred, 'decode') }] : []}
+          inferTypeName={inferred ? resolver.schema.typeName(node.name) : null}
+          inferKind={aliasKind(inferred, 'decode')}
           typeGuards={typeGuards}
           isName={isName}
           assertName={assertName}
@@ -178,7 +179,8 @@ export const zodGenerator = defineGenerator<PluginZod>({
             name={resolver.schema.inputName(node.name)}
             node={node}
             printer={stdPrinters.encode}
-            types={inferred ? [{ name: resolver.schema.inputTypeName(node.name), kind: aliasKind(inferred, 'encode') }] : []}
+            inferTypeName={inferred ? resolver.schema.inputTypeName(node.name) : null}
+            inferKind={aliasKind(inferred, 'encode')}
             typeGuards={typeGuards}
             isName={typeGuards ? resolver.schema.isName(resolver.schema.inputName(node.name)) : null}
             assertName={typeGuards ? resolver.schema.assertName(resolver.schema.inputName(node.name)) : null}
@@ -258,7 +260,8 @@ export const zodGenerator = defineGenerator<PluginZod>({
             name={name}
             node={schema}
             printer={schemaPrinter}
-            types={inferred ? [{ name: resolver.schema.type(name), kind: aliasKind(inferred, direction) }] : []}
+            inferTypeName={inferred ? resolver.schema.type(name) : null}
+            inferKind={aliasKind(inferred, direction)}
             cyclic={false}
             compile={compile}
           />

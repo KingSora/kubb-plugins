@@ -30,7 +30,7 @@ export default defineConfig({
       },
     }),
     pluginFetch({
-      // use zod for for everything so codecs are useable everywhere
+      // validate every slot with zod so the codecs run on params, body, and response
       validator: {
         request: 'zod',
         params: 'zod',
