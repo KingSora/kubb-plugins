@@ -1,6 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
-import manifest from '../kubb-extension.json'
+import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { mutationKeyTransformer, queryKeyTransformer, resolveInfiniteConfig, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
@@ -40,7 +40,7 @@ export const pluginVueQueryName = 'plugin-vue-query' satisfies PluginVueQuery['n
  * ```
  */
 export const pluginVueQuery = definePlugin<PluginVueQuery>({
-  meta: { ...manifest, name: pluginVueQueryName, version },
+  meta: { name: pluginVueQueryName, version, compatibility },
   dependencies: { [pluginTsName]: {} },
   setup(options) {
     const {

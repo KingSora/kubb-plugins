@@ -1,6 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
-import manifest from '../kubb-extension.json'
+import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { resolveContractClient } from '@internals/client'
 import { pluginTsName } from '@kubb/plugin-ts'
@@ -49,7 +49,7 @@ export const pluginReactQueryName = 'plugin-react-query' satisfies PluginReactQu
  * ```
  */
 export const pluginReactQuery = definePlugin<PluginReactQuery>({
-  meta: { ...manifest, name: pluginReactQueryName, version },
+  meta: { name: pluginReactQueryName, version, compatibility },
   dependencies: { [pluginTsName]: {} },
   setup(options) {
     const {

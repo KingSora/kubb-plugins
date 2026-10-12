@@ -1,6 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
-import manifest from '../kubb-extension.json'
+import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { cypressGenerator } from './generators/cypressGenerator.tsx'
@@ -37,7 +37,7 @@ export const pluginCypressName = 'plugin-cypress' satisfies PluginCypress['name'
  * ```
  */
 export const pluginCypress = definePlugin<PluginCypress>({
-  meta: { ...manifest, name: pluginCypressName, version },
+  meta: { name: pluginCypressName, version, compatibility },
   dependencies: { [pluginTsName]: {} },
   setup(options) {
     const {

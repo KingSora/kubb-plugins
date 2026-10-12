@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import type { ast } from 'kubb/kit'
 import { matchFiles as matchFilesBase } from 'kubb/kit/testing'
 import { parserTs } from '@kubb/parser-ts'
@@ -53,46 +52,4 @@ function assertCleanRawOutput(files: Array<ast.FileNode> | undefined): void {
 export function matchFiles(files: Array<ast.FileNode> | undefined, pre?: string) {
   assertCleanRawOutput(files)
   return matchFilesBase(files, { parsers, format, pre })
-}
-
-type ManifestOption = {
-  key: string
-  type: string
-  default?: unknown
-  choices?: Array<{ label?: string; value: unknown }>
-}
-
-type Manifest = {
-  kind: string
-  name: string
-  export: string
-  compatibility?: Record<string, string>
-  options?: Array<ManifestOption>
-}
-
-/**
- * Checks a package's `kubb-extension.json` against the plugin it describes: the name and factory
- * export match, option keys are unique, and every select default is one of its choices.
- */
-export function expectExtensionManifest(file: URL, { name, entry }: { name: string; entry: Record<string, unknown> }): void {
-  const manifest = JSON.parse(readFileSync(file, 'utf8')) as Manifest
-
-  expect(manifest.kind).toBe('plugin')
-  expect(manifest.name).toBe(name)
-  expect(entry[manifest.export]).toBeTypeOf('function')
-  expect(Object.keys(manifest.compatibility ?? {}).filter((key) => key !== 'kubb' && key !== 'node')).toEqual([])
-
-  const options = manifest.options ?? []
-  const keys = options.map((option) => option.key)
-  expect(new Set(keys).size, 'option keys are unique').toBe(keys.length)
-
-  for (const option of options.filter((option) => option.type === 'select')) {
-    expect(option.choices, `${option.key} has choices`).toBeInstanceOf(Array)
-    if ('default' in option) {
-      expect(
-        (option.choices ?? []).map((choice) => choice.value),
-        `${option.key} default is one of its choices`,
-      ).toContainEqual(option.default)
-    }
-  }
 }

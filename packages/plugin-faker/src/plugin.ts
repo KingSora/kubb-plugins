@@ -1,6 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
-import manifest from '../kubb-extension.json'
+import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { fakerGenerator } from './generators/fakerGenerator.tsx'
@@ -38,7 +38,7 @@ export const pluginFakerName = 'plugin-faker' satisfies PluginFaker['name']
  * ```
  */
 export const pluginFaker = definePlugin<PluginFaker>({
-  meta: { ...manifest, name: pluginFakerName, version },
+  meta: { name: pluginFakerName, version, compatibility },
   dependencies: { [pluginTsName]: {} },
   setup(options) {
     const {
