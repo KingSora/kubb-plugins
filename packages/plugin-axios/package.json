@@ -39,6 +39,8 @@
     "src",
     "dist",
     "templates",
+    "kubb-extension.json",
+    "OVERVIEW.md",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -58,6 +60,7 @@
       "require": "./dist/index.cjs"
     },
     "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json",
     "./templates/*": "./templates/*"
   },
   "publishConfig": {

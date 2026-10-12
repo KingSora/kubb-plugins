@@ -2,6 +2,7 @@ import { createGroupConfig } from '@internals/shared'
 
 import { resolveContractClient } from '@internals/client'
 import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import manifest from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
@@ -44,7 +45,7 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  * ```
  */
 export const pluginMcp = definePlugin<PluginMcp>({
-  meta: { name: pluginMcpName, version, compatibility: { kubb: '>=5.8.0' } },
+  meta: { ...manifest, name: pluginMcpName, version },
   dependencies: { [pluginTsName]: {}, [pluginZodName]: {} },
   setup(options) {
     const {

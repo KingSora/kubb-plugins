@@ -2,6 +2,7 @@ import path from 'node:path'
 import { createSdkGenerator, defaultMacros, resolverClient } from '@internals/client'
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, definePlugin, injectFile, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import manifest from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
@@ -38,7 +39,7 @@ export const pluginFetchName = 'plugin-fetch' satisfies PluginFetch['name']
  * ```
  */
 export const pluginFetch = definePlugin<PluginFetch>({
-  meta: { name: pluginFetchName, version, compatibility: { kubb: '>=5.8.0' } },
+  meta: { ...manifest, name: pluginFetchName, version },
   // Both are ordering hints, skipped when the plugin is not in the pipeline. `plugin-ts` supplies
   // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
   dependencies: { [pluginTsName]: { optional: true }, [pluginZodName]: { optional: true } },

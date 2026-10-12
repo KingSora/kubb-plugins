@@ -1,0 +1,28 @@
+{
+  "$schema": "https://kubb.dev/schemas/kubb-extension.json",
+  "kind": "plugin",
+  "name": "plugin-redoc",
+  "export": "pluginRedoc",
+  "displayName": "Redoc",
+  "description": "Generates a single-file HTML page from your OpenAPI spec with Redoc, rebuilt on every Kubb run so the docs match the spec your code comes from.",
+  "category": "documentation",
+  "icon": {
+    "light": "https://kubb.dev/feature/openapi.svg"
+  },
+  "tags": ["redoc", "api-docs", "documentation", "interactive-docs", "codegen", "openapi"],
+  "docs": "https://kubb.dev/plugins/plugin-redoc",
+  "compatibility": {
+    "kubb": ">=5.8.0",
+    "node": ">=22"
+  },
+  "options": [
+    {
+      "key": "outputPath",
+      "path": ["output", "path"],
+      "label": "Output Path",
+      "description": "Output folder for generated files",
+      "type": "text",
+      "default": "docs.html"
+    }
+  ]
+}

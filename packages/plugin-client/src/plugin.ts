@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import manifest from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
@@ -23,7 +24,7 @@ export const pluginClientName = 'plugin-client' satisfies PluginClient['name']
  * ```
  */
 export const pluginClient = definePlugin<PluginClient>({
-  meta: { name: pluginClientName, version, compatibility: { kubb: '>=5.8.0' } },
+  meta: { ...manifest, name: pluginClientName, version },
   dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !options.validator } }),
   setup(options) {
     const {
