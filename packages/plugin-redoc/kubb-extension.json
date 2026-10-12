@@ -20,7 +20,7 @@
       "key": "outputPath",
       "path": ["output", "path"],
       "label": "Output Path",
-      "description": "Output folder for generated files",
+      "description": "Path of the generated HTML file. End it in .html.",
       "type": "text",
       "default": "docs.html"
     }

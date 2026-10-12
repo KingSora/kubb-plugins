@@ -72,7 +72,7 @@
       "label": "Output Mode",
       "description": "How the plugin consolidates its code into files. File mode writes everything into a single file, so the output path must include a file extension and cannot be grouped.",
       "type": "select",
-      "default": "file",
+      "default": "directory",
       "choices": [
         {
           "label": "directory (one file per schema)",
