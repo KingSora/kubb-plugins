@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, usePlugin } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { clientGenerator } from './generators/clientGenerator.tsx'
@@ -55,12 +55,12 @@ export const pluginClient = definePlugin<PluginClient>((options) => {
     dependencies: [pluginTsName, pluginZodName],
     hooks: {
       'kubb:plugin:setup'(ctx) {
-        if (validator) ctx.requirePlugin(pluginZodName)
+        if (validator) usePlugin(pluginZodName)
 
         ctx.setOptions(resolved)
-        ctx.setResolver(resolved.resolver)
-        ctx.setMacros([...defaultMacros, ...(options.macros ?? [])])
-        ctx.addGenerator(clientGenerator)
+        setResolver(resolved.resolver)
+        setMacros([...defaultMacros, ...(options.macros ?? [])])
+        addGenerator(clientGenerator)
       },
     },
   }

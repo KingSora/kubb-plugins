@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, usePlugin } from 'kubb/kit'
 import { pluginFakerName } from '@kubb/plugin-faker'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { handlersGenerator, mswGenerator } from './generators'
@@ -60,8 +60,8 @@ export const pluginMsw = definePlugin<PluginMsw>((options) => {
     dependencies: [pluginTsName, parser === 'faker' ? pluginFakerName : null].filter((dependency): dependency is string => Boolean(dependency)),
     hooks: {
       'kubb:plugin:setup'(ctx) {
-        ctx.requirePlugin(pluginTsName)
-        if (parser === 'faker') ctx.requirePlugin(pluginFakerName)
+        usePlugin(pluginTsName)
+        if (parser === 'faker') usePlugin(pluginFakerName)
 
         const resolver = userResolver ? Resolver.merge<ResolverMsw>(resolverMsw, userResolver) : resolverMsw
 
@@ -76,14 +76,14 @@ export const pluginMsw = definePlugin<PluginMsw>((options) => {
           handlers,
           resolver,
         })
-        ctx.setResolver(resolver)
+        setResolver(resolver)
         if (userMacros?.length) {
-          ctx.setMacros(userMacros)
+          setMacros(userMacros)
         }
 
-        ctx.addGenerator(mswGenerator)
+        addGenerator(mswGenerator)
         if (handlers) {
-          ctx.addGenerator(handlersGenerator)
+          addGenerator(handlersGenerator)
         }
       },
     },

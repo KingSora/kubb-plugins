@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { createSdkGenerator, defaultMacros, resolverClient } from '@internals/client'
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, injectFile, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { clientGenerator } from './generators/clientGenerator.tsx'
@@ -78,28 +78,28 @@ export const pluginAxios = definePlugin<PluginAxios>((options) => {
     hooks: {
       'kubb:plugin:setup'(ctx) {
         ctx.setOptions(resolved)
-        ctx.setResolver(resolved.resolver)
-        ctx.setMacros([...defaultMacros, ...(options.macros ?? [])])
+        setResolver(resolved.resolver)
+        setMacros([...defaultMacros, ...(options.macros ?? [])])
 
-        ctx.addGenerator(...selectedGenerators)
+        addGenerator(...selectedGenerators)
 
         const root = path.resolve(ctx.config.root, ctx.config.output.path)
         const baseURLExpression = baseURL ? (baseURL.includes('${') ? `\`${baseURL.replaceAll('`', '\\`')}\`` : JSON.stringify(baseURL)) : undefined
 
-        ctx.injectFile({
+        injectFile({
           baseName: 'serializers.ts',
           path: path.resolve(root, '.kubb/serializers.ts'),
           copy: axiosSerializersTemplatePath,
         })
 
-        ctx.injectFile({
+        injectFile({
           baseName: 'client.ts',
           path: path.resolve(root, '.kubb/client.ts'),
           copy: axiosClientTemplatePath,
           footer: baseURLExpression ? `client.setConfig({ baseURL: ${baseURLExpression} })` : undefined,
         })
 
-        ctx.injectFile({
+        injectFile({
           baseName: 'standardSchema.ts',
           path: path.resolve(root, '.kubb/standardSchema.ts'),
           copy: standardSchemaTemplatePath,

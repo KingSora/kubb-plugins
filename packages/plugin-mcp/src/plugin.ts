@@ -1,7 +1,7 @@
 import { createGroupConfig } from '@internals/shared'
 
 import { resolveContractClient } from '@internals/client'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, usePlugin } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { mcpGenerator } from './generators/mcpGenerator.tsx'
@@ -62,8 +62,8 @@ export const pluginMcp = definePlugin<PluginMcp>((options) => {
     dependencies: [pluginTsName, pluginZodName],
     hooks: {
       'kubb:plugin:setup'(ctx) {
-        ctx.requirePlugin(pluginTsName)
-        ctx.requirePlugin(pluginZodName)
+        usePlugin(pluginTsName)
+        usePlugin(pluginZodName)
 
         const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
 
@@ -76,11 +76,11 @@ export const pluginMcp = definePlugin<PluginMcp>((options) => {
           client: resolveContractClient({ client, plugins: ctx.config.plugins }),
           resolver,
         })
-        ctx.setResolver(resolver)
+        setResolver(resolver)
         if (userMacros?.length) {
-          ctx.setMacros(userMacros)
+          setMacros(userMacros)
         }
-        ctx.addGenerator(mcpGenerator, serverGenerator)
+        addGenerator(mcpGenerator, serverGenerator)
       },
     },
   }

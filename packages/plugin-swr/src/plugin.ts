@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, usePlugin } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { resolveContractClient } from '@internals/client'
 import { mutationKeyTransformer, queryKeyTransformer, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
@@ -60,7 +60,7 @@ export const pluginSwr = definePlugin<PluginSwr>((options) => {
     dependencies: [pluginTsName],
     hooks: {
       'kubb:plugin:setup'(ctx) {
-        ctx.requirePlugin(pluginTsName)
+        usePlugin(pluginTsName)
 
         const resolver = userResolver ? Resolver.merge<ResolverSwr>(resolverSwr, userResolver) : resolverSwr
 
@@ -77,12 +77,12 @@ export const pluginSwr = definePlugin<PluginSwr>((options) => {
           override,
           resolver,
         })
-        ctx.setResolver(resolver)
+        setResolver(resolver)
         if (userMacros?.length) {
-          ctx.setMacros(userMacros)
+          setMacros(userMacros)
         }
 
-        ctx.addGenerator(...selectedGenerators)
+        addGenerator(...selectedGenerators)
       },
     },
   }

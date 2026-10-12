@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { assertPluginOption, definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, assertPluginOption, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { typeGenerator } from './generators/typeGenerator.tsx'
 import { resolverTs } from './resolvers/resolverTs.ts'
 import type { PluginTs, ResolvedOptions } from './types.ts'
@@ -108,11 +108,11 @@ export const pluginTs = definePlugin<PluginTs>((options) => {
           syntaxType,
           printer,
         })
-        ctx.setResolver(userResolver ? Resolver.merge(resolverTs, userResolver) : resolverTs)
+        setResolver(userResolver ? Resolver.merge(resolverTs, userResolver) : resolverTs)
         if (userMacros?.length) {
-          ctx.setMacros(userMacros)
+          setMacros(userMacros)
         }
-        ctx.addGenerator(typeGenerator)
+        addGenerator(typeGenerator)
       },
     },
   }

@@ -1,3 +1,4 @@
+import { kubbContext } from 'kubb/kit'
 import { createMockedSetupContext } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { pluginMsw } from './plugin.ts'
@@ -7,7 +8,7 @@ function setup(options: Options, pluginNames: Array<string>) {
   const plugin = pluginMsw(options)
   const ctx = createMockedSetupContext<PluginMsw>({ plugins: pluginNames })
 
-  return { run: () => plugin.hooks?.['kubb:plugin:setup']?.(ctx), ctx }
+  return { run: () => kubbContext.run(ctx, () => plugin.hooks?.['kubb:plugin:setup']?.(ctx)), ctx }
 }
 
 describe('pluginMsw setup', () => {

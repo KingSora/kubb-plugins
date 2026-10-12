@@ -2,7 +2,7 @@ import path from 'node:path'
 import type { AdapterOas } from '@kubb/adapter-oas'
 import { adapterOasName } from '@kubb/adapter-oas'
 
-import { type Adapter, ast, definePlugin } from 'kubb/kit'
+import { type Adapter, ast, definePlugin, injectFile } from 'kubb/kit'
 import { version } from '../package.json'
 import { getPageHTML } from './redoc.tsx'
 import type { PluginRedoc } from './types.ts'
@@ -69,7 +69,7 @@ export const pluginRedoc = definePlugin<PluginRedoc>((options) => {
         const root = path.resolve(ctx.config.root, ctx.config.output.path)
         const pageHTML = await getPageHTML(document)
 
-        ctx.injectFile({
+        injectFile({
           baseName: 'docs.html',
           path: path.resolve(root, output.path || './docs.html'),
           sources: [
