@@ -2,6 +2,7 @@ import { createGroupConfig } from '@internals/shared'
 
 import { resolveContractClient } from '@internals/client'
 import { definePlugin, Resolver } from 'kubb/kit'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { mcpGenerator } from './generators/mcpGenerator.tsx'
@@ -42,48 +43,39 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  * })
  * ```
  */
-export const pluginMcp = definePlugin<PluginMcp>((options) => {
-  const {
-    output = { path: 'mcp', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    client,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginMcp = definePlugin<PluginMcp>({
+  meta: { name: pluginMcpName, version },
+  dependencies: { [pluginTsName]: {}, [pluginZodName]: {} },
+  setup(options, kubb) {
+    const {
+      output = { path: 'mcp', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      client,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
 
-  return {
-    name: pluginMcpName,
-    options,
-    dependencies: [pluginTsName, pluginZodName],
-    hooks: {
-      'kubb:plugin:setup'(ctx) {
-        ctx.requirePlugin(pluginTsName)
-        ctx.requirePlugin(pluginZodName)
+    kubb.setResolver(resolver)
+    if (userMacros?.length) {
+      kubb.setMacros(userMacros)
+    }
+    kubb.addGenerator(mcpGenerator, serverGenerator)
 
-        const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
-
-        ctx.setOptions({
-          output,
-          exclude,
-          include,
-          override,
-          group: groupConfig,
-          client: resolveContractClient({ client, plugins: ctx.config.plugins }),
-          resolver,
-        })
-        ctx.setResolver(resolver)
-        if (userMacros?.length) {
-          ctx.setMacros(userMacros)
-        }
-        ctx.addGenerator(mcpGenerator, serverGenerator)
-      },
-    },
-  }
+    return {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      client: resolveContractClient({ client, plugins: kubb.config.plugins }),
+      resolver,
+    }
+  },
 })
 
 export default pluginMcp
