@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
@@ -23,9 +23,9 @@ export const pluginClientName = 'plugin-client' satisfies PluginClient['name']
  * ```
  */
 export const pluginClient = definePlugin<PluginClient>({
-  meta: { name: pluginClientName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginClientName, version, compatibility: { kubb: '>=5.8.0' } },
   dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !options.validator } }),
-  setup(options, kubb) {
+  setup(options) {
     const {
       output = { path: 'clients', barrel: { type: 'named' } },
       exclude = [],
@@ -40,9 +40,9 @@ export const pluginClient = definePlugin<PluginClient>({
 
     const resolver = userResolver ? Resolver.merge<ResolverClient>(resolverClient, userResolver) : resolverClient
 
-    kubb.setResolver(resolver)
-    kubb.setMacros([...defaultMacros, ...(options.macros ?? [])])
-    kubb.addGenerator(clientGenerator)
+    setResolver(resolver)
+    setMacros([...defaultMacros, ...(options.macros ?? [])])
+    addGenerator(clientGenerator)
 
     return {
       output,

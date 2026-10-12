@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { assertPluginOption, definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, assertPluginOption, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { version } from '../package.json'
 import { typeGenerator } from './generators/typeGenerator.tsx'
 import { resolverTs } from './resolvers/resolverTs.ts'
@@ -62,8 +62,8 @@ function assertEnumLikeOptions({
  * ```
  */
 export const pluginTs = definePlugin<PluginTs>({
-  meta: { name: pluginTsName, version, compatibility: { kubb: '>=5.7.0' } },
-  setup(options, kubb) {
+  meta: { name: pluginTsName, version, compatibility: { kubb: '>=5.8.0' } },
+  setup(options) {
     const {
       output = { path: 'types', barrel: { type: 'named' } },
       group,
@@ -92,11 +92,11 @@ export const pluginTs = definePlugin<PluginTs>({
       assertEnumLikeOptions({ prefix: `override[${index}].options.`, options: entry.options })
     }
 
-    kubb.setResolver(userResolver ? Resolver.merge(resolverTs, userResolver) : resolverTs)
+    setResolver(userResolver ? Resolver.merge(resolverTs, userResolver) : resolverTs)
     if (userMacros?.length) {
-      kubb.setMacros(userMacros)
+      setMacros(userMacros)
     }
-    kubb.addGenerator(typeGenerator)
+    addGenerator(typeGenerator)
 
     return {
       output,

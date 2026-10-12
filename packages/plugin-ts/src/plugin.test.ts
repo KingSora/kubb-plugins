@@ -1,3 +1,4 @@
+import { kubbContext } from 'kubb/kit'
 import { createMockedSetupContext } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { pluginTs } from './plugin.ts'
@@ -7,7 +8,7 @@ function setup(options: Options) {
   const plugin = pluginTs(options)
   const ctx = createMockedSetupContext<PluginTs>()
 
-  return { run: () => plugin.setup?.(plugin.options ?? {}, ctx), ctx }
+  return { run: () => kubbContext.run(ctx, () => plugin.setup?.(plugin.options ?? {}, ctx)), ctx }
 }
 
 describe('pluginTs setup', () => {

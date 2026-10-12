@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { mutationKeyTransformer, queryKeyTransformer, resolveInfiniteConfig, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
@@ -39,9 +39,9 @@ export const pluginVueQueryName = 'plugin-vue-query' satisfies PluginVueQuery['n
  * ```
  */
 export const pluginVueQuery = definePlugin<PluginVueQuery>({
-  meta: { name: pluginVueQueryName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginVueQueryName, version, compatibility: { kubb: '>=5.8.0' } },
   dependencies: { [pluginTsName]: {} },
-  setup(options, kubb) {
+  setup(options) {
     const {
       output = { path: 'hooks', barrel: { type: 'named' } },
       group,
@@ -61,16 +61,16 @@ export const pluginVueQuery = definePlugin<PluginVueQuery>({
 
     const resolver = userResolver ? Resolver.merge<ResolverVueQuery>(resolverVueQuery, userResolver) : resolverVueQuery
 
-    kubb.setResolver(resolver)
+    setResolver(resolver)
     if (userMacros?.length) {
-      kubb.setMacros(userMacros)
+      setMacros(userMacros)
     }
 
-    kubb.addGenerator(queryGenerator, infiniteQueryGenerator, mutationGenerator)
+    addGenerator(queryGenerator, infiniteQueryGenerator, mutationGenerator)
 
     return {
       output,
-      client: resolveContractClient({ client, plugins: kubb.config.plugins }),
+      client: resolveContractClient({ client, plugins: useConfig().plugins }),
       queryKey,
       query: resolveQueryConfig(query, { importPath: '@tanstack/vue-query' }),
       mutationKey,

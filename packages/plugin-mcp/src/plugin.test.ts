@@ -1,5 +1,5 @@
 import { createKubb } from 'kubb'
-import { definePlugin } from 'kubb/kit'
+import { definePlugin, kubbContext } from 'kubb/kit'
 import { createMockedSetupContext } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { pluginMcp } from './plugin.ts'
@@ -16,7 +16,7 @@ describe('pluginMcp setup', () => {
     const plugin = pluginMcp()
     const ctx = createMockedSetupContext<PluginMcp>({ plugins: ['plugin-ts', 'plugin-zod', 'plugin-fetch', 'plugin-mcp'] })
 
-    plugin.setup?.(plugin.options ?? {}, ctx)
+    kubbContext.run(ctx, () => plugin.setup?.(plugin.options ?? {}, ctx))
 
     expect(ctx.addGenerator).toHaveBeenCalledTimes(1)
   })

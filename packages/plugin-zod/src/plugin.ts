@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { version } from '../package.json'
 import { zodGenerator } from './generators/zodGenerator.tsx'
 import { resolverZod } from './resolvers/resolverZod.ts'
@@ -38,8 +38,8 @@ export const pluginZodName = 'plugin-zod' satisfies PluginZod['name']
  * ```
  */
 export const pluginZod = definePlugin<PluginZod>({
-  meta: { name: pluginZodName, version, compatibility: { kubb: '>=5.7.0' } },
-  setup(options, kubb) {
+  meta: { name: pluginZodName, version, compatibility: { kubb: '>=5.8.0' } },
+  setup(options) {
     const {
       output = { path: 'zod', barrel: { type: 'named' } },
       group,
@@ -59,11 +59,11 @@ export const pluginZod = definePlugin<PluginZod>({
       macros: userMacros,
     } = options
 
-    kubb.setResolver(userResolver ? Resolver.merge(resolverZod, userResolver) : resolverZod)
+    setResolver(userResolver ? Resolver.merge(resolverZod, userResolver) : resolverZod)
     if (userMacros?.length) {
-      kubb.setMacros(userMacros)
+      setMacros(userMacros)
     }
-    kubb.addGenerator(zodGenerator)
+    addGenerator(zodGenerator)
 
     return {
       output,

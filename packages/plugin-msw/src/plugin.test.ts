@@ -1,5 +1,5 @@
 import { createKubb } from 'kubb'
-import { definePlugin } from 'kubb/kit'
+import { definePlugin, kubbContext } from 'kubb/kit'
 import { createMockedSetupContext } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { pluginMsw } from './plugin.ts'
@@ -19,7 +19,7 @@ describe('pluginMsw setup', () => {
     const plugin = pluginMsw({ handlers })
     const ctx = createMockedSetupContext<PluginMsw>()
 
-    plugin.setup?.(plugin.options ?? {}, ctx)
+    kubbContext.run(ctx, () => plugin.setup?.(plugin.options ?? {}, ctx))
 
     expect(ctx.addGenerator).toHaveBeenCalledTimes(generators)
   })

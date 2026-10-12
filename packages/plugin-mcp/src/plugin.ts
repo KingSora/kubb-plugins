@@ -1,7 +1,7 @@
 import { createGroupConfig } from '@internals/shared'
 
 import { resolveContractClient } from '@internals/client'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
@@ -44,9 +44,9 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  * ```
  */
 export const pluginMcp = definePlugin<PluginMcp>({
-  meta: { name: pluginMcpName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginMcpName, version, compatibility: { kubb: '>=5.8.0' } },
   dependencies: { [pluginTsName]: {}, [pluginZodName]: {} },
-  setup(options, kubb) {
+  setup(options) {
     const {
       output = { path: 'mcp', barrel: { type: 'named' } },
       group,
@@ -60,11 +60,11 @@ export const pluginMcp = definePlugin<PluginMcp>({
 
     const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
 
-    kubb.setResolver(resolver)
+    setResolver(resolver)
     if (userMacros?.length) {
-      kubb.setMacros(userMacros)
+      setMacros(userMacros)
     }
-    kubb.addGenerator(mcpGenerator, serverGenerator)
+    addGenerator(mcpGenerator, serverGenerator)
 
     return {
       output,
@@ -72,7 +72,7 @@ export const pluginMcp = definePlugin<PluginMcp>({
       include,
       override,
       group: createGroupConfig(group),
-      client: resolveContractClient({ client, plugins: kubb.config.plugins }),
+      client: resolveContractClient({ client, plugins: useConfig().plugins }),
       resolver,
     }
   },

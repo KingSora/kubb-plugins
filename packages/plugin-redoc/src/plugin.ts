@@ -2,7 +2,7 @@ import path from 'node:path'
 import type { AdapterOas } from '@kubb/adapter-oas'
 import { adapterOasName } from '@kubb/adapter-oas'
 
-import { type Adapter, ast, definePlugin } from 'kubb/kit'
+import { type Adapter, ast, definePlugin, injectFile, useConfig } from 'kubb/kit'
 import { version } from '../package.json'
 import { getPageHTML } from './redoc.tsx'
 import type { PluginRedoc } from './types.ts'
@@ -33,13 +33,14 @@ export const pluginRedocName = 'plugin-redoc' satisfies PluginRedoc['name']
  * ```
  */
 export const pluginRedoc = definePlugin<PluginRedoc>({
-  meta: { name: pluginRedocName, version, compatibility: { kubb: '>=5.7.0' } },
-  async setup(options, kubb) {
+  meta: { name: pluginRedocName, version, compatibility: { kubb: '>=5.8.0' } },
+  async setup(options) {
+    const config = useConfig()
     const { output = { path: 'docs.html' } } = options
     const extname = path.extname(output.path)
     const name = extname ? output.path.slice(0, -extname.length) : output.path
 
-    const adapter = kubb.config.adapter
+    const adapter = config.adapter
 
     if (adapter?.name !== adapterOasName) {
       throw new Error(
@@ -55,10 +56,10 @@ export const pluginRedoc = definePlugin<PluginRedoc>({
       )
     }
 
-    const root = path.resolve(kubb.config.root, kubb.config.output.path)
+    const root = path.resolve(config.root, config.output.path)
     const pageHTML = await getPageHTML(document)
 
-    kubb.injectFile({
+    injectFile({
       baseName: 'docs.html',
       path: path.resolve(root, output.path || './docs.html'),
       sources: [

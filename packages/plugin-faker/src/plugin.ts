@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { fakerGenerator } from './generators/fakerGenerator.tsx'
@@ -37,9 +37,9 @@ export const pluginFakerName = 'plugin-faker' satisfies PluginFaker['name']
  * ```
  */
 export const pluginFaker = definePlugin<PluginFaker>({
-  meta: { name: pluginFakerName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginFakerName, version, compatibility: { kubb: '>=5.8.0' } },
   dependencies: { [pluginTsName]: {} },
-  setup(options, kubb) {
+  setup(options) {
     const {
       output = { path: 'mocks', barrel: { type: 'named' } },
       seed,
@@ -56,11 +56,11 @@ export const pluginFaker = definePlugin<PluginFaker>({
       macros: userMacros,
     } = options
 
-    kubb.setResolver(userResolver ? Resolver.merge(resolverFaker, userResolver) : resolverFaker)
+    setResolver(userResolver ? Resolver.merge(resolverFaker, userResolver) : resolverFaker)
     if (userMacros?.length) {
-      kubb.setMacros(userMacros)
+      setMacros(userMacros)
     }
-    kubb.addGenerator(fakerGenerator)
+    addGenerator(fakerGenerator)
 
     return {
       output,
