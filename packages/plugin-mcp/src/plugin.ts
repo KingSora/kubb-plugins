@@ -44,7 +44,7 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  * ```
  */
 export const pluginMcp = definePlugin<PluginMcp>({
-  meta: { name: pluginMcpName, version },
+  meta: { name: pluginMcpName, version, compatibility: { kubb: '>=5.7.0' } },
   dependencies: { [pluginTsName]: {}, [pluginZodName]: {} },
   setup(options, kubb) {
     const {

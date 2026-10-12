@@ -62,7 +62,7 @@ function assertEnumLikeOptions({
  * ```
  */
 export const pluginTs = definePlugin<PluginTs>({
-  meta: { name: pluginTsName, version },
+  meta: { name: pluginTsName, version, compatibility: { kubb: '>=5.7.0' } },
   setup(options, kubb) {
     const {
       output = { path: 'types', barrel: { type: 'named' } },

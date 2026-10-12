@@ -39,7 +39,7 @@ export const pluginVueQueryName = 'plugin-vue-query' satisfies PluginVueQuery['n
  * ```
  */
 export const pluginVueQuery = definePlugin<PluginVueQuery>({
-  meta: { name: pluginVueQueryName, version },
+  meta: { name: pluginVueQueryName, version, compatibility: { kubb: '>=5.7.0' } },
   dependencies: { [pluginTsName]: {} },
   setup(options, kubb) {
     const {

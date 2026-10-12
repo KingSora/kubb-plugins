@@ -36,7 +36,7 @@ export const pluginSwrName = 'plugin-swr' satisfies PluginSwr['name']
  * ```
  */
 export const pluginSwr = definePlugin<PluginSwr>({
-  meta: { name: pluginSwrName, version },
+  meta: { name: pluginSwrName, version, compatibility: { kubb: '>=5.7.0' } },
   dependencies: { [pluginTsName]: {} },
   setup(options, kubb) {
     const {

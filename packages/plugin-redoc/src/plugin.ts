@@ -33,7 +33,7 @@ export const pluginRedocName = 'plugin-redoc' satisfies PluginRedoc['name']
  * ```
  */
 export const pluginRedoc = definePlugin<PluginRedoc>({
-  meta: { name: pluginRedocName, version },
+  meta: { name: pluginRedocName, version, compatibility: { kubb: '>=5.7.0' } },
   async setup(options, kubb) {
     const { output = { path: 'docs.html' } } = options
     const extname = path.extname(output.path)

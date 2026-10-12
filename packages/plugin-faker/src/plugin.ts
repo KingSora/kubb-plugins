@@ -37,7 +37,7 @@ export const pluginFakerName = 'plugin-faker' satisfies PluginFaker['name']
  * ```
  */
 export const pluginFaker = definePlugin<PluginFaker>({
-  meta: { name: pluginFakerName, version },
+  meta: { name: pluginFakerName, version, compatibility: { kubb: '>=5.7.0' } },
   dependencies: { [pluginTsName]: {} },
   setup(options, kubb) {
     const {
