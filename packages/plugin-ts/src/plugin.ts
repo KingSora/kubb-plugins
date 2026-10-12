@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, assertPluginOption, definePlugin, Resolver, setMacros, setOptions, setResolver } from 'kubb/kit'
+import { addGenerator, assertPluginOption, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { version } from '../package.json'
 import { typeGenerator } from './generators/typeGenerator.tsx'
 import { resolverTs } from './resolvers/resolverTs.ts'
 import type { PluginTs, ResolvedOptions } from './types.ts'
@@ -60,62 +61,56 @@ function assertEnumLikeOptions({
  * })
  * ```
  */
-export const pluginTs = definePlugin<PluginTs>((options) => {
-  const {
-    output = { path: 'types', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    enum: enumOptions = {},
-    optionalType = 'questionToken',
-    arrayType = 'array',
-    syntaxType = 'type',
-    printer,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginTs = definePlugin<PluginTs>({
+  meta: { name: pluginTsName, version, compatibility: { kubb: '>=5.7.0' } },
+  setup(options) {
+    const {
+      output = { path: 'types', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      enum: enumOptions = {},
+      optionalType = 'questionToken',
+      arrayType = 'array',
+      syntaxType = 'type',
+      printer,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    const resolvedEnum = {
+      type: enumOptions.type ?? 'asConst',
+      constCasing: enumOptions.constCasing ?? 'camelCase',
+      typeSuffix: enumOptions.typeSuffix ?? 'Key',
+      keyCasing: enumOptions.keyCasing ?? 'none',
+    }
 
-  const resolvedEnum = {
-    type: enumOptions.type ?? 'asConst',
-    constCasing: enumOptions.constCasing ?? 'camelCase',
-    typeSuffix: enumOptions.typeSuffix ?? 'Key',
-    keyCasing: enumOptions.keyCasing ?? 'none',
-  }
+    assertEnumLikeOptions({ prefix: '', options: { enum: resolvedEnum, syntaxType, arrayType, optionalType } })
+    // An override replaces these per operation or schema, so its values are checked too.
+    for (const [index, entry] of override.entries()) {
+      assertEnumLikeOptions({ prefix: `override[${index}].options.`, options: entry.options })
+    }
 
-  return {
-    name: pluginTsName,
-    options,
-    hooks: {
-      'kubb:plugin:setup'() {
-        assertEnumLikeOptions({ prefix: '', options: { enum: resolvedEnum, syntaxType, arrayType, optionalType } })
-        // An override replaces these per operation or schema, so its values are checked too.
-        for (const [index, entry] of override.entries()) {
-          assertEnumLikeOptions({ prefix: `override[${index}].options.`, options: entry.options })
-        }
+    setResolver(userResolver ? Resolver.merge(resolverTs, userResolver) : resolverTs)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
+    addGenerator(typeGenerator)
 
-        setOptions<PluginTs>({
-          output,
-          exclude,
-          include,
-          override,
-          optionalType,
-          group: groupConfig,
-          arrayType,
-          enum: resolvedEnum,
-          syntaxType,
-          printer,
-        })
-        setResolver(userResolver ? Resolver.merge(resolverTs, userResolver) : resolverTs)
-        if (userMacros?.length) {
-          setMacros(userMacros)
-        }
-        addGenerator(typeGenerator)
-      },
-    },
-  }
+    return {
+      output,
+      exclude,
+      include,
+      override,
+      optionalType,
+      group: createGroupConfig(group),
+      arrayType,
+      enum: resolvedEnum,
+      syntaxType,
+      printer,
+    }
+  },
 })
 
 export default pluginTs

@@ -1,7 +1,8 @@
 import path from 'node:path'
 import { createSdkGenerator, defaultMacros, resolverClient } from '@internals/client'
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, injectFile, Resolver, setMacros, setOptions, setResolver, useConfig } from 'kubb/kit'
+import { addGenerator, definePlugin, injectFile, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { clientGenerator } from './generators/clientGenerator.tsx'
@@ -36,78 +37,72 @@ export const pluginAxiosName = 'plugin-axios' satisfies PluginAxios['name']
  * })
  * ```
  */
-export const pluginAxios = definePlugin<PluginAxios>((options) => {
-  const {
-    output = { path: 'clients', barrel: { type: 'named' } },
-    exclude = [],
-    include,
-    override = [],
-    baseURL,
-    throwOnErrorDefault = true,
-    validator = false,
-    returnType = 'full',
-    group,
-    sdk,
-    resolver: userResolver,
-  } = options
+export const pluginAxios = definePlugin<PluginAxios>({
+  meta: { name: pluginAxiosName, version, compatibility: { kubb: '>=5.7.0' } },
+  // Both are ordering hints, skipped when the plugin is not in the pipeline. `plugin-ts` supplies
+  // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
+  dependencies: { [pluginTsName]: { optional: true }, [pluginZodName]: { optional: true } },
+  setup(options) {
+    const config = useConfig()
+    const {
+      output = { path: 'clients', barrel: { type: 'named' } },
+      exclude = [],
+      include,
+      override = [],
+      baseURL,
+      throwOnErrorDefault = true,
+      validator = false,
+      returnType = 'full',
+      group,
+      sdk,
+      resolver: userResolver,
+    } = options
 
-  const resolved: ResolvedOptions = {
-    output,
-    exclude,
-    include,
-    override,
-    group: createGroupConfig(group),
-    baseURL,
-    throwOnErrorDefault,
-    validator,
-    returnType,
-    sdk: sdk ? { mode: sdk.mode ?? 'tag', name: sdk.name } : undefined,
-    resolver: userResolver ? Resolver.merge<ResolverClient>(resolverClient, userResolver) : resolverClient,
-  }
+    const resolved: ResolvedOptions = {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      baseURL,
+      throwOnErrorDefault,
+      validator,
+      returnType,
+      sdk: sdk ? { mode: sdk.mode ?? 'tag', name: sdk.name } : undefined,
+      resolver: userResolver ? Resolver.merge<ResolverClient>(resolverClient, userResolver) : resolverClient,
+    }
 
-  // `sdk` swaps the per-operation functions for the class-based SDK; left unset, the standalone
-  // functions (which query plugins consume) stay.
-  const selectedGenerators = resolved.sdk ? [createSdkGenerator<PluginAxios>()] : [clientGenerator]
+    setResolver(resolved.resolver)
+    setMacros([...defaultMacros, ...(options.macros ?? [])])
 
-  return {
-    name: pluginAxiosName,
-    options,
-    // Both are ordering hints, dropped when the plugin is not in the pipeline. `plugin-ts` supplies
-    // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
-    dependencies: [pluginTsName, pluginZodName],
-    hooks: {
-      'kubb:plugin:setup'() {
-        const config = useConfig()
-        setOptions<PluginAxios>(resolved)
-        setResolver(resolved.resolver)
-        setMacros([...defaultMacros, ...(options.macros ?? [])])
+    // `sdk` swaps the per-operation functions for the class-based SDK; left unset, the standalone
+    // functions (which query plugins consume) stay.
+    addGenerator(resolved.sdk ? createSdkGenerator<PluginAxios>() : clientGenerator)
 
-        addGenerator(...selectedGenerators)
+    const root = path.resolve(config.root, config.output.path)
+    const baseURLExpression = baseURL ? (baseURL.includes('${') ? `\`${baseURL.replaceAll('`', '\\`')}\`` : JSON.stringify(baseURL)) : undefined
 
-        const root = path.resolve(config.root, config.output.path)
-        const baseURLExpression = baseURL ? (baseURL.includes('${') ? `\`${baseURL.replaceAll('`', '\\`')}\`` : JSON.stringify(baseURL)) : undefined
+    injectFile({
+      baseName: 'serializers.ts',
+      path: path.resolve(root, '.kubb/serializers.ts'),
+      copy: axiosSerializersTemplatePath,
+    })
 
-        injectFile({
-          baseName: 'serializers.ts',
-          path: path.resolve(root, '.kubb/serializers.ts'),
-          copy: axiosSerializersTemplatePath,
-        })
+    injectFile({
+      baseName: 'client.ts',
+      path: path.resolve(root, '.kubb/client.ts'),
+      copy: axiosClientTemplatePath,
+      footer: baseURLExpression ? `client.setConfig({ baseURL: ${baseURLExpression} })` : undefined,
+    })
 
-        injectFile({
-          baseName: 'client.ts',
-          path: path.resolve(root, '.kubb/client.ts'),
-          copy: axiosClientTemplatePath,
-          footer: baseURLExpression ? `client.setConfig({ baseURL: ${baseURLExpression} })` : undefined,
-        })
+    injectFile({
+      baseName: 'standardSchema.ts',
+      path: path.resolve(root, '.kubb/standardSchema.ts'),
+      copy: standardSchemaTemplatePath,
+    })
 
-        injectFile({
-          baseName: 'standardSchema.ts',
-          path: path.resolve(root, '.kubb/standardSchema.ts'),
-          copy: standardSchemaTemplatePath,
-        })
-      },
-    },
-  }
+    return resolved
+  },
 })
 
 export default pluginAxios

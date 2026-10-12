@@ -1,7 +1,8 @@
 import { createGroupConfig } from '@internals/shared'
 
 import { resolveContractClient } from '@internals/client'
-import { addGenerator, definePlugin, requirePlugin, Resolver, setMacros, setOptions, setResolver, useConfig } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { mcpGenerator } from './generators/mcpGenerator.tsx'
@@ -42,48 +43,39 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  * })
  * ```
  */
-export const pluginMcp = definePlugin<PluginMcp>((options) => {
-  const {
-    output = { path: 'mcp', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    client,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginMcp = definePlugin<PluginMcp>({
+  meta: { name: pluginMcpName, version, compatibility: { kubb: '>=5.7.0' } },
+  dependencies: { [pluginTsName]: {}, [pluginZodName]: {} },
+  setup(options) {
+    const {
+      output = { path: 'mcp', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      client,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
 
-  return {
-    name: pluginMcpName,
-    options,
-    dependencies: [pluginTsName, pluginZodName],
-    hooks: {
-      'kubb:plugin:setup'() {
-        requirePlugin(pluginTsName)
-        requirePlugin(pluginZodName)
+    setResolver(resolver)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
+    addGenerator(mcpGenerator, serverGenerator)
 
-        const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
-
-        setOptions<PluginMcp>({
-          output,
-          exclude,
-          include,
-          override,
-          group: groupConfig,
-          client: resolveContractClient({ client, plugins: useConfig().plugins }),
-          resolver,
-        })
-        setResolver(resolver)
-        if (userMacros?.length) {
-          setMacros(userMacros)
-        }
-        addGenerator(mcpGenerator, serverGenerator)
-      },
-    },
-  }
+    return {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      client: resolveContractClient({ client, plugins: useConfig().plugins }),
+      resolver,
+    }
+  },
 })
 
 export default pluginMcp

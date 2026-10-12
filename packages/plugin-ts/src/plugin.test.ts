@@ -8,15 +8,14 @@ function setup(options: Options) {
   const plugin = pluginTs(options)
   const ctx = createMockedSetupContext<PluginTs>()
 
-  return { run: () => kubbContext.run(ctx, () => plugin.hooks?.['kubb:plugin:setup']?.(ctx)), ctx }
+  return { run: () => kubbContext.run(ctx, () => plugin.setup?.(plugin.options ?? {}, ctx)), ctx }
 }
 
 describe('pluginTs setup', () => {
-  test('accepts the default options', () => {
+  test('accepts the default options and returns them resolved', () => {
     const { run, ctx } = setup({})
 
-    run()
-
+    expect(run()).toMatchObject({ output: { path: 'types' }, enum: { type: 'asConst' }, syntaxType: 'type', arrayType: 'array', optionalType: 'questionToken' })
     expect(ctx.addGenerator).toHaveBeenCalledTimes(1)
   })
 
@@ -35,14 +34,14 @@ describe('pluginTs setup', () => {
     const { run, ctx } = setup(options as unknown as Options)
 
     expect(run).toThrow(`Plugin "plugin-ts" option \`${option}\` is "bogus", but it must be one of ${allowed}.`)
-    expect(ctx.setOptions).not.toHaveBeenCalled()
+    expect(ctx.addGenerator).not.toHaveBeenCalled()
   })
 
   test('throws on an invalid value inside an override', () => {
     const { run, ctx } = setup({ override: [{ type: 'operationId', pattern: 'listPets', options: { syntaxType: 'bogus' } }] } as unknown as Options)
 
     expect(run).toThrow('Plugin "plugin-ts" option `override[0].options.syntaxType` is "bogus", but it must be one of "type", "interface".')
-    expect(ctx.setOptions).not.toHaveBeenCalled()
+    expect(ctx.addGenerator).not.toHaveBeenCalled()
   })
 
   test('accepts an override that leaves the enum-like options out', () => {

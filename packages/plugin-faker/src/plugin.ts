@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, requirePlugin, Resolver, setMacros, setOptions, setResolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { fakerGenerator } from './generators/fakerGenerator.tsx'
 import { resolverFaker } from './resolvers/resolverFaker.ts'
@@ -35,54 +36,46 @@ export const pluginFakerName = 'plugin-faker' satisfies PluginFaker['name']
  * })
  * ```
  */
-export const pluginFaker = definePlugin<PluginFaker>((options) => {
-  const {
-    output = { path: 'mocks', barrel: { type: 'named' } },
-    seed,
-    locale = 'en',
-    group,
-    exclude = [],
-    include,
-    override = [],
-    typeMode = 'inferred',
-    dateParser = 'faker',
-    regexGenerator = 'faker',
-    printer,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginFaker = definePlugin<PluginFaker>({
+  meta: { name: pluginFakerName, version, compatibility: { kubb: '>=5.7.0' } },
+  dependencies: { [pluginTsName]: {} },
+  setup(options) {
+    const {
+      output = { path: 'mocks', barrel: { type: 'named' } },
+      seed,
+      locale = 'en',
+      group,
+      exclude = [],
+      include,
+      override = [],
+      typeMode = 'inferred',
+      dateParser = 'faker',
+      regexGenerator = 'faker',
+      printer,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    setResolver(userResolver ? Resolver.merge(resolverFaker, userResolver) : resolverFaker)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
+    addGenerator(fakerGenerator)
 
-  return {
-    name: pluginFakerName,
-    options,
-    dependencies: [pluginTsName],
-    hooks: {
-      'kubb:plugin:setup'() {
-        requirePlugin(pluginTsName)
-
-        setOptions<PluginFaker>({
-          output,
-          seed,
-          locale,
-          exclude,
-          include,
-          override,
-          typeMode,
-          group: groupConfig,
-          dateParser,
-          regexGenerator,
-          printer,
-        })
-        setResolver(userResolver ? Resolver.merge(resolverFaker, userResolver) : resolverFaker)
-        if (userMacros?.length) {
-          setMacros(userMacros)
-        }
-        addGenerator(fakerGenerator)
-      },
-    },
-  }
+    return {
+      output,
+      seed,
+      locale,
+      exclude,
+      include,
+      override,
+      typeMode,
+      group: createGroupConfig(group),
+      dateParser,
+      regexGenerator,
+      printer,
+    }
+  },
 })
 
 export default pluginFaker

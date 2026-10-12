@@ -1,36 +1,35 @@
-import { kubbContext } from 'kubb/kit'
+import { createKubb } from 'kubb'
+import { definePlugin, kubbContext } from 'kubb/kit'
 import { createMockedSetupContext } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { pluginMcp } from './plugin.ts'
 import type { PluginMcp } from './types.ts'
 
-function setup(pluginNames: Array<string>) {
-  const plugin = pluginMcp()
-  const ctx = createMockedSetupContext<PluginMcp>({ plugins: pluginNames })
+function setupKubb(pluginNames: Array<string>) {
+  const plugins = pluginNames.map((name) => definePlugin({ meta: { name } })())
 
-  return { run: () => kubbContext.run(ctx, () => plugin.hooks?.['kubb:plugin:setup']?.(ctx)), ctx }
+  return createKubb({ input: './petStore.yaml', output: { path: './gen' }, plugins: [...plugins, pluginMcp()] }).setup()
 }
 
 describe('pluginMcp setup', () => {
-  test('registers the generators when plugin-zod is registered', () => {
-    const { run, ctx } = setup(['plugin-ts', 'plugin-zod', 'plugin-fetch', 'plugin-mcp'])
+  test('registers the generators', () => {
+    const plugin = pluginMcp()
+    const ctx = createMockedSetupContext<PluginMcp>({ plugins: ['plugin-ts', 'plugin-zod', 'plugin-fetch', 'plugin-mcp'] })
 
-    run()
+    kubbContext.run(ctx, () => plugin.setup?.(plugin.options ?? {}, ctx))
 
     expect(ctx.addGenerator).toHaveBeenCalledTimes(1)
   })
 
-  test('throws when plugin-zod is not registered', () => {
-    const { run, ctx } = setup(['plugin-ts', 'plugin-fetch', 'plugin-mcp'])
-
-    expect(run).toThrow('Plugin "plugin-zod" is required but not found.')
-    expect(ctx.addGenerator).not.toHaveBeenCalled()
+  test('passes when plugin-ts and plugin-zod are registered', async () => {
+    await expect(setupKubb(['plugin-ts', 'plugin-zod', 'plugin-fetch'])).resolves.toBeUndefined()
   })
 
-  test('throws when plugin-ts is not registered', () => {
-    const { run, ctx } = setup(['plugin-zod', 'plugin-fetch', 'plugin-mcp'])
+  test.each(['plugin-ts', 'plugin-zod'])('fails with KUBB_MISSING_DEPENDENCY when %s is not registered', async (missing) => {
+    const registered = ['plugin-ts', 'plugin-zod', 'plugin-fetch'].filter((name) => name !== missing)
 
-    expect(run).toThrow('Plugin "plugin-ts" is required but not found.')
-    expect(ctx.addGenerator).not.toHaveBeenCalled()
+    await expect(setupKubb(registered)).rejects.toMatchObject({
+      diagnostic: { code: 'KUBB_MISSING_DEPENDENCY', message: `Plugin "${missing}" is required by "plugin-mcp" but not found.` },
+    })
   })
 })

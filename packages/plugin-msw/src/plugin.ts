@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, requirePlugin, Resolver, setMacros, setOptions, setResolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { version } from '../package.json'
 import { pluginFakerName } from '@kubb/plugin-faker'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { handlersGenerator, mswGenerator } from './generators'
@@ -38,56 +39,47 @@ export const pluginMswName = 'plugin-msw' satisfies PluginMsw['name']
  * })
  * ```
  */
-export const pluginMsw = definePlugin<PluginMsw>((options) => {
-  const {
-    output = { path: 'handlers', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    handlers = false,
-    parser = 'data',
-    baseURL,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginMsw = definePlugin<PluginMsw>({
+  meta: { name: pluginMswName, version, compatibility: { kubb: '>=5.7.0' } },
+  dependencies: (options) => ({ [pluginTsName]: {}, ...(options.parser === 'faker' ? { [pluginFakerName]: {} } : {}) }),
+  setup(options) {
+    const {
+      output = { path: 'handlers', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      handlers = false,
+      parser = 'data',
+      baseURL,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    const resolver = userResolver ? Resolver.merge<ResolverMsw>(resolverMsw, userResolver) : resolverMsw
 
-  return {
-    name: pluginMswName,
-    options,
-    dependencies: [pluginTsName, parser === 'faker' ? pluginFakerName : null].filter((dependency): dependency is string => Boolean(dependency)),
-    hooks: {
-      'kubb:plugin:setup'() {
-        requirePlugin(pluginTsName)
-        if (parser === 'faker') requirePlugin(pluginFakerName)
+    setResolver(resolver)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
 
-        const resolver = userResolver ? Resolver.merge<ResolverMsw>(resolverMsw, userResolver) : resolverMsw
+    addGenerator(mswGenerator)
+    if (handlers) {
+      addGenerator(handlersGenerator)
+    }
 
-        setOptions<PluginMsw>({
-          output,
-          parser,
-          baseURL,
-          group: groupConfig,
-          exclude,
-          include,
-          override,
-          handlers,
-          resolver,
-        })
-        setResolver(resolver)
-        if (userMacros?.length) {
-          setMacros(userMacros)
-        }
-
-        addGenerator(mswGenerator)
-        if (handlers) {
-          addGenerator(handlersGenerator)
-        }
-      },
-    },
-  }
+    return {
+      output,
+      parser,
+      baseURL,
+      group: createGroupConfig(group),
+      exclude,
+      include,
+      override,
+      handlers,
+      resolver,
+    }
+  },
 })
 
 export default pluginMsw

@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, requirePlugin, Resolver, setMacros, setOptions, setResolver, useConfig } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { version } from '../package.json'
 import { resolveContractClient } from '@internals/client'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { mutationKeyTransformer, queryKeyTransformer, resolveInfiniteConfig, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
@@ -46,74 +47,64 @@ export const pluginReactQueryName = 'plugin-react-query' satisfies PluginReactQu
  * })
  * ```
  */
-export const pluginReactQuery = definePlugin<PluginReactQuery>((options) => {
-  const {
-    output = { path: 'hooks', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    suspense = false,
-    infinite = false,
-    mutation = {},
-    query = {},
-    mutationKey = mutationKeyTransformer,
-    queryKey = queryKeyTransformer,
-    customOptions,
-    hooks = false,
-    client,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginReactQuery = definePlugin<PluginReactQuery>({
+  meta: { name: pluginReactQueryName, version, compatibility: { kubb: '>=5.7.0' } },
+  dependencies: { [pluginTsName]: {} },
+  setup(options) {
+    const {
+      output = { path: 'hooks', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      suspense = false,
+      infinite = false,
+      mutation = {},
+      query = {},
+      mutationKey = mutationKeyTransformer,
+      queryKey = queryKeyTransformer,
+      customOptions,
+      hooks = false,
+      client,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const selectedGenerators = [
-    queryGenerator,
-    suspenseQueryGenerator,
-    infiniteQueryGenerator,
-    suspenseInfiniteQueryGenerator,
-    mutationGenerator,
-    hookOptionsGenerator,
-    customHookOptionsFileGenerator,
-  ]
+    const resolver = userResolver ? Resolver.merge<ResolverReactQuery>(resolverReactQuery, userResolver) : resolverReactQuery
 
-  const groupConfig = createGroupConfig(group)
+    setResolver(resolver)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
 
-  return {
-    name: pluginReactQueryName,
-    options,
-    dependencies: [pluginTsName],
-    hooks: {
-      'kubb:plugin:setup'() {
-        requirePlugin(pluginTsName)
+    addGenerator(
+      queryGenerator,
+      suspenseQueryGenerator,
+      infiniteQueryGenerator,
+      suspenseInfiniteQueryGenerator,
+      mutationGenerator,
+      hookOptionsGenerator,
+      customHookOptionsFileGenerator,
+    )
 
-        const resolver = userResolver ? Resolver.merge<ResolverReactQuery>(resolverReactQuery, userResolver) : resolverReactQuery
-
-        setOptions<PluginReactQuery>({
-          output,
-          client: resolveContractClient({ client, plugins: useConfig().plugins }),
-          queryKey,
-          query: resolveQueryConfig(query, { importPath: '@tanstack/react-query' }),
-          mutationKey,
-          mutation: resolveMutationConfig(mutation, { importPath: '@tanstack/react-query' }),
-          infinite: resolveInfiniteConfig(infinite),
-          suspense,
-          customOptions: customOptions ? { name: 'useCustomHookOptions', ...customOptions } : null,
-          hooks,
-          group: groupConfig,
-          exclude,
-          include,
-          override,
-          resolver,
-        })
-        setResolver(resolver)
-        if (userMacros?.length) {
-          setMacros(userMacros)
-        }
-
-        addGenerator(...selectedGenerators)
-      },
-    },
-  }
+    return {
+      output,
+      client: resolveContractClient({ client, plugins: useConfig().plugins }),
+      queryKey,
+      query: resolveQueryConfig(query, { importPath: '@tanstack/react-query' }),
+      mutationKey,
+      mutation: resolveMutationConfig(mutation, { importPath: '@tanstack/react-query' }),
+      infinite: resolveInfiniteConfig(infinite),
+      suspense,
+      customOptions: customOptions ? { name: 'useCustomHookOptions', ...customOptions } : null,
+      hooks,
+      group: createGroupConfig(group),
+      exclude,
+      include,
+      override,
+      resolver,
+    }
+  },
 })
 
 export default pluginReactQuery

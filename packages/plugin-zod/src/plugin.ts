@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setOptions, setResolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { version } from '../package.json'
 import { zodGenerator } from './generators/zodGenerator.tsx'
 import { resolverZod } from './resolvers/resolverZod.ts'
 import type { PluginZod } from './types.ts'
@@ -36,57 +37,51 @@ export const pluginZodName = 'plugin-zod' satisfies PluginZod['name']
  * })
  * ```
  */
-export const pluginZod = definePlugin<PluginZod>((options) => {
-  const {
-    output = { path: 'zod', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    compile = false,
-    mini = false,
-    guidType = 'uuid',
-    regexType = 'literal',
-    importPath = mini ? 'zod/mini' : 'zod',
-    coercion = false,
-    inferred = false,
-    typeGuards = false,
-    printer,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginZod = definePlugin<PluginZod>({
+  meta: { name: pluginZodName, version, compatibility: { kubb: '>=5.7.0' } },
+  setup(options) {
+    const {
+      output = { path: 'zod', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      compile = false,
+      mini = false,
+      guidType = 'uuid',
+      regexType = 'literal',
+      importPath = mini ? 'zod/mini' : 'zod',
+      coercion = false,
+      inferred = false,
+      typeGuards = false,
+      printer,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    setResolver(userResolver ? Resolver.merge(resolverZod, userResolver) : resolverZod)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
+    addGenerator(zodGenerator)
 
-  return {
-    name: pluginZodName,
-    options,
-    hooks: {
-      'kubb:plugin:setup'() {
-        setOptions<PluginZod>({
-          output,
-          exclude,
-          include,
-          override,
-          group: groupConfig,
-          importPath,
-          coercion,
-          inferred,
-          guidType,
-          regexType,
-          compile,
-          mini,
-          typeGuards,
-          printer,
-        })
-        setResolver(userResolver ? Resolver.merge(resolverZod, userResolver) : resolverZod)
-        if (userMacros?.length) {
-          setMacros(userMacros)
-        }
-        addGenerator(zodGenerator)
-      },
-    },
-  }
+    return {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      importPath,
+      coercion,
+      inferred,
+      guidType,
+      regexType,
+      compile,
+      mini,
+      typeGuards,
+      printer,
+    }
+  },
 })
 
 export default pluginZod

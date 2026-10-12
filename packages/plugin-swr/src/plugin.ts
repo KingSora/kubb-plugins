@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, requirePlugin, Resolver, setMacros, setOptions, setResolver, useConfig } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { resolveContractClient } from '@internals/client'
 import { mutationKeyTransformer, queryKeyTransformer, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
@@ -34,58 +35,48 @@ export const pluginSwrName = 'plugin-swr' satisfies PluginSwr['name']
  * })
  * ```
  */
-export const pluginSwr = definePlugin<PluginSwr>((options) => {
-  const {
-    output = { path: 'hooks', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    mutation = {},
-    query = {},
-    mutationKey = mutationKeyTransformer,
-    queryKey = queryKeyTransformer,
-    client,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginSwr = definePlugin<PluginSwr>({
+  meta: { name: pluginSwrName, version, compatibility: { kubb: '>=5.7.0' } },
+  dependencies: { [pluginTsName]: {} },
+  setup(options) {
+    const {
+      output = { path: 'hooks', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      mutation = {},
+      query = {},
+      mutationKey = mutationKeyTransformer,
+      queryKey = queryKeyTransformer,
+      client,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const selectedGenerators = [queryGenerator, mutationGenerator]
+    const resolver = userResolver ? Resolver.merge<ResolverSwr>(resolverSwr, userResolver) : resolverSwr
 
-  const groupConfig = createGroupConfig(group) ?? undefined
+    setResolver(resolver)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
 
-  return {
-    name: pluginSwrName,
-    options,
-    dependencies: [pluginTsName],
-    hooks: {
-      'kubb:plugin:setup'() {
-        requirePlugin(pluginTsName)
+    addGenerator(queryGenerator, mutationGenerator)
 
-        const resolver = userResolver ? Resolver.merge<ResolverSwr>(resolverSwr, userResolver) : resolverSwr
-
-        setOptions<PluginSwr>({
-          output,
-          client: resolveContractClient({ client, plugins: useConfig().plugins }),
-          queryKey,
-          query: resolveQueryConfig(query, { importPath: 'swr' }),
-          mutationKey,
-          mutation: resolveMutationConfig(mutation, { importPath: 'swr/mutation' }),
-          group: groupConfig,
-          exclude,
-          include,
-          override,
-          resolver,
-        })
-        setResolver(resolver)
-        if (userMacros?.length) {
-          setMacros(userMacros)
-        }
-
-        addGenerator(...selectedGenerators)
-      },
-    },
-  }
+    return {
+      output,
+      client: resolveContractClient({ client, plugins: useConfig().plugins }),
+      queryKey,
+      query: resolveQueryConfig(query, { importPath: 'swr' }),
+      mutationKey,
+      mutation: resolveMutationConfig(mutation, { importPath: 'swr/mutation' }),
+      group: createGroupConfig(group) ?? undefined,
+      exclude,
+      include,
+      override,
+      resolver,
+    }
+  },
 })
 
 export default pluginSwr
