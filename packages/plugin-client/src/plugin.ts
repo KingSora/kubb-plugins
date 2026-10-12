@@ -23,7 +23,7 @@ export const pluginClientName = 'plugin-client' satisfies PluginClient['name']
  * ```
  */
 export const pluginClient = definePlugin<PluginClient>({
-  meta: { name: pluginClientName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginClientName, version, compatibility: { kubb: '>=5.8.0' } },
   dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !options.validator } }),
   setup(options) {
     const {

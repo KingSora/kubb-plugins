@@ -38,7 +38,7 @@ export const pluginZodName = 'plugin-zod' satisfies PluginZod['name']
  * ```
  */
 export const pluginZod = definePlugin<PluginZod>({
-  meta: { name: pluginZodName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginZodName, version, compatibility: { kubb: '>=5.8.0' } },
   setup(options) {
     const {
       output = { path: 'zod', barrel: { type: 'named' } },

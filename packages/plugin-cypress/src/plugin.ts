@@ -36,7 +36,7 @@ export const pluginCypressName = 'plugin-cypress' satisfies PluginCypress['name'
  * ```
  */
 export const pluginCypress = definePlugin<PluginCypress>({
-  meta: { name: pluginCypressName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginCypressName, version, compatibility: { kubb: '>=5.8.0' } },
   dependencies: { [pluginTsName]: {} },
   setup(options) {
     const {

@@ -40,7 +40,7 @@ export const pluginMswName = 'plugin-msw' satisfies PluginMsw['name']
  * ```
  */
 export const pluginMsw = definePlugin<PluginMsw>({
-  meta: { name: pluginMswName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginMswName, version, compatibility: { kubb: '>=5.8.0' } },
   dependencies: (options) => ({ [pluginTsName]: {}, ...(options.parser === 'faker' ? { [pluginFakerName]: {} } : {}) }),
   setup(options) {
     const {

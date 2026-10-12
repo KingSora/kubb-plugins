@@ -22,4 +22,4 @@ Required plugins move from `ctx.requirePlugin` to a `dependencies` record. A con
 - mcp needs `@kubb/plugin-zod`, and msw needs `@kubb/plugin-faker` when `parser: 'faker'` is set.
 - client needs `@kubb/plugin-zod` when `validator` is set. axios, fetch, and client only order themselves after plugin-ts and plugin-zod.
 
-Every plugin now requires Kubb 5.7.0 or newer, because the object form of `definePlugin` ships in that release. `meta.compatibility.kubb` is `>=5.7.0`, and the `kubb` and `@kubb/*` peer ranges move to `^5.7.0`.
+Every plugin now requires Kubb 5.8.0 or newer. The object form of `definePlugin` ships in 5.7.0, and 5.8.0 makes the plugin context work in CommonJS configs. `meta.compatibility.kubb` is `>=5.8.0`, and the `kubb` and `@kubb/*` peer ranges move to `^5.8.0`.

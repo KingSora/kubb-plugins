@@ -48,7 +48,7 @@ export const pluginReactQueryName = 'plugin-react-query' satisfies PluginReactQu
  * ```
  */
 export const pluginReactQuery = definePlugin<PluginReactQuery>({
-  meta: { name: pluginReactQueryName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginReactQueryName, version, compatibility: { kubb: '>=5.8.0' } },
   dependencies: { [pluginTsName]: {} },
   setup(options) {
     const {

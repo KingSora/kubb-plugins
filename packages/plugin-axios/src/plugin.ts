@@ -38,7 +38,7 @@ export const pluginAxiosName = 'plugin-axios' satisfies PluginAxios['name']
  * ```
  */
 export const pluginAxios = definePlugin<PluginAxios>({
-  meta: { name: pluginAxiosName, version, compatibility: { kubb: '>=5.7.0' } },
+  meta: { name: pluginAxiosName, version, compatibility: { kubb: '>=5.8.0' } },
   // Both are ordering hints, skipped when the plugin is not in the pipeline. `plugin-ts` supplies
   // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
   dependencies: { [pluginTsName]: { optional: true }, [pluginZodName]: { optional: true } },
