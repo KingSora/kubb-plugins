@@ -1,7 +1,7 @@
 import { createGroupConfig } from '@internals/shared'
 
 import { resolveContractClient } from '@internals/client'
-import { addGenerator, definePlugin, Resolver, setMacros, setResolver, usePlugin } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setOptions, setResolver, useConfig, usePlugin } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { mcpGenerator } from './generators/mcpGenerator.tsx'
@@ -61,19 +61,19 @@ export const pluginMcp = definePlugin<PluginMcp>((options) => {
     options,
     dependencies: [pluginTsName, pluginZodName],
     hooks: {
-      'kubb:plugin:setup'(ctx) {
+      'kubb:plugin:setup'() {
         usePlugin(pluginTsName)
         usePlugin(pluginZodName)
 
         const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
 
-        ctx.setOptions({
+        setOptions<PluginMcp>({
           output,
           exclude,
           include,
           override,
           group: groupConfig,
-          client: resolveContractClient({ client, plugins: ctx.config.plugins }),
+          client: resolveContractClient({ client, plugins: useConfig().plugins }),
           resolver,
         })
         setResolver(resolver)

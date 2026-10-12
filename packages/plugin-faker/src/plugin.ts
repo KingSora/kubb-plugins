@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setResolver, usePlugin } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setOptions, setResolver, usePlugin } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { fakerGenerator } from './generators/fakerGenerator.tsx'
 import { resolverFaker } from './resolvers/resolverFaker.ts'
@@ -59,10 +59,10 @@ export const pluginFaker = definePlugin<PluginFaker>((options) => {
     options,
     dependencies: [pluginTsName],
     hooks: {
-      'kubb:plugin:setup'(ctx) {
+      'kubb:plugin:setup'() {
         usePlugin(pluginTsName)
 
-        ctx.setOptions({
+        setOptions<PluginFaker>({
           output,
           seed,
           locale,

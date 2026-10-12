@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, assertPluginOption, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { addGenerator, assertPluginOption, definePlugin, Resolver, setMacros, setOptions, setResolver } from 'kubb/kit'
 import { typeGenerator } from './generators/typeGenerator.tsx'
 import { resolverTs } from './resolvers/resolverTs.ts'
 import type { PluginTs, ResolvedOptions } from './types.ts'
@@ -89,14 +89,14 @@ export const pluginTs = definePlugin<PluginTs>((options) => {
     name: pluginTsName,
     options,
     hooks: {
-      'kubb:plugin:setup'(ctx) {
+      'kubb:plugin:setup'() {
         assertEnumLikeOptions({ prefix: '', options: { enum: resolvedEnum, syntaxType, arrayType, optionalType } })
         // An override replaces these per operation or schema, so its values are checked too.
         for (const [index, entry] of override.entries()) {
           assertEnumLikeOptions({ prefix: `override[${index}].options.`, options: entry.options })
         }
 
-        ctx.setOptions({
+        setOptions<PluginTs>({
           output,
           exclude,
           include,

@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { createSdkGenerator, defaultMacros, resolverClient } from '@internals/client'
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, injectFile, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { addGenerator, definePlugin, injectFile, Resolver, setMacros, setOptions, setResolver, useConfig } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { clientGenerator } from './generators/clientGenerator.tsx'
@@ -76,14 +76,15 @@ export const pluginFetch = definePlugin<PluginFetch>((options) => {
     // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
     dependencies: [pluginTsName, pluginZodName],
     hooks: {
-      'kubb:plugin:setup'(ctx) {
-        ctx.setOptions(resolved)
+      'kubb:plugin:setup'() {
+        const config = useConfig()
+        setOptions<PluginFetch>(resolved)
         setResolver(resolved.resolver)
         setMacros([...defaultMacros, ...(options.macros ?? [])])
 
         addGenerator(...selectedGenerators)
 
-        const root = path.resolve(ctx.config.root, ctx.config.output.path)
+        const root = path.resolve(config.root, config.output.path)
         const baseURLExpression = baseURL ? (baseURL.includes('${') ? `\`${baseURL.replaceAll('`', '\\`')}\`` : JSON.stringify(baseURL)) : undefined
 
         injectFile({

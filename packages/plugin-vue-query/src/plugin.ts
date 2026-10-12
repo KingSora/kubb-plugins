@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setResolver, usePlugin } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setOptions, setResolver, useConfig, usePlugin } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { mutationKeyTransformer, queryKeyTransformer, resolveInfiniteConfig, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
 import { resolveContractClient } from '@internals/client'
@@ -64,14 +64,14 @@ export const pluginVueQuery = definePlugin<PluginVueQuery>((options) => {
     options,
     dependencies: [pluginTsName],
     hooks: {
-      'kubb:plugin:setup'(ctx) {
+      'kubb:plugin:setup'() {
         usePlugin(pluginTsName)
 
         const resolver = userResolver ? Resolver.merge<ResolverVueQuery>(resolverVueQuery, userResolver) : resolverVueQuery
 
-        ctx.setOptions({
+        setOptions<PluginVueQuery>({
           output,
-          client: resolveContractClient({ client, plugins: ctx.config.plugins }),
+          client: resolveContractClient({ client, plugins: useConfig().plugins }),
           queryKey,
           query: resolveQueryConfig(query, { importPath: '@tanstack/vue-query' }),
           mutationKey,

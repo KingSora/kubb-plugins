@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setResolver, usePlugin } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setOptions, setResolver, useConfig, usePlugin } from 'kubb/kit'
 import { resolveContractClient } from '@internals/client'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { mutationKeyTransformer, queryKeyTransformer, resolveInfiniteConfig, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
@@ -83,14 +83,14 @@ export const pluginReactQuery = definePlugin<PluginReactQuery>((options) => {
     options,
     dependencies: [pluginTsName],
     hooks: {
-      'kubb:plugin:setup'(ctx) {
+      'kubb:plugin:setup'() {
         usePlugin(pluginTsName)
 
         const resolver = userResolver ? Resolver.merge<ResolverReactQuery>(resolverReactQuery, userResolver) : resolverReactQuery
 
-        ctx.setOptions({
+        setOptions<PluginReactQuery>({
           output,
-          client: resolveContractClient({ client, plugins: ctx.config.plugins }),
+          client: resolveContractClient({ client, plugins: useConfig().plugins }),
           queryKey,
           query: resolveQueryConfig(query, { importPath: '@tanstack/react-query' }),
           mutationKey,

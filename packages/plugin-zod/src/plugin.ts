@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { addGenerator, definePlugin, Resolver, setMacros, setOptions, setResolver } from 'kubb/kit'
 import { zodGenerator } from './generators/zodGenerator.tsx'
 import { resolverZod } from './resolvers/resolverZod.ts'
 import type { PluginZod } from './types.ts'
@@ -62,8 +62,8 @@ export const pluginZod = definePlugin<PluginZod>((options) => {
     name: pluginZodName,
     options,
     hooks: {
-      'kubb:plugin:setup'(ctx) {
-        ctx.setOptions({
+      'kubb:plugin:setup'() {
+        setOptions<PluginZod>({
           output,
           exclude,
           include,

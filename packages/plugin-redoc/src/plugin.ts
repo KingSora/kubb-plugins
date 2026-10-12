@@ -2,7 +2,7 @@ import path from 'node:path'
 import type { AdapterOas } from '@kubb/adapter-oas'
 import { adapterOasName } from '@kubb/adapter-oas'
 
-import { type Adapter, ast, definePlugin, injectFile } from 'kubb/kit'
+import { type Adapter, ast, definePlugin, injectFile, setOptions, useConfig } from 'kubb/kit'
 import { version } from '../package.json'
 import { getPageHTML } from './redoc.tsx'
 import type { PluginRedoc } from './types.ts'
@@ -42,15 +42,16 @@ export const pluginRedoc = definePlugin<PluginRedoc>((options) => {
     version,
     options,
     hooks: {
-      async 'kubb:plugin:setup'(ctx) {
-        ctx.setOptions({
+      async 'kubb:plugin:setup'() {
+        const config = useConfig()
+        setOptions<PluginRedoc>({
           output,
           name,
           exclude: [],
           override: [],
         })
 
-        const adapter = ctx.config.adapter
+        const adapter = config.adapter
 
         if (adapter?.name !== adapterOasName) {
           throw new Error(
@@ -66,7 +67,7 @@ export const pluginRedoc = definePlugin<PluginRedoc>((options) => {
           )
         }
 
-        const root = path.resolve(ctx.config.root, ctx.config.output.path)
+        const root = path.resolve(config.root, config.output.path)
         const pageHTML = await getPageHTML(document)
 
         injectFile({
