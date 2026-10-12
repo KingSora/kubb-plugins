@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
 import { definePlugin, Resolver } from 'kubb/kit'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { cypressGenerator } from './generators/cypressGenerator.tsx'
 import { resolverCypress } from './resolvers/resolverCypress.ts'
@@ -34,47 +35,39 @@ export const pluginCypressName = 'plugin-cypress' satisfies PluginCypress['name'
  * })
  * ```
  */
-export const pluginCypress = definePlugin<PluginCypress>((options) => {
-  const {
-    output = { path: 'cypress', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    baseURL,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginCypress = definePlugin<PluginCypress>({
+  meta: { name: pluginCypressName, version, compatibility: { kubb: '>=5.7.0' } },
+  dependencies: { [pluginTsName]: {} },
+  setup(options, kubb) {
+    const {
+      output = { path: 'cypress', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      baseURL,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    const resolver = userResolver ? Resolver.merge<ResolverCypress>(resolverCypress, userResolver) : resolverCypress
 
-  return {
-    name: pluginCypressName,
-    options,
-    dependencies: [pluginTsName],
-    hooks: {
-      'kubb:plugin:setup'(ctx) {
-        ctx.requirePlugin(pluginTsName)
+    kubb.setResolver(resolver)
+    if (userMacros?.length) {
+      kubb.setMacros(userMacros)
+    }
+    kubb.addGenerator(cypressGenerator)
 
-        const resolver = userResolver ? Resolver.merge<ResolverCypress>(resolverCypress, userResolver) : resolverCypress
-
-        ctx.setOptions({
-          output,
-          exclude,
-          include,
-          override,
-          group: groupConfig,
-          baseURL,
-          resolver,
-        })
-        ctx.setResolver(resolver)
-        if (userMacros?.length) {
-          ctx.setMacros(userMacros)
-        }
-        ctx.addGenerator(cypressGenerator)
-      },
-    },
-  }
+    return {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      baseURL,
+      resolver,
+    }
+  },
 })
 
 export default pluginCypress

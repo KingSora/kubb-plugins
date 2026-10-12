@@ -2,6 +2,7 @@ import path from 'node:path'
 import { createSdkGenerator, defaultMacros, resolverClient } from '@internals/client'
 import { createGroupConfig } from '@internals/shared'
 import { definePlugin, Resolver } from 'kubb/kit'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { clientGenerator } from './generators/clientGenerator.tsx'
@@ -36,77 +37,71 @@ export const pluginFetchName = 'plugin-fetch' satisfies PluginFetch['name']
  * })
  * ```
  */
-export const pluginFetch = definePlugin<PluginFetch>((options) => {
-  const {
-    output = { path: 'clients', barrel: { type: 'named' } },
-    exclude = [],
-    include,
-    override = [],
-    baseURL,
-    throwOnErrorDefault = true,
-    validator = false,
-    returnType = 'full',
-    group,
-    sdk,
-    resolver: userResolver,
-  } = options
+export const pluginFetch = definePlugin<PluginFetch>({
+  meta: { name: pluginFetchName, version, compatibility: { kubb: '>=5.7.0' } },
+  // Both are ordering hints, skipped when the plugin is not in the pipeline. `plugin-ts` supplies
+  // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
+  dependencies: { [pluginTsName]: { optional: true }, [pluginZodName]: { optional: true } },
+  setup(options, kubb) {
+    const {
+      output = { path: 'clients', barrel: { type: 'named' } },
+      exclude = [],
+      include,
+      override = [],
+      baseURL,
+      throwOnErrorDefault = true,
+      validator = false,
+      returnType = 'full',
+      group,
+      sdk,
+      resolver: userResolver,
+    } = options
 
-  const resolved: ResolvedOptions = {
-    output,
-    exclude,
-    include,
-    override,
-    group: createGroupConfig(group),
-    baseURL,
-    throwOnErrorDefault,
-    validator,
-    returnType,
-    sdk: sdk ? { mode: sdk.mode ?? 'tag', name: sdk.name } : undefined,
-    resolver: userResolver ? Resolver.merge<ResolverClient>(resolverClient, userResolver) : resolverClient,
-  }
+    const resolved: ResolvedOptions = {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      baseURL,
+      throwOnErrorDefault,
+      validator,
+      returnType,
+      sdk: sdk ? { mode: sdk.mode ?? 'tag', name: sdk.name } : undefined,
+      resolver: userResolver ? Resolver.merge<ResolverClient>(resolverClient, userResolver) : resolverClient,
+    }
 
-  // `sdk` swaps the per-operation functions for the class-based SDK; left unset, the standalone
-  // functions (which query plugins consume) stay.
-  const selectedGenerators = resolved.sdk ? [createSdkGenerator<PluginFetch>()] : [clientGenerator]
+    kubb.setResolver(resolved.resolver)
+    kubb.setMacros([...defaultMacros, ...(options.macros ?? [])])
 
-  return {
-    name: pluginFetchName,
-    options,
-    // Both are ordering hints, dropped when the plugin is not in the pipeline. `plugin-ts` supplies
-    // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
-    dependencies: [pluginTsName, pluginZodName],
-    hooks: {
-      'kubb:plugin:setup'(ctx) {
-        ctx.setOptions(resolved)
-        ctx.setResolver(resolved.resolver)
-        ctx.setMacros([...defaultMacros, ...(options.macros ?? [])])
+    // `sdk` swaps the per-operation functions for the class-based SDK; left unset, the standalone
+    // functions (which query plugins consume) stay.
+    kubb.addGenerator(resolved.sdk ? createSdkGenerator<PluginFetch>() : clientGenerator)
 
-        ctx.addGenerator(...selectedGenerators)
+    const root = path.resolve(kubb.config.root, kubb.config.output.path)
+    const baseURLExpression = baseURL ? (baseURL.includes('${') ? `\`${baseURL.replaceAll('`', '\\`')}\`` : JSON.stringify(baseURL)) : undefined
 
-        const root = path.resolve(ctx.config.root, ctx.config.output.path)
-        const baseURLExpression = baseURL ? (baseURL.includes('${') ? `\`${baseURL.replaceAll('`', '\\`')}\`` : JSON.stringify(baseURL)) : undefined
+    kubb.injectFile({
+      baseName: 'serializers.ts',
+      path: path.resolve(root, '.kubb/serializers.ts'),
+      copy: fetchSerializersTemplatePath,
+    })
 
-        ctx.injectFile({
-          baseName: 'serializers.ts',
-          path: path.resolve(root, '.kubb/serializers.ts'),
-          copy: fetchSerializersTemplatePath,
-        })
+    kubb.injectFile({
+      baseName: 'client.ts',
+      path: path.resolve(root, '.kubb/client.ts'),
+      copy: fetchClientTemplatePath,
+      footer: baseURLExpression ? `client.setConfig({ baseURL: ${baseURLExpression} })` : undefined,
+    })
 
-        ctx.injectFile({
-          baseName: 'client.ts',
-          path: path.resolve(root, '.kubb/client.ts'),
-          copy: fetchClientTemplatePath,
-          footer: baseURLExpression ? `client.setConfig({ baseURL: ${baseURLExpression} })` : undefined,
-        })
+    kubb.injectFile({
+      baseName: 'standardSchema.ts',
+      path: path.resolve(root, '.kubb/standardSchema.ts'),
+      copy: standardSchemaTemplatePath,
+    })
 
-        ctx.injectFile({
-          baseName: 'standardSchema.ts',
-          path: path.resolve(root, '.kubb/standardSchema.ts'),
-          copy: standardSchemaTemplatePath,
-        })
-      },
-    },
-  }
+    return resolved
+  },
 })
 
 export default pluginFetch

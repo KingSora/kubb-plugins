@@ -1,43 +1,46 @@
+import { createKubb } from 'kubb'
+import { definePlugin } from 'kubb/kit'
 import { createMockedSetupContext } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { pluginMsw } from './plugin.ts'
 import type { Options, PluginMsw } from './types.ts'
 
-function setup(options: Options, pluginNames: Array<string>) {
-  const plugin = pluginMsw(options)
-  const ctx = createMockedSetupContext<PluginMsw>({ plugins: pluginNames })
+function setupKubb(options: Options, pluginNames: Array<string>) {
+  const plugins = pluginNames.map((name) => definePlugin({ meta: { name } })())
 
-  return { run: () => plugin.hooks?.['kubb:plugin:setup']?.(ctx), ctx }
+  return createKubb({ input: './petStore.yaml', output: { path: './gen' }, plugins: [...plugins, pluginMsw(options)] }).setup()
 }
 
 describe('pluginMsw setup', () => {
-  test("parser: 'data' does not need plugin-faker", () => {
-    const { run, ctx } = setup({ parser: 'data' }, ['plugin-ts', 'plugin-msw'])
+  test.each([
+    { handlers: false, generators: 1 },
+    { handlers: true, generators: 2 },
+  ])('registers $generators generator(s) when handlers is $handlers', ({ handlers, generators }) => {
+    const plugin = pluginMsw({ handlers })
+    const ctx = createMockedSetupContext<PluginMsw>()
 
-    run()
+    plugin.setup?.(plugin.options ?? {}, ctx)
 
-    expect(ctx.addGenerator).toHaveBeenCalledTimes(1)
+    expect(ctx.addGenerator).toHaveBeenCalledTimes(generators)
   })
 
-  test("parser: 'faker' registers the generator when plugin-faker is registered", () => {
-    const { run, ctx } = setup({ parser: 'faker' }, ['plugin-ts', 'plugin-faker', 'plugin-msw'])
-
-    run()
-
-    expect(ctx.addGenerator).toHaveBeenCalledTimes(1)
+  test("parser: 'data' does not need plugin-faker", async () => {
+    await expect(setupKubb({ parser: 'data' }, ['plugin-ts'])).resolves.toBeUndefined()
   })
 
-  test("parser: 'faker' throws when plugin-faker is not registered", () => {
-    const { run, ctx } = setup({ parser: 'faker' }, ['plugin-ts', 'plugin-msw'])
-
-    expect(run).toThrow('Plugin "plugin-faker" is required but not found.')
-    expect(ctx.addGenerator).not.toHaveBeenCalled()
+  test("parser: 'faker' passes when plugin-faker is registered", async () => {
+    await expect(setupKubb({ parser: 'faker' }, ['plugin-ts', 'plugin-faker'])).resolves.toBeUndefined()
   })
 
-  test('throws when plugin-ts is not registered', () => {
-    const { run, ctx } = setup({ parser: 'data' }, ['plugin-msw'])
+  test("parser: 'faker' fails with KUBB_MISSING_DEPENDENCY when plugin-faker is not registered", async () => {
+    await expect(setupKubb({ parser: 'faker' }, ['plugin-ts'])).rejects.toMatchObject({
+      diagnostic: { code: 'KUBB_MISSING_DEPENDENCY', message: 'Plugin "plugin-faker" is required by "plugin-msw" but not found.' },
+    })
+  })
 
-    expect(run).toThrow('Plugin "plugin-ts" is required but not found.')
-    expect(ctx.addGenerator).not.toHaveBeenCalled()
+  test('fails with KUBB_MISSING_DEPENDENCY when plugin-ts is not registered', async () => {
+    await expect(setupKubb({ parser: 'data' }, [])).rejects.toMatchObject({
+      diagnostic: { code: 'KUBB_MISSING_DEPENDENCY', message: 'Plugin "plugin-ts" is required by "plugin-msw" but not found.' },
+    })
   })
 })

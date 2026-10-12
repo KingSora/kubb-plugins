@@ -32,56 +32,45 @@ export const pluginRedocName = 'plugin-redoc' satisfies PluginRedoc['name']
  * })
  * ```
  */
-export const pluginRedoc = definePlugin<PluginRedoc>((options) => {
-  const { output = { path: 'docs.html' } } = options
-  const extname = path.extname(output.path)
-  const name = extname ? output.path.slice(0, -extname.length) : output.path
+export const pluginRedoc = definePlugin<PluginRedoc>({
+  meta: { name: pluginRedocName, version, compatibility: { kubb: '>=5.7.0' } },
+  async setup(options, kubb) {
+    const { output = { path: 'docs.html' } } = options
+    const extname = path.extname(output.path)
+    const name = extname ? output.path.slice(0, -extname.length) : output.path
 
-  return {
-    name: pluginRedocName,
-    version,
-    options,
-    hooks: {
-      async 'kubb:plugin:setup'(ctx) {
-        ctx.setOptions({
-          output,
-          name,
-          exclude: [],
-          override: [],
-        })
+    const adapter = kubb.config.adapter
 
-        const adapter = ctx.config.adapter
+    if (adapter?.name !== adapterOasName) {
+      throw new Error(
+        `[${pluginRedocName}] plugin-redoc requires the OpenAPI adapter. Make sure you are using adapterOas (e.g. \`adapter: adapterOas()\`) in your Kubb config.`,
+      )
+    }
 
-        if (adapter?.name !== adapterOasName) {
-          throw new Error(
-            `[${pluginRedocName}] plugin-redoc requires the OpenAPI adapter. Make sure you are using adapterOas (e.g. \`adapter: adapterOas()\`) in your Kubb config.`,
-          )
-        }
+    const document = (adapter as Adapter<AdapterOas>).document
 
-        const document = (adapter as Adapter<AdapterOas>).document
+    if (!document) {
+      throw new Error(
+        `[${pluginRedocName}] No OpenAPI document found. The adapterOas did not produce a document — ensure the adapter has run before this plugin.`,
+      )
+    }
 
-        if (!document) {
-          throw new Error(
-            `[${pluginRedocName}] No OpenAPI document found. The adapterOas did not produce a document — ensure the adapter has run before this plugin.`,
-          )
-        }
+    const root = path.resolve(kubb.config.root, kubb.config.output.path)
+    const pageHTML = await getPageHTML(document)
 
-        const root = path.resolve(ctx.config.root, ctx.config.output.path)
-        const pageHTML = await getPageHTML(document)
+    kubb.injectFile({
+      baseName: 'docs.html',
+      path: path.resolve(root, output.path || './docs.html'),
+      sources: [
+        ast.factory.createSource({
+          name: 'docs.html',
+          nodes: [ast.factory.createText(pageHTML)],
+        }),
+      ],
+    })
 
-        ctx.injectFile({
-          baseName: 'docs.html',
-          path: path.resolve(root, output.path || './docs.html'),
-          sources: [
-            ast.factory.createSource({
-              name: 'docs.html',
-              nodes: [ast.factory.createText(pageHTML)],
-            }),
-          ],
-        })
-      },
-    },
-  }
+    return { output, name, exclude: [], override: [] }
+  },
 })
 
 export default pluginRedoc
