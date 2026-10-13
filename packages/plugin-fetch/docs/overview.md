@@ -1,24 +1,28 @@
 # Fetch
 
-Generates a type-safe HTTP client based on the native Fetch API from your OpenAPI spec. Each operation becomes one async function with grouped `path`, `query`, `headers`, and `body` parameters and a result keyed by status code.
+The Fetch plugin turns each operation in your OpenAPI spec into a typed async function that sends the request with the native Fetch API. Each function takes grouped `path`, `query`, `headers`, and `body` parameters and returns a result keyed by status code.
 
-This plugin provides the client runtime. Query plugins such as `@kubb/plugin-react-query`, `@kubb/plugin-vue-query`, `@kubb/plugin-swr`, and `@kubb/plugin-mcp` call the functions it generates.
+The query plugins (`@kubb/plugin-react-query`, `@kubb/plugin-vue-query`, and `@kubb/plugin-swr`) and `@kubb/plugin-mcp` call these functions. The plugin also copies its runtime files (`client.ts`, `serializers.ts`, and `standardSchema.ts`) to `.kubb/` in the root output folder.
 
 ## Setup
 
-- Add `@kubb/plugin-ts` for the operation types. Without it, `@kubb/plugin-zod` with `inferred: true` supplies them.
-- Add `@kubb/plugin-zod` when you set `validator`.
-- No HTTP client package is needed.
+- Add `@kubb/plugin-ts` for the operation types, or `@kubb/plugin-zod` with `inferred: true`.
+- Add `@kubb/plugin-zod` when you set `validator`, and install `zod` v4. Without the plugin, `validator` does nothing.
+- No HTTP client package is needed. The generated code calls the global `fetch`.
 
 ## Options worth knowing
 
-- `baseURL` is prepended to every request.
-- `validator: 'zod'` validates request and response bodies with the schemas from `@kubb/plugin-zod`.
-- `sdk` generates a class-based SDK, grouped by tag or flat, instead of standalone functions. Query plugins need the standalone functions, so leave `sdk` unset when you use them.
-- `returnType: 'data'` makes a call resolve to the success body instead of the full result with status, data, and error.
-- `throwOnErrorDefault: false` returns documented error responses as values instead of throwing. A single call can still pass `throwOnError`.
+- `baseURL` is prepended to every request. The spec's `servers` URL is not used, so without `baseURL` you set one at runtime with `client.setConfig({ baseURL })`.
+- `validator: 'zod'` validates response bodies with the schemas from `@kubb/plugin-zod`. Use `{ request: 'zod', response: 'zod' }` to also validate request bodies.
+- `throwOnErrorDefault: false` returns non-2xx responses as values instead of throwing. A single call can still pass `throwOnError`.
+- `returnType: 'data'` makes a call resolve to the success body instead of the full result. With `throwOnError: false`, the call still returns the full result.
+- `sdk` generates a class-based SDK, grouped by tag or flat, instead of standalone functions. The query plugins and `@kubb/plugin-mcp` need the standalone functions, so leave `sdk` unset when you use them.
+
+See [Options](https://kubb.dev/extensions/kubb-labs/plugin-fetch/options) for every option and its default.
 
 ## Example
+
+The config below generates a Fetch client that sends every request to the Petstore API.
 
 ```typescript [kubb.config.ts]
 import { defineConfig } from 'kubb/config'
@@ -34,8 +38,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
-- [`@kubb/plugin-ts`](https://kubb.dev/extensions/kubb-labs/plugin-ts)
