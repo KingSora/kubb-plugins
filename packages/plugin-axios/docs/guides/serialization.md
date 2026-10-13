@@ -112,9 +112,3 @@ pluginAxios({ validator: { request: 'zod', response: 'zod' } })
 With a validator set, Kubb passes the matching schema to each generated call, and the runtime
 parses the body through it. A body that does not match throws a `ParseError` with the schema's
 `issues`.
-
-## See also
-
-- [Call operations](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/calling-operations)
-- [Handle errors](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/error-handling)
-- [Server-sent events](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/server-sent-events)

@@ -70,9 +70,3 @@ client.interceptors.request.eject(id)
 ## Where to set them
 
 Register handlers on the shared `client` for all operations, or on a separate `createClient` instance for isolated calls. Interceptors are instance-level settings.
-
-## See also
-
-- [Handle errors](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/error-handling)
-- [Authenticate requests](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/authentication)
-- [Use a custom transport](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/transport)

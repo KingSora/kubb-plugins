@@ -92,8 +92,3 @@ try {
 > [!NOTE]
 > A drop mid-stream ends the `for await` loop. Track the last event's `id` if you need to reconnect
 > from where the stream stopped.
-
-## See also
-
-- [Call operations](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/calling-operations)
-- [Handle errors](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/error-handling)

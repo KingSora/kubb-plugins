@@ -42,9 +42,3 @@ Every generated function now sends through your instance, so its timeout, header
 ## Where to set it
 
 Use `client.setConfig({ transport })` for shared configuration, `createClient({ transport })` for an isolated instance, or pass `transport` on an operation to override it for one call.
-
-## See also
-
-- [Add interceptors](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/interceptors)
-- [Set the base URL](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/base-url)
-- [Call operations](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/calling-operations)
