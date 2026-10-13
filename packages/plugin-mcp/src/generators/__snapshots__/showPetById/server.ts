@@ -31,8 +31,6 @@ export function getServer() {
   return server
 }
 
-export const server = getServer()
-
 export async function startServer() {
   return serveStdio(getServer, {
     onerror: (error) => console.error('MCP server error:', error),

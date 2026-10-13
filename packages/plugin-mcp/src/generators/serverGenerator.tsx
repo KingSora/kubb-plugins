@@ -121,7 +121,7 @@ export const serverGenerator = defineGenerator<PluginMcp>({
           <File.Import name={['z']} path={'zod'} />
 
           {imports}
-          <Server name={name} serverName={ctx.meta.title ?? 'server'} serverVersion={ctx.meta.version ?? '0.0.0'} operations={operationsMapped} />
+          <Server serverName={ctx.meta.title ?? 'server'} serverVersion={ctx.meta.version ?? '0.0.0'} operations={operationsMapped} />
         </File>
 
         <File baseName={jsonFile.baseName} path={jsonFile.path} meta={jsonFile.meta}>

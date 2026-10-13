@@ -8,6 +8,7 @@ Generate MCP servers for the MCP TypeScript SDK v2 (`@modelcontextprotocol/serve
 - Pass `ctx: ServerContext` to each handler and forward `ctx.mcpReq.signal` to the client call.
 - Wrap `inputSchema` and `outputSchema` in `z.object()`, since v2 deprecates raw shapes.
 - Start the stdio server with `serveStdio(getServer)`, which also serves clients on the 2025 protocol. `startServer()` now resolves to the stdio handle, so `close()` stops the server, and it logs transport errors to stderr.
+- Remove the `server` export. `startServer()` and `createMcpHandler` build their own instances from `getServer`, so tools added to `server` would not be served. Named barrels now export `getServer` and `startServer`.
 - Replace the `@modelcontextprotocol/sdk ^1.0.0` peer with `@modelcontextprotocol/server ^2.0.0`, and raise the `zod` peer to `^4.2.0`.
 
 ```typescript
@@ -29,4 +30,4 @@ export async function getPetByIdHandler({ path }: GetPetByIdOptions, ctx: Server
 }
 ```
 
-To upgrade, uninstall `@modelcontextprotocol/sdk`, install `@modelcontextprotocol/server@^2` and `zod@^4.2`, and run `kubb generate`. To serve over HTTP, pass the generated `getServer` to `createMcpHandler(getServer)`.
+To upgrade, uninstall `@modelcontextprotocol/sdk`, install `@modelcontextprotocol/server@^2` and `zod@^4.2`, and run `kubb generate`. Replace imports of `server` with a call to `getServer()`. To serve over HTTP, pass the generated `getServer` to `createMcpHandler(getServer)`.

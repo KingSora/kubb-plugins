@@ -1,16 +1,12 @@
 import { getOperationParameters } from '@internals/shared'
 import type { ast } from 'kubb/kit'
 import { createFunctionParameter, createFunctionParameters, createObjectBindingPattern, functionPrinter } from '@kubb/plugin-ts'
-import { Const, File, Function } from 'kubb/jsx'
+import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import type { ZodParam } from '../utils.ts'
 import { zodExprFromSchemaNode, zodGroupExpr } from '../utils.ts'
 
 type Props = {
-  /**
-   * Variable name for the MCP server instance (e.g. 'server').
-   */
-  name: string
   /**
    * Human-readable server name passed to `new McpServer({ name })`.
    */
@@ -52,7 +48,7 @@ type Props = {
 
 const keysPrinter = functionPrinter({ mode: 'call' })
 
-export function Server({ name, serverName, serverVersion, operations }: Props): KubbReactNode {
+export function Server({ serverName, serverVersion, operations }: Props): KubbReactNode {
   const registrations = operations
     .map(({ tool, mcp, zod, node }) => {
       const { path: pathParams } = getOperationParameters(node)
@@ -129,25 +125,25 @@ server.registerTool(${JSON.stringify(tool.name)}, {
     .join('\n')
 
   return (
-    <File.Source name={name} isExportable isIndexable>
-      <Function name="getServer" export>
-        {`const server = new McpServer({
+    <>
+      <File.Source name="getServer" isExportable isIndexable>
+        <Function name="getServer" export>
+          {`const server = new McpServer({
   name: '${serverName}',
   version: '${serverVersion}',
 })
 ${registrations}
 return server`}
-      </Function>
+        </Function>
+      </File.Source>
 
-      <Const name={'server'} export>
-        {'getServer()'}
-      </Const>
-
-      <Function name="startServer" async export>
-        {`return serveStdio(getServer, {
+      <File.Source name="startServer" isExportable isIndexable>
+        <Function name="startServer" async export>
+          {`return serveStdio(getServer, {
     onerror: (error) => console.error('MCP server error:', error),
   })`}
-      </Function>
-    </File.Source>
+        </Function>
+      </File.Source>
+    </>
   )
 }
