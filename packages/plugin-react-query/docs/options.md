@@ -1,0 +1,333 @@
+# Options
+
+Pass these options to `pluginReactQuery()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options), which documents their behavior once.
+
+## Options overview
+
+| Option                                                                                | Purpose                                                              | Default                                                                                |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)                 | Where the generated hooks are written and exported.                  | `{ path: 'hooks', barrel: { type: 'named' } }`                                         |
+| ↳ [`output.path`](https://kubb.dev/docs/5.x/reference/plugin-options#output-path)     | Choose the output folder or file.                                    | `'hooks'`                                                                              |
+| ↳ [`output.mode`](https://kubb.dev/docs/5.x/reference/plugin-options#output-mode)     | Write a single file or a directory of files.                         | Inferred from `output.path`                                                            |
+| ↳ [`output.barrel`](https://kubb.dev/docs/5.x/reference/plugin-options#output-barrel) | Configure barrel exports.                                            | `{ type: 'named' }`                                                                    |
+| ↳ [`output.banner`](https://kubb.dev/docs/5.x/reference/plugin-options#output-banner) | Add content before generated code.                                   | None                                                                                   |
+| ↳ [`output.footer`](https://kubb.dev/docs/5.x/reference/plugin-options#output-footer) | Add content after generated code.                                    | None                                                                                   |
+| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)                   | Split output into per-tag or per-path folders.                       | None                                                                                   |
+| ↳ [`group.type`](https://kubb.dev/docs/5.x/reference/plugin-options#group-type)       | Group operations by tag or URL path.                                 | Required with `group`                                                                  |
+| ↳ [`group.name`](https://kubb.dev/docs/5.x/reference/plugin-options#group-name)       | Customize output group names.                                        | camelCased tag or raw path segment                                                     |
+| [`client`](#client)                                                                   | Which registered client plugin the hooks call.                       | Auto-detected                                                                          |
+| [`infinite`](#infinite)                                                               | Generate `useInfiniteQuery` hooks for pagination.                    | `false`                                                                                |
+| ↳ [`infinite.queryParam`](#infinite-queryparam)                                       | Choose the query parameter that carries the cursor.                  | `'id'`                                                                                 |
+| ↳ [`infinite.initialPageParam`](#infinite-initialpageparam)                           | Set the first page parameter.                                        | `0`                                                                                    |
+| ↳ [`infinite.nextParam`](#infinite-nextparam)                                         | Locate the next-page cursor in the response.                         | `null`                                                                                 |
+| ↳ [`infinite.previousParam`](#infinite-previousparam)                                 | Locate the previous-page cursor in the response.                     | `null`                                                                                 |
+| ↳ [`infinite.cursorParam`](#infinite-cursorparam)                                     | Deprecated cursor path. Use `nextParam` and `previousParam` instead. | `null`                                                                                 |
+| [`suspense`](#suspense)                                                               | Generate `useSuspenseQuery` hooks.                                   | `false`                                                                                |
+| [`query`](#query)                                                                     | Configure the query hooks.                                           | `{ methods: ['GET'], importPath: '@tanstack/react-query' }`                            |
+| ↳ [`query.methods`](#query-methods)                                                   | Choose which HTTP methods generate queries.                          | `['GET']`                                                                              |
+| ↳ [`query.importPath`](#query-importpath)                                             | Set the module used for query imports.                               | `'@tanstack/react-query'`                                                              |
+| [`queryKey`](#querykey)                                                               | Build the `queryKey` for each query hook.                            | Built-in `queryKeyTransformer`                                                         |
+| [`mutation`](#mutation)                                                               | Configure the mutation hooks.                                        | `{ methods: ['POST', 'PUT', 'PATCH', 'DELETE'], importPath: '@tanstack/react-query' }` |
+| ↳ [`mutation.methods`](#mutation-methods)                                             | Choose which HTTP methods generate mutations.                        | `['POST', 'PUT', 'PATCH', 'DELETE']`                                                   |
+| ↳ [`mutation.importPath`](#mutation-importpath)                                       | Set the module used for mutation imports.                            | `'@tanstack/react-query'`                                                              |
+| [`mutationKey`](#mutationkey)                                                         | Build the `mutationKey` for each mutation hook.                      | Built-in `mutationKeyTransformer`                                                      |
+| [`customOptions`](#customoptions)                                                     | Route every hook through your own options function.                  | None                                                                                   |
+| ↳ [`customOptions.importPath`](#customoptions-importpath)                             | Set the module for the custom-options hook.                          | Required with `customOptions`                                                          |
+| ↳ [`customOptions.name`](#customoptions-name)                                         | Set the exported custom-options hook name.                           | `'useCustomHookOptions'`                                                               |
+| [`hooks`](#hooks)                                                                     | Emit `use*` hook functions on top of the factories.                  | `false`                                                                                |
+| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)               | Keep only operations that match.                                     | None                                                                                   |
+| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)               | Skip operations that match.                                          | `[]`                                                                                   |
+| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override)             | Apply different options per pattern.                                 | `[]`                                                                                   |
+| [`resolver`](#resolver)                                                               | Customize generated names and file paths.                            | `resolverReactQuery`                                                                   |
+| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)                 | Rewrite AST nodes before printing.                                   | `[]`                                                                                   |
+
+## Option details
+
+### client
+
+Selects which registered client plugin the hooks call. A single registered client is auto-detected. Set `client` when several are registered.
+
+|          |                      |
+| -------- | -------------------- |
+| Type     | `'axios' \| 'fetch'` |
+| Required | `false`              |
+
+::field-group
+
+:::field{name="'fetch'"}
+Calls the operations generated by [`@kubb/plugin-fetch`](https://kubb.dev/extensions/kubb-labs/plugin-fetch).
+:::
+
+:::field{name="'axios'"}
+Calls the operations generated by [`@kubb/plugin-axios`](https://kubb.dev/extensions/kubb-labs/plugin-axios).
+:::
+
+::
+
+> [!NOTE]
+> The hooks call a client plugin's functions, so register `@kubb/plugin-axios` or `@kubb/plugin-fetch` alongside this one.
+
+### infinite
+
+Adds infinite-query output for pagination. Pass an object to configure the cursor, or `false` (the default) to skip. Emitted only for operations with a query parameter matching `infinite.queryParam`.
+
+|          |                              |
+| -------- | ---------------------------- |
+| Type     | `Partial<Infinite> \| false` |
+| Required | `false`                      |
+| Default  | `false`                      |
+
+With [`hooks`](#hooks) at its default of `false`, setting `infinite` produces no file at all, not even the `infiniteQueryOptions` factory. Set `hooks: true` alongside `infinite` to generate the file and its `useInfiniteQuery` hook.
+
+#### infinite.queryParam
+
+Query parameter that carries the page cursor.
+
+|          |          |
+| -------- | -------- |
+| Type     | `string` |
+| Required | `false`  |
+| Default  | `'id'`   |
+
+#### infinite.initialPageParam
+
+Initial value for `pageParam` on the first fetch.
+
+|          |           |
+| -------- | --------- |
+| Type     | `unknown` |
+| Required | `false`   |
+| Default  | `0`       |
+
+#### infinite.nextParam
+
+Path to the next-page cursor on the response, as dot notation (`'pagination.next.id'`) or array form (`['pagination', 'next', 'id']`).
+
+|          |                                   |
+| -------- | --------------------------------- |
+| Type     | `string \| Array<string> \| null` |
+| Required | `false`                           |
+| Default  | `null`                            |
+
+#### infinite.previousParam
+
+Path to the previous-page cursor on the response, in the same dot or array form.
+
+|          |                                   |
+| -------- | --------------------------------- |
+| Type     | `string \| Array<string> \| null` |
+| Required | `false`                           |
+| Default  | `null`                            |
+
+#### infinite.cursorParam
+
+Deprecated path to the cursor field, read for both `getNextPageParam` and `getPreviousPageParam` when set. Use `nextParam` and `previousParam` instead.
+
+|          |                  |
+| -------- | ---------------- |
+| Type     | `string \| null` |
+| Required | `false`          |
+| Default  | `null`           |
+
+#### infinite.getNextPageParam
+
+Source of TanStack Query's `getNextPageParam`, inlined verbatim, for a next page that has to be computed rather than read from a field. Takes precedence over `nextParam` and `cursorParam`. Defaults to `null`.
+
+```typescript
+infinite: {
+  queryParam: 'page',
+  getNextPageParam: '(lastPage) => (lastPage.hasNext ? lastPage.number + 1 : undefined)',
+  getPreviousPageParam: '(firstPage) => (firstPage.number > 0 ? firstPage.number - 1 : undefined)',
+}
+```
+
+Without any of `getNextPageParam`, `nextParam` or `cursorParam`, the hook counts pages up from `initialPageParam` and stops on an empty array. That only works for responses that are arrays, so generation warns for an operation whose response is an object.
+
+#### infinite.getPreviousPageParam
+
+Source of TanStack Query's `getPreviousPageParam`, inlined verbatim. Takes precedence over `previousParam` and `cursorParam`. Defaults to `null`.
+
+### suspense
+
+Adds a suspense variant alongside the regular query output. Pass an empty object (`{}`) to enable, or leave it as `false` (the default) to skip it. TanStack Query v5+ only.
+
+|          |                            |
+| -------- | -------------------------- |
+| Type     | `Partial<object> \| false` |
+| Required | `false`                    |
+| Default  | `false`                    |
+
+With [`hooks`](#hooks) at its default of `false`, enabling `suspense` produces no file at all, not even the `suspenseQueryOptions` factory. Set `hooks: true` alongside `suspense` to generate the file and its `useSuspenseQuery` hook.
+
+### query
+
+Which operations become queries, emitting a `queryOptions` factory by default. Pass `false` to skip, or set [`hooks`](#hooks) to also emit `useQuery`.
+
+|          |                                                             |
+| -------- | ----------------------------------------------------------- |
+| Type     | `Partial<Query> \| false`                                   |
+| Required | `false`                                                     |
+| Default  | `{ methods: ['GET'], importPath: '@tanstack/react-query' }` |
+
+#### query.methods
+
+HTTP methods treated as queries.
+
+|          |                 |
+| -------- | --------------- |
+| Type     | `Array<string>` |
+| Required | `false`         |
+| Default  | `['GET']`       |
+
+#### query.importPath
+
+Module for the `queryOptions` and `useQuery` imports.
+
+|          |                           |
+| -------- | ------------------------- |
+| Type     | `string`                  |
+| Required | `false`                   |
+| Default  | `'@tanstack/react-query'` |
+
+### queryKey
+
+Builds the `queryKey` for each hook from the operation `node`, `casing` and `variant`. String values are inlined verbatim, so wrap literals in `JSON.stringify(...)`.
+
+|          |                                                        |
+| -------- | ------------------------------------------------------ |
+| Type     | `(props: { node, casing, variant }) => Array<unknown>` |
+| Required | `false`                                                |
+| Default  | Built-in `queryKeyTransformer`                         |
+
+`variant` is the hook the key is built for: `'query'`, `'suspenseQuery'`, `'infiniteQuery'` or `'suspenseInfiniteQuery'`. The default key adds `infinite: true` for the infinite variants, because TanStack Query stores `InfiniteData` under an infinite key and the plain hook for the same request must not share it.
+
+```typescript
+queryKey: ({ node, variant }) => [JSON.stringify({ variant, operationId: node.operationId })]
+```
+
+### mutation
+
+Which operations become mutations, emitting a `mutationOptions` factory by default. Set `false` to skip, or set [`hooks`](#hooks) to also emit `useMutation`.
+
+|          |                                                                                        |
+| -------- | -------------------------------------------------------------------------------------- |
+| Type     | `Partial<Mutation> \| false`                                                           |
+| Required | `false`                                                                                |
+| Default  | `{ methods: ['POST', 'PUT', 'PATCH', 'DELETE'], importPath: '@tanstack/react-query' }` |
+
+#### mutation.methods
+
+HTTP methods treated as mutations.
+
+|          |                                      |
+| -------- | ------------------------------------ |
+| Type     | `Array<string>`                      |
+| Required | `false`                              |
+| Default  | `['POST', 'PUT', 'PATCH', 'DELETE']` |
+
+#### mutation.importPath
+
+Module for the `mutationOptions` and `useMutation` imports.
+
+|          |                           |
+| -------- | ------------------------- |
+| Type     | `string`                  |
+| Required | `false`                   |
+| Default  | `'@tanstack/react-query'` |
+
+### mutationKey
+
+Builds the `mutationKey` for each mutation hook, for batched invalidations or `useMutationState`. Same props and string-inlining caveat as `queryKey`, with `variant` set to `'mutation'`.
+
+|          |                                                        |
+| -------- | ------------------------------------------------------ |
+| Type     | `(props: { node, casing, variant }) => Array<unknown>` |
+| Required | `false`                                                |
+| Default  | Built-in `mutationKeyTransformer`                      |
+
+### customOptions
+
+Routes every hook through your own function that returns extra options such as `onSuccess` or `select`. Also emits a `HookOptions` type so your wrapper stays in sync.
+
+|          |                                         |
+| -------- | --------------------------------------- |
+| Type     | `{ importPath: string, name?: string }` |
+| Required | `false`                                 |
+
+> [!IMPORTANT]
+> `customOptions` needs [`hooks: true`](#hooks). With `hooks` at its default of `false` there are no `use*` hooks to route, so the `HookOptions` file is not written.
+
+#### customOptions.importPath
+
+Module of your custom-options hook, imported as a named import.
+
+|          |                                    |
+| -------- | ---------------------------------- |
+| Type     | `string`                           |
+| Required | `true` when `customOptions` is set |
+
+#### customOptions.name
+
+Exported name of your custom-options hook.
+
+|          |                          |
+| -------- | ------------------------ |
+| Type     | `string`                 |
+| Required | `false`                  |
+| Default  | `'useCustomHookOptions'` |
+
+### hooks
+
+When `false` (the default), only the `queryOptions`, `mutationOptions`, `queryKey` and `mutationKey` helpers are written, using factory imports that work across TanStack Query adapters. Set `true` to also generate `useQuery`, `useSuspenseQuery`, `useInfiniteQuery`, `useSuspenseInfiniteQuery`, and `useMutation`.
+
+|          |           |
+| -------- | --------- |
+| Type     | `boolean` |
+| Required | `false`   |
+| Default  | `false`   |
+
+[`suspense`](#suspense), [`infinite`](#infinite) and [`customOptions`](#customoptions) are gated on `hooks` too: with `hooks: false`, enabling any of them writes nothing.
+
+### resolver
+
+Overrides generated file and symbol names. Omitted members keep `resolverReactQuery`. The shared members (`name`, `file`, `imports`) and the `this` context are described under [`resolver`](https://kubb.dev/docs/5.x/reference/plugin-options#resolver).
+
+|          |                                     |
+| -------- | ----------------------------------- |
+| Type     | `ResolverPatch<ResolverReactQuery>` |
+| Required | `false`                             |
+
+::code-collapse{name="ResolverReactQuery patch members"}
+
+```typescript [Partial override]
+type ResolverReactQueryPatch = {
+  name?(name: string): string
+  file?: {
+    baseName?(params: { name: string; extname: string }): string
+    path?(params: { baseName: string; output: Output }): string
+  }
+  imports?(options: ResolveImportsOptions): Array<ImportNode>
+  query?: {
+    name?(node: OperationNode): string         // → 'useGetPetById'
+    optionsName?(node: OperationNode): string  // → 'getPetByIdQueryOptions'
+    keyName?(node: OperationNode): string       // → 'getPetByIdQueryKey'
+    keyTypeName?(node: OperationNode): string   // → 'GetPetByIdQueryKey'
+    clientName?(node: OperationNode): string    // → 'getPetById'
+  }
+  suspenseQuery?: { /* same members as query */ }
+  infiniteQuery?: { /* same members as query */ }
+  suspenseInfiniteQuery?: { /* same members as query */ }
+  mutation?: {
+    name?(node: OperationNode): string          // → 'useUpdatePet'
+    optionsName?(node: OperationNode): string
+    keyName?(node: OperationNode): string
+    typeName?(node: OperationNode): string      // → 'UpdatePet'
+  }
+  hook?: {
+    optionsName?(): string
+    customOptionsName?(): string
+  }
+}
+```
+
+::

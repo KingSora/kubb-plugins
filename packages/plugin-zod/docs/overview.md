@@ -18,3 +18,23 @@ Install Zod v4 or higher in the app that uses the generated code. No other plugi
 - `regexType` writes a `pattern` as a regex literal (default) or a `RegExp` constructor.
 - `typeGuards` adds `is*` type guards and `assert*` assertions.
 - `compile` wraps schemas in `z.compile` for faster validation.
+
+## Example
+
+```typescript [kubb.config.ts]
+import { defineConfig } from 'kubb/config'
+import { pluginZod } from '@kubb/plugin-zod'
+
+export default defineConfig({
+  input: './petStore.yaml',
+  output: { path: './src/gen' },
+  plugins: [
+    pluginZod({ inferred: true }),
+  ],
+})
+```
+
+## See also
+
+- [Zod](https://zod.dev/)
+- [Zod Mini](https://zod.dev/packages/mini)

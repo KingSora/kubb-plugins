@@ -15,3 +15,26 @@ Each handler returns the data you pass to it. With `parser: 'faker'`, it falls b
 - `parser` sets where the response body comes from: `data` (default) or `faker`.
 - `handlers` writes a `handlers.ts` file that exports every handler, ready to spread into `setupServer` or `setupWorker`.
 - `baseURL` is prepended to the path each handler matches.
+
+## Example
+
+```typescript [kubb.config.ts]
+import { defineConfig } from 'kubb/config'
+import { pluginTs } from '@kubb/plugin-ts'
+import { pluginMsw } from '@kubb/plugin-msw'
+
+export default defineConfig({
+  input: './petStore.yaml',
+  output: { path: './src/gen' },
+  plugins: [
+    pluginTs(),
+    pluginMsw({ output: { path: 'handlers', mode: 'directory' }, handlers: true }),
+  ],
+})
+```
+
+## See also
+
+- [MSW](https://mswjs.io/)
+- [@kubb/plugin-ts](https://kubb.dev/extensions/kubb-labs/plugin-ts)
+- [@kubb/plugin-faker](https://kubb.dev/extensions/kubb-labs/plugin-faker)

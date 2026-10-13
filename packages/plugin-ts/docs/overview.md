@@ -15,3 +15,23 @@ No other plugins or packages are needed.
 - `optionalType` sets how optional properties are written: `questionToken` (default), `undefined`, or `questionTokenAndUndefined`.
 - `arrayType` writes arrays as `T[]` (default) or `Array<T>`.
 - `group` splits the output into folders by tag or path. It does not work with `output.mode: 'file'`.
+
+## Example
+
+```typescript [kubb.config.ts]
+import { defineConfig } from 'kubb/config'
+import { pluginTs } from '@kubb/plugin-ts'
+
+export default defineConfig({
+  input: './petStore.yaml',
+  output: { path: './src/gen' },
+  plugins: [
+    pluginTs(),
+  ],
+})
+```
+
+## See also
+
+- [TypeScript](https://www.typescriptlang.org/)
+- [TypeScript Compiler API](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API)
