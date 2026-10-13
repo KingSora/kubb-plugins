@@ -14,7 +14,11 @@
   </head>
 
   <body>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/redoc@2.5.4/bundles/redoc.standalone.js"
+      integrity="sha384-w447zOpYfw/1Tv/5AK9NfHTlQIqE3RVR6KY62jCyy9zNDgO64cMwGGP1Fj0zJVf5"
+      crossorigin="anonymous"
+    ></script>
     <div id="redoc-container"></div>
     <script>
       const data = {
@@ -587,7 +591,7 @@
             get: {
               tags: ['store'],
               summary: 'Find purchase order by ID',
-              description: 'For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.',
+              description: 'For valid response try integer IDs with value \u003c= 5 or \u003e 10. Other values will generate exceptions.',
               operationId: 'getOrderById',
               parameters: [
                 {
@@ -628,7 +632,7 @@
             delete: {
               tags: ['store'],
               summary: 'Delete purchase order by ID',
-              description: 'For valid response try integer IDs with value < 1000. Anything above 1000 or nonintegers will generate API errors',
+              description: 'For valid response try integer IDs with value \u003c 1000. Anything above 1000 or nonintegers will generate API errors',
               operationId: 'deleteOrder',
               parameters: [
                 {
