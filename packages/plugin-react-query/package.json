@@ -93,7 +93,7 @@
     "kubb": "catalog:"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-query": "^5.82.0",
     "kubb": "catalog:"
   },
   "peerDependenciesMeta": {
