@@ -2,7 +2,7 @@
 
 Generates a single HTML page that documents your OpenAPI spec with Redoc. The page is rebuilt on every Kubb run, so the docs always match the spec your code comes from.
 
-The spec is embedded in the page, so you can publish it to any static host without a build step. Viewing the page needs network access, because Redoc's scripts and fonts load from a CDN.
+The spec is embedded in the page, so you can publish it to any static host without a build step. Viewing the page needs network access, because Redoc's scripts and fonts load from a CDN. The page pins one Redoc release and checks it with a Subresource Integrity hash.
 
 ## Setup
 
