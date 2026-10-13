@@ -1,5 +1,20 @@
 # @kubb/plugin-swr
 
+## 5.2.5
+
+### Patch Changes
+
+- [#1086](https://github.com/kubb-labs/plugins/pull/1086) [`02c4172`](https://github.com/kubb-labs/plugins/commit/02c41722a2872767579dc3b4784159e477962005) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Give each extension page on kubb.dev the same sections (Setup, Options worth knowing, and Example), and fix claims that did not match the code.
+  
+  - List the peer versions the generated code needs, such as `@tanstack/react-query` 5.82, `swr` 2.2, `@faker-js/faker` v10, and `cypress` v15 or v16.
+  - Say that `validator: 'zod'` validates response bodies only, and that `{ request: 'zod', response: 'zod' }` also validates request bodies.
+  - Say which React Query and Vue Query options need `hooks: true`.
+  - Say that the MCP server starts through `startServer()` and that the generated `.mcp.json` runs `npx tsx`.
+
+- [#1090](https://github.com/kubb-labs/plugins/pull/1090) [`49175c7`](https://github.com/kubb-labs/plugins/commit/49175c7449fd648a1d82327e07c7adc2c719a60f) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Raise the `swr` peer range from `^2.0.0` to `^2.2.0`. Generated mutation hooks type their options as `SWRMutationConfiguration<Data, Error, Key, Arg>`, the generic order SWR uses from 2.2.0. SWR 2.0.0 to 2.1.5 declare `<Data, Error, ExtraArg, Key>`, so the output failed to compile against them.
+- Updated dependencies [[`02c4172`](https://github.com/kubb-labs/plugins/commit/02c41722a2872767579dc3b4784159e477962005)]:
+  - @kubb/plugin-ts@5.0.10
+
 ## 5.2.4
 
 ### Patch Changes

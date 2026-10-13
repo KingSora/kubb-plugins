@@ -1,5 +1,20 @@
 # @kubb/plugin-redoc
 
+## 5.0.8
+
+### Patch Changes
+
+- [#1086](https://github.com/kubb-labs/plugins/pull/1086) [`02c4172`](https://github.com/kubb-labs/plugins/commit/02c41722a2872767579dc3b4784159e477962005) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Give each extension page on kubb.dev the same sections (Setup, Options worth knowing, and Example), and fix claims that did not match the code.
+  
+  - List the peer versions the generated code needs, such as `@tanstack/react-query` 5.82, `swr` 2.2, `@faker-js/faker` v10, and `cypress` v15 or v16.
+  - Say that `validator: 'zod'` validates response bodies only, and that `{ request: 'zod', response: 'zod' }` also validates request bodies.
+  - Say which React Query and Vue Query options need `hooks: true`.
+  - Say that the MCP server starts through `startServer()` and that the generated `.mcp.json` runs `npx tsx`.
+
+- [#1089](https://github.com/kubb-labs/plugins/pull/1089) [`ece021b`](https://github.com/kubb-labs/plugins/commit/ece021bcc768b863a45f09ec2208d8c5cd5f4b23) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Escape the OpenAPI spec before inlining it in the generated HTML page. `<`, `>`, `&`, U+2028, and U+2029 in the JSON are written as `\uXXXX` escapes, so a spec string such as `</script><script>alert(1)</script>` in a description or example stays inside the data instead of closing the `<script>` tag.
+  
+  The page now loads Redoc 2.5.4 from `https://cdn.jsdelivr.net/npm/redoc@2.5.4/bundles/redoc.standalone.js` with a Subresource Integrity hash, instead of the unpinned `https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js`.
+
 ## 5.0.7
 
 ### Patch Changes

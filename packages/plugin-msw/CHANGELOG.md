@@ -1,5 +1,21 @@
 # @kubb/plugin-msw
 
+## 5.0.12
+
+### Patch Changes
+
+- [#1086](https://github.com/kubb-labs/plugins/pull/1086) [`02c4172`](https://github.com/kubb-labs/plugins/commit/02c41722a2872767579dc3b4784159e477962005) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Give each extension page on kubb.dev the same sections (Setup, Options worth knowing, and Example), and fix claims that did not match the code.
+  
+  - List the peer versions the generated code needs, such as `@tanstack/react-query` 5.82, `swr` 2.2, `@faker-js/faker` v10, and `cypress` v15 or v16.
+  - Say that `validator: 'zod'` validates response bodies only, and that `{ request: 'zod', response: 'zod' }` also validates request bodies.
+  - Say which React Query and Vue Query options need `hooks: true`.
+  - Say that the MCP server starts through `startServer()` and that the generated `.mcp.json` runs `npx tsx`.
+
+- [#1091](https://github.com/kubb-labs/plugins/pull/1091) [`b4a1d46`](https://github.com/kubb-labs/plugins/commit/b4a1d467288d653d58f77eaee872c76831a4487d) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - The registry metadata no longer lists `@kubb/plugin-faker` as a required dependency. The plugin needs it only with `parser: 'faker'`. The `parser: 'faker'` docs now say the Faker fallback runs only when `data` is `undefined` or `null`, which matches the generated `data ?? factory(data)`.
+- Updated dependencies [[`02c4172`](https://github.com/kubb-labs/plugins/commit/02c41722a2872767579dc3b4784159e477962005)]:
+  - @kubb/plugin-faker@5.1.5
+  - @kubb/plugin-ts@5.0.10
+
 ## 5.0.11
 
 ### Patch Changes
