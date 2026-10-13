@@ -40,16 +40,17 @@ Use `ResponseError.is(error)` to narrow errors across generated packages, which 
 ## Return the error instead
 
 Pass `throwOnError: false` and the call resolves for every documented status. The result is a
-discriminated union: `data` is set on success and `error` on failure, so branch on `status` or
-check which field is present.
+discriminated union: `data` is set on success and `error` on failure. Branch on `status`,
+because an empty error body can leave `error` empty or undefined.
 
 ```typescript
 const result = await getPetById({ path: { petId: 1 }, throwOnError: false })
 
-if (result.error) {
-  console.error(result.status, result.error)
-} else {
+if (result.status === 200) {
   console.info(result.data.name)
+}
+if (result.status !== 200) {
+  console.error(result.status, result.error)
 }
 ```
 
@@ -61,9 +62,9 @@ Set `throwOnErrorDefault` on the client plugin to choose how generated operation
 responses by default. Each call can still override that setting with `throwOnError`:
 
 ```typescript
-import { pluginFetch } from '@kubb/plugin-fetch'
+import { pluginAxios } from '@kubb/plugin-axios'
 
-pluginFetch({ throwOnErrorDefault: false })
+pluginAxios({ throwOnErrorDefault: false })
 
 // resolves with an error result
 const list = await searchPets({ query: { status: 'available' } })
@@ -81,7 +82,8 @@ change the generated default.
 > [!IMPORTANT]
 > `throwOnError` governs the response status, not the send: a dropped connection, DNS failure, or
 > aborted `AbortSignal` rejects regardless of the setting. A `ResponseError` means the server
-> answered with a non-2xx, and anything else means the request never completed.
+> answered with a non-2xx, and a `ParseError` means a body failed validation. Anything else
+> usually means the request never completed.
 
 ```typescript
 try {

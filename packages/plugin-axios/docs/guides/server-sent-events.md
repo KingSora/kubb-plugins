@@ -73,7 +73,7 @@ for await (const event of stream) {
 
 ## Handle errors
 
-Catch connection failures and non-2xx responses around the call and iteration:
+Catch non-2xx responses around the call and iteration, and rethrow other errors such as connection failures:
 
 ```typescript
 import { ResponseError } from './gen/.kubb/client'
@@ -84,9 +84,8 @@ try {
     handle(event.data)
   }
 } catch (error) {
-  if (ResponseError.is(error)) {
-    console.error('stream rejected', error.status)
-  }
+  if (!ResponseError.is(error)) throw error
+  console.error('stream rejected', error.status)
 }
 ```
 

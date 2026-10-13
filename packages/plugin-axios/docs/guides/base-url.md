@@ -7,19 +7,19 @@ Set `baseURL` on the client plugin or on the generated client.
 
 ## Use the baseURL option
 
-Pass `baseURL` to the client plugin to set the generated default. `pluginAxios` takes the same option. Include `pluginTs`, which the client requires.
+Pass `baseURL` to the client plugin to set the generated default. Include `pluginTs`, which the client requires.
 
 ```typescript [kubb.config.ts]
 import { defineConfig } from 'kubb/config'
 import { pluginTs } from '@kubb/plugin-ts'
-import { pluginFetch } from '@kubb/plugin-fetch'
+import { pluginAxios } from '@kubb/plugin-axios'
 
 export default defineConfig({
   input: './petStore.yaml',
   output: { path: './src/gen' },
   plugins: [
     pluginTs(),
-    pluginFetch({ baseURL: 'https://localhost:8080/api/v1' }),
+    pluginAxios({ baseURL: 'https://localhost:8080/api/v1' }),
   ],
 })
 ```

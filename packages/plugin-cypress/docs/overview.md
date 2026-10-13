@@ -1,6 +1,6 @@
 # Cypress
 
-Generates a typed `cy.request()` helper for each operation in your OpenAPI spec. Your Cypress tests call the API through these helpers, so a broken call fails at compile time instead of at run time.
+Generates a typed `cy.request()` helper for each operation in your OpenAPI spec. Your Cypress tests call the API through these helpers, so a call with the wrong parameters fails at compile time instead of at run time.
 
 Each helper takes grouped `path`, `query`, `headers`, and `body` parameters named after the spec. It returns the response body typed as `Cypress.Chainable<{Operation}Response>`.
 

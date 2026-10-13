@@ -55,7 +55,7 @@ Set `throwOnErrorDefault: false` to return documented error responses as values 
 ```typescript
 // pluginAxios({ throwOnErrorDefault: false }) or pluginFetch({ throwOnErrorDefault: false })
 const result = await getPetById({ path: { petId: 1 } })
-if (result.error) console.error(result.error)
+if (result.status !== 200) console.error(result.status, result.error)
 ```
 
 This setting applies to the whole plugin and cannot be set in `override`. Pass `throwOnError` on a call to override it. Query hooks continue to set `throwOnError: true` explicitly.

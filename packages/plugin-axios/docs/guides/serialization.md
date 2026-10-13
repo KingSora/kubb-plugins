@@ -93,12 +93,12 @@ For bidirectional formats, supply both `serialize` and `deserialize` in the medi
 
 ## Validate responses
 
-Enable `validator` on the client plugin and register `pluginZod` in the same configuration. Validation is disabled by default. `pluginAxios` takes the same option.
+Enable `validator` on the client plugin and register `pluginZod` in the same configuration. Validation is disabled by default.
 
 ```typescript
-import { pluginFetch } from '@kubb/plugin-fetch'
+import { pluginAxios } from '@kubb/plugin-axios'
 
-pluginFetch({ validator: 'zod' })
+pluginAxios({ validator: 'zod' })
 ```
 
 `'zod'` validates the success response body, and the error body when a non-2xx call does not
@@ -106,7 +106,7 @@ throw. Use the object form to opt in per direction, where `request` validates th
 body before the call goes out:
 
 ```typescript
-pluginFetch({ validator: { request: 'zod', response: 'zod' } })
+pluginAxios({ validator: { request: 'zod', response: 'zod' } })
 ```
 
 With a validator set, Kubb passes the matching schema to each generated call, and the runtime

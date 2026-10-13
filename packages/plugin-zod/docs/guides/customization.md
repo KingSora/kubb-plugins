@@ -27,7 +27,7 @@ The type becomes `ApiPet`. The schema constant stays `petSchema`. The callback r
 
 ## Use numbers for int64 fields
 
-Replace the `bigint` printer handler to validate `int64` fields with `z.number()`.
+Replace the `bigint` printer handler to validate `int64` fields with `z.int()`.
 
 ```typescript [kubb.config.ts]
 import { pluginZod } from '@kubb/plugin-zod'
@@ -36,7 +36,7 @@ pluginZod({
   printer: {
     nodes: {
       bigint() {
-        return 'z.number()'
+        return 'z.int()'
       },
     },
   },

@@ -161,7 +161,7 @@ const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(
 
 ::
 
-`nextParam` takes dot notation or an array of keys. Change it to match your API's response. Without `nextParam`, the generated options increment the page number until a page returns an empty array.
+`nextParam` takes dot notation or an array of keys. Change it to match your API's response. Without `getNextPageParam`, `nextParam` or `cursorParam`, the generated options increment the page number until a page returns an empty array.
 
 ## Refetch when parameters change
 

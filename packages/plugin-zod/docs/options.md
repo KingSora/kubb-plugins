@@ -87,7 +87,7 @@ Wraps schemas in `z.coerce` so input is coerced before validation, for form data
 ::field-group
 
 :::field{name="false"}
-Default value. Coerces nothing and validates strictly.
+Default value. Coerces nothing and validates strictly, except `bigint` fields (`format: int64`), which always use `z.coerce.bigint()`.
 :::
 
 :::field{name="true"}
