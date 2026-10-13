@@ -7,18 +7,19 @@ import type { PluginReactQuery } from '../types'
 
 /**
  * Scaffolds the user-editable `useCustomHookOptions` file when
- * `pluginReactQuery({ customOptions: { ... } })` is configured. The file is
+ * `pluginReactQuery({ customOptions: { ... }, hooks: true })` is configured. The file is
  * only created when it does not already exist, so user edits persist across
- * regeneration.
+ * regeneration, and only when `importPath` resolves inside the plugin's output folder.
  */
 export const customHookOptionsFileGenerator = defineGenerator<PluginReactQuery>({
   name: 'react-query-custom-hook-options-file',
   renderer: jsxRenderer,
   operations(nodes, ctx) {
     const { resolver, root } = ctx
-    const { output, customOptions, query, group } = ctx.options
+    const { output, customOptions, query, group, hooks } = ctx.options
 
-    if (!customOptions) return null
+    // The starter file imports the `HookOptions` type, which is only generated alongside the hooks.
+    if (!customOptions || !hooks) return null
 
     const { importPath, name } = customOptions
     const hookOptionsName = resolver.hook.optionsName()
@@ -26,7 +27,10 @@ export const customHookOptionsFileGenerator = defineGenerator<PluginReactQuery>(
 
     const reactQueryImportPath = query ? query.importPath : '@tanstack/react-query'
 
-    let hookFilePath: string
+    const outputPath = path.resolve(root, output.path)
+    const outputDir = output.mode === 'directory' ? outputPath : path.dirname(outputPath)
+
+    let basePath = outputDir
     const firstNode = nodes[0]
     if (firstNode) {
       const hookName = resolver.query.name(firstNode)
@@ -39,9 +43,7 @@ export const customHookOptionsFileGenerator = defineGenerator<PluginReactQuery>(
         output,
         group: group ?? undefined,
       })
-      hookFilePath = hookFile.path
-    } else {
-      hookFilePath = path.resolve(root, 'index.ts')
+      basePath = path.dirname(hookFile.path)
     }
 
     const ensureExtension = (filePath: string, extname: string) => {
@@ -49,12 +51,16 @@ export const customHookOptionsFileGenerator = defineGenerator<PluginReactQuery>(
       return filePath
     }
 
-    const basePath = path.dirname(hookFilePath)
     const actualFilePath = ensureExtension(importPath, '.ts')
     const file = {
       baseName: path.basename(actualFilePath) as `${string}.${string}`,
       path: path.resolve(basePath, actualFilePath),
     }
+
+    // `importPath` bypasses the resolver's output-folder guard, so apply the same boundary here.
+    // A module outside the output folder belongs to the user, who creates it themselves.
+    const relativeToOutput = path.relative(outputDir, file.path)
+    if (relativeToOutput === '..' || relativeToOutput.startsWith(`..${path.sep}`) || path.isAbsolute(relativeToOutput)) return null
 
     if (fs.existsSync(file.path)) return null
 
