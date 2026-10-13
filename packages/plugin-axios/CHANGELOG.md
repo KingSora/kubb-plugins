@@ -1,5 +1,21 @@
 # @kubb/plugin-axios
 
+## 5.5.12
+
+### Patch Changes
+
+- [#1091](https://github.com/kubb-labs/plugins/pull/1091) [`b4a1d46`](https://github.com/kubb-labs/plugins/commit/b4a1d467288d653d58f77eaee872c76831a4487d) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Remove the `comments` option from the options docs. Neither plugin has this option.
+
+- [#1086](https://github.com/kubb-labs/plugins/pull/1086) [`02c4172`](https://github.com/kubb-labs/plugins/commit/02c41722a2872767579dc3b4784159e477962005) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Give each extension page on kubb.dev the same sections (Setup, Options worth knowing, and Example), and fix claims that did not match the code.
+  
+  - List the peer versions the generated code needs, such as `@tanstack/react-query` 5.82, `swr` 2.2, `@faker-js/faker` v10, and `cypress` v15 or v16.
+  - Say that `validator: 'zod'` validates response bodies only, and that `{ request: 'zod', response: 'zod' }` also validates request bodies.
+  - Say which React Query and Vue Query options need `hooks: true`.
+  - Say that the MCP server starts through `startServer()` and that the generated `.mcp.json` runs `npx tsx`.
+- Updated dependencies [[`02c4172`](https://github.com/kubb-labs/plugins/commit/02c41722a2872767579dc3b4784159e477962005)]:
+  - @kubb/plugin-ts@5.0.10
+  - @kubb/plugin-zod@5.4.8
+
 ## 5.5.11
 
 ### Patch Changes
