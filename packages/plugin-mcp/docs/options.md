@@ -19,7 +19,7 @@ Pass these options to `pluginMcp()`. Shared options link to [Shared plugin optio
 
 ### output
 
-Where the generated MCP handler files are written. The plugin writes `server.ts` and `.mcp.json` at the root of `output.path`, next to the handlers. Keep `output.path` a folder name such as the default `'mcp'`. Single-file output (`output.mode: 'file'`, or a `path` with an extension) has no room for those two files. With `group`, handlers move into subfolders and the two files stay at the root.
+Where the generated MCP handler files are written. The plugin writes `server.ts`, `start.ts`, and `.mcp.json` at the root of `output.path`, next to the handlers. Keep `output.path` a folder name such as the default `'mcp'`. Single-file output (`output.mode: 'file'`, or a `path` with an extension) has no room for those files. With `group`, handlers move into subfolders and those files stay at the root.
 
 |          |                                              |
 | -------- | -------------------------------------------- |

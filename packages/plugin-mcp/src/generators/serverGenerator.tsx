@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { findSuccessStatusCode, getOperationParameters } from '@internals/shared'
+import { getRelativePath } from '@internals/utils'
 import { ast, defineGenerator } from 'kubb/kit'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { File, jsxRenderer } from 'kubb/jsx'
@@ -32,11 +33,30 @@ export const serverGenerator = defineGenerator<PluginMcp>({
       meta: { pluginName: plugin.name },
     }
 
+    const startFilePath = path.resolve(root, output.path, 'start.ts')
+    const startFile = {
+      baseName: 'start.ts' as const,
+      path: startFilePath,
+      meta: { pluginName: plugin.name },
+    }
+
     const jsonFilePath = path.resolve(root, output.path, '.mcp.json')
     const jsonFile = {
       baseName: '.mcp.json' as const,
       path: jsonFilePath,
       meta: { pluginName: plugin.name },
+    }
+
+    // MCP clients spawn the command from their own working directory, usually the project root,
+    // so `args` points at `start.ts` relative to `config.root` instead of the `.mcp.json` folder.
+    const mcpConfig = {
+      mcpServers: {
+        [ctx.meta.title || 'server']: {
+          type: 'stdio',
+          command: 'npx',
+          args: ['tsx', getRelativePath(path.resolve(config.root), startFile.path)],
+        },
+      },
     }
 
     const operationsMapped = nodes.filter(ast.isHttpOperationNode).map((node) => {
@@ -124,20 +144,20 @@ export const serverGenerator = defineGenerator<PluginMcp>({
           <Server serverName={ctx.meta.title ?? 'server'} serverVersion={ctx.meta.version ?? '0.0.0'} operations={operationsMapped} />
         </File>
 
+        <File
+          baseName={startFile.baseName}
+          path={startFile.path}
+          meta={startFile.meta}
+          banner={resolver.default.banner(ctx.meta, { output, config, file: { path: startFile.path, baseName: startFile.baseName } })}
+          footer={resolver.default.footer(ctx.meta, { output, config, file: { path: startFile.path, baseName: startFile.baseName } })}
+        >
+          <File.Import name={['startServer']} root={startFile.path} path={serverFile.path} />
+          {/* Not indexable: barrels must not re-export this entry, importing it starts the server. */}
+          <File.Source name="start">{'void startServer()'}</File.Source>
+        </File>
+
         <File baseName={jsonFile.baseName} path={jsonFile.path} meta={jsonFile.meta}>
-          <File.Source name={name}>
-            {`
-          {
-            "mcpServers": {
-              "${ctx.meta.title || 'server'}": {
-                "type": "stdio",
-                "command": "npx",
-                "args": ["tsx", "${path.relative(path.dirname(jsonFile.path), serverFile.path)}"]
-              }
-            }
-          }
-          `}
-          </File.Source>
+          <File.Source name={name}>{`${JSON.stringify(mcpConfig, null, 2)}\n`}</File.Source>
         </File>
       </>
     )

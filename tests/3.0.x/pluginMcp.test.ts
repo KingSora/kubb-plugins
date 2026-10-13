@@ -159,6 +159,10 @@ describe(`plugin-mcp options ${version}`, () => {
     const { files, diagnostics } = await createKubb(
       {
         ...config,
+        // Root the build in the temp dir, as in a real project, so the `.mcp.json` path to
+        // `start.ts` (relative to `root`) stays the same between runs.
+        root: tmpDir,
+        input: path.resolve(config.root, config.input as string),
         output: {
           ...config.output,
           path: output,
