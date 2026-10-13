@@ -10,7 +10,14 @@
     "light": "https://kubb.dev/feature/swr.svg"
   },
   "tags": ["swr", "react", "hooks", "data-fetching", "codegen", "openapi"],
-  "docs": "https://kubb.dev/plugins/plugin-swr",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-swr",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts"],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"

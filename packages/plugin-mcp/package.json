@@ -14,7 +14,7 @@
     "model-context-protocol",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-mcp",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-mcp",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -39,7 +39,7 @@
   "files": [
     "dist",
     "kubb-extension.json",
-    "OVERVIEW.md",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"

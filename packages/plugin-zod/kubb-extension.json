@@ -10,7 +10,13 @@
     "light": "https://kubb.dev/feature/zod.svg"
   },
   "tags": ["zod", "validation", "schema", "runtime-validation", "codegen", "openapi"],
-  "docs": "https://kubb.dev/plugins/plugin-zod",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-zod",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"

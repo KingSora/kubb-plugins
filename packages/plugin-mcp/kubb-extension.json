@@ -11,7 +11,14 @@
     "dark": "https://kubb.dev/feature/mcp-dark.svg"
   },
   "tags": ["mcp", "model-context-protocol", "ai", "claude", "llm", "codegen", "openapi"],
-  "docs": "https://kubb.dev/plugins/plugin-mcp",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-mcp",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts", "plugin-zod"],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"

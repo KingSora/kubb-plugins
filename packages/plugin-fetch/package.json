@@ -13,7 +13,7 @@
     "swagger",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-fetch",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-fetch",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -40,7 +40,7 @@
     "dist",
     "templates",
     "kubb-extension.json",
-    "OVERVIEW.md",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"

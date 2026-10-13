@@ -11,7 +11,7 @@
     "swagger",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-client",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-client",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -23,7 +23,7 @@
     "src",
     "dist",
     "kubb-extension.json",
-    "OVERVIEW.md",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"

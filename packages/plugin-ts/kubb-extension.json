@@ -10,7 +10,13 @@
     "light": "https://kubb.dev/feature/typescript.svg"
   },
   "tags": ["typescript", "types", "interfaces", "codegen", "openapi"],
-  "docs": "https://kubb.dev/plugins/plugin-ts",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-ts",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"

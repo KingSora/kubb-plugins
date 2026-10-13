@@ -10,7 +10,14 @@
     "light": "https://kubb.dev/feature/faker.svg"
   },
   "tags": ["faker", "mock-data", "mocks", "fixtures", "testing", "codegen", "openapi"],
-  "docs": "https://kubb.dev/plugins/plugin-faker",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-faker",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts"],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"

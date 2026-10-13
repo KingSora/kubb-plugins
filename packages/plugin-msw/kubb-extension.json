@@ -10,7 +10,14 @@
     "light": "https://kubb.dev/feature/msw.svg"
   },
   "tags": ["msw", "mock-service-worker", "api-mocking", "mocks", "testing", "codegen", "openapi"],
-  "docs": "https://kubb.dev/plugins/plugin-msw",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-msw",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts", "plugin-faker"],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"
