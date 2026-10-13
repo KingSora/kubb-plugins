@@ -1,4 +1,4 @@
-import type { Exclude, Include, Output, Override, PluginFactoryOptions } from 'kubb/kit'
+import type { Exclude, Include, Output, Override, PluginType } from 'kubb/kit'
 
 export type Options = {
   /**
@@ -24,7 +24,7 @@ export type ResolveOptions = {
   override: Array<Override<ResolveOptions>>
 }
 
-export type PluginRedoc = PluginFactoryOptions<'plugin-redoc', Options, ResolveOptions>
+export type PluginRedoc = PluginType<'plugin-redoc', Options, ResolveOptions>
 
 declare global {
   namespace Kubb {

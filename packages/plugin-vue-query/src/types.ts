@@ -1,6 +1,6 @@
 import type { ClientSelector, ResolvedContractClient } from '@internals/client'
 import type { Infinite, Mutation, Query, Transformer } from '@internals/tanstack-query'
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 export type { Infinite, Transformer } from '@internals/tanstack-query'
 
@@ -195,7 +195,7 @@ export type ResolvedOptions = {
   resolver: ResolverVueQuery
 }
 
-export type PluginVueQuery = PluginFactoryOptions<'plugin-vue-query', Options, ResolvedOptions, ResolverVueQuery>
+export type PluginVueQuery = PluginType<'plugin-vue-query', Options, ResolvedOptions, ResolverVueQuery>
 
 declare global {
   namespace Kubb {

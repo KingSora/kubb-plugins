@@ -1,6 +1,6 @@
 import type { ClientSelector } from '@internals/client'
 import type { Transformer } from '@internals/tanstack-query'
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 export type { Transformer } from '@internals/tanstack-query'
 
@@ -211,7 +211,7 @@ export type ResolvedOptions = {
   resolver: ResolverSwr
 }
 
-export type PluginSwr = PluginFactoryOptions<'plugin-swr', Options, ResolvedOptions, ResolverSwr>
+export type PluginSwr = PluginType<'plugin-swr', Options, ResolvedOptions, ResolverSwr>
 
 declare global {
   namespace Kubb {

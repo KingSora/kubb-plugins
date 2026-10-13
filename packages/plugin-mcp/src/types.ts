@@ -1,5 +1,5 @@
 import type { ClientSelector } from '@internals/client'
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 /**
  * Resolver for MCP that provides naming methods for handler functions.
@@ -79,7 +79,7 @@ export type ResolvedOptions = {
   resolver: ResolverMcp
 }
 
-export type PluginMcp = PluginFactoryOptions<'plugin-mcp', Options, ResolvedOptions, ResolverMcp>
+export type PluginMcp = PluginType<'plugin-mcp', Options, ResolvedOptions, ResolverMcp>
 
 declare global {
   namespace Kubb {

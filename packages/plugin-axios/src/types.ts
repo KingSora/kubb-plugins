@@ -1,4 +1,4 @@
-import type { PluginFactoryOptions } from 'kubb/kit'
+import type { PluginType } from 'kubb/kit'
 import type { Options, ResolvedOptions, ResolverClient } from '@internals/client'
 
 export type { Options, ResolvedOptions, ResolverClient } from '@internals/client'
@@ -8,7 +8,7 @@ export type { Options, ResolvedOptions, ResolverClient } from '@internals/client
  * resolved-options shape with the other client plugins; only the plugin name and transport
  * differ.
  */
-export type PluginAxios = PluginFactoryOptions<'plugin-axios', Options, ResolvedOptions, ResolverClient>
+export type PluginAxios = PluginType<'plugin-axios', Options, ResolvedOptions, ResolverClient>
 
 declare global {
   namespace Kubb {
