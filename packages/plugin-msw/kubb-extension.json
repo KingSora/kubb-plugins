@@ -17,7 +17,7 @@
       "github": "stijnvanhulle"
     }
   ],
-  "dependencies": ["plugin-ts", "plugin-faker"],
+  "dependencies": ["plugin-ts"],
   "compatibility": {
     "kubb": ">=5.8.3",
     "node": ">=22"

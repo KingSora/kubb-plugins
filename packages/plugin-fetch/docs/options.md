@@ -11,7 +11,6 @@ Pass these options to `pluginFetch()`. Shared options link to [Shared plugin opt
 | [`baseURL`](#baseurl)                                                     | Base URL prepended to every request.                                   | None                                             |
 | [`throwOnErrorDefault`](#throwonerrordefault)                             | Default error behavior and return type for generated operations.       | `true`                                           |
 | [`validator`](#validator)                                                 | Validate request and response bodies with Zod.                         | `false`                                          |
-| [`comments`](#comments)                                                   | How much of each description reaches the JSDoc.                        | `'full'`                                         |
 | [`sdk`](#sdk)                                                             | Generate a class-based SDK instead of functions.                       | None                                             |
 | [`returnType`](#returntype)                                               | Shape of the value a generated call resolves to.                       | `'full'`                                         |
 | [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)   | Keep only operations that match.                                       | None                                             |
@@ -89,32 +88,6 @@ export default defineConfig({
   ],
 })
 ```
-
-### comments
-
-Controls generated JSDoc.
-
-|          |                               |
-| -------- | ----------------------------- |
-| Type     | `'full' \| 'brief' \| 'none'` |
-| Required | `false`                       |
-| Default  | `'full'`                      |
-
-::field-group
-
-:::field{name="'full'"}
-Default value. Keeps complete descriptions and tags.
-:::
-
-:::field{name="'brief'"}
-Keeps the first sentence and other tags. Descriptions over 150 characters without a sentence ending are cut at the last word before 120.
-:::
-
-:::field{name="'none'"}
-Omits JSDoc but keeps the generated-by banner.
-:::
-
-::
 
 ### sdk
 
