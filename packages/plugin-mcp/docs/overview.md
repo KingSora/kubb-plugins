@@ -41,9 +41,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [Run an MCP server](https://kubb.dev/extensions/kubb-labs/plugin-mcp/guides/server)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
-- [`@kubb/plugin-zod`](https://kubb.dev/extensions/kubb-labs/plugin-zod)

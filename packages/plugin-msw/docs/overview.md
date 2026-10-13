@@ -36,8 +36,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [MSW](https://mswjs.io/)
-- [`@kubb/plugin-faker`](https://kubb.dev/extensions/kubb-labs/plugin-faker)

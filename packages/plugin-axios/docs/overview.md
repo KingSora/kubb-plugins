@@ -38,9 +38,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [axios](https://axios-http.com/)
-- [`@kubb/plugin-fetch`](https://kubb.dev/extensions/kubb-labs/plugin-fetch)
-- [`@kubb/plugin-zod`](https://kubb.dev/extensions/kubb-labs/plugin-zod)

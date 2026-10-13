@@ -39,9 +39,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [TanStack Query for Vue](https://tanstack.com/query/latest/docs/framework/vue/overview)
-- [`@kubb/plugin-fetch`](https://kubb.dev/extensions/kubb-labs/plugin-fetch)
-- [`@kubb/plugin-axios`](https://kubb.dev/extensions/kubb-labs/plugin-axios)

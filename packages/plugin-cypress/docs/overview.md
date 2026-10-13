@@ -48,8 +48,3 @@ describe('Pet API', () => {
   })
 })
 ```
-
-## See also
-
-- [Cypress](https://www.cypress.io/)
-- [cy.request()](https://docs.cypress.io/api/commands/request)

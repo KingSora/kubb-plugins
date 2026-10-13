@@ -39,9 +39,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [SWR](https://swr.vercel.app)
-- [`@kubb/plugin-fetch`](https://kubb.dev/extensions/kubb-labs/plugin-fetch)
-- [`@kubb/plugin-axios`](https://kubb.dev/extensions/kubb-labs/plugin-axios)

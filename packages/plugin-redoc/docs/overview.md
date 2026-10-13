@@ -30,8 +30,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [Redoc](https://redocly.com/redoc)
-- [`@kubb/adapter-oas`](https://kubb.dev/extensions/kubb-labs/adapter-oas)

@@ -41,10 +41,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [Write your client](https://kubb.dev/extensions/kubb-labs/plugin-client/guides/write-your-client)
-- [`@kubb/plugin-fetch`](https://kubb.dev/extensions/kubb-labs/plugin-fetch)
-- [`@kubb/plugin-axios`](https://kubb.dev/extensions/kubb-labs/plugin-axios)
-- [Example project](https://github.com/kubb-labs/plugins/tree/main/examples/client)

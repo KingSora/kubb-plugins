@@ -36,8 +36,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [TypeScript](https://www.typescriptlang.org/)
-- [`@kubb/adapter-oas`](https://kubb.dev/extensions/kubb-labs/adapter-oas)

@@ -38,9 +38,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
-- [`@kubb/plugin-axios`](https://kubb.dev/extensions/kubb-labs/plugin-axios)
-- [`@kubb/plugin-zod`](https://kubb.dev/extensions/kubb-labs/plugin-zod)
