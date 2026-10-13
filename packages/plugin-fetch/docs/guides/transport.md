@@ -63,9 +63,3 @@ Pass the isolated client per operation or to a query plugin.
 ## Where to set it
 
 Use `client.setConfig({ transport })` for shared configuration, `createClient({ transport })` for an isolated instance, or pass `transport` on an operation to override it for one call.
-
-## See also
-
-- [Add interceptors](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/interceptors)
-- [Set the base URL](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/base-url)
-- [Call operations](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/calling-operations)

@@ -138,10 +138,3 @@ const url = client.getUrl({
 })
 // https://api.example.com/v1/pets/1?fields=name
 ```
-
-## See also
-
-- [Handle errors](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/error-handling)
-- [Configure serialization](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/serialization)
-- [Set the base URL](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/base-url)
-- [Server-sent events](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/server-sent-events)

@@ -56,8 +56,3 @@ const { data } = await getPetById({ path: { petId: 1 }, baseURL: 'https://localh
 ```
 
 A `baseURL` set on the call wins over `createClient`, which wins over `setConfig`, which wins over the build-time value.
-
-## See also
-
-- [Authenticate requests](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/authentication)
-- [Use a custom transport](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/transport)

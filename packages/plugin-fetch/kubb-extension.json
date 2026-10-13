@@ -17,7 +17,7 @@
       "github": "stijnvanhulle"
     }
   ],
-  "dependencies": ["plugin-ts"],
+  "optionalDependencies": ["plugin-ts", "plugin-zod"],
   "compatibility": {
     "kubb": ">=5.8.3",
     "node": ">=22"

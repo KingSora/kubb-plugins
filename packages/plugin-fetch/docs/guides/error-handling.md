@@ -116,9 +116,3 @@ A `ParseError` reports schema validation issues. A `ResponseError` reports a non
 
 Calling `.unwrap()` on a `throwOnError: false` call turns that same `error` into a rejection, so a
 `try`/`catch` works there too.
-
-## See also
-
-- [Call operations](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/calling-operations)
-- [Configure serialization](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/serialization)
-- [Add interceptors](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/interceptors)

@@ -70,8 +70,3 @@ const { data } = await getPetById({ path: { petId: 1 }, client: tenant })
 To override the client for one request, pass `auth` on that single call, which suits a one-off token refresh. An explicit `headers` value you set on a call always wins over the resolved token.
 
 For authentication outside OpenAPI security schemes, use an async request interceptor to sign requests or supply custom headers.
-
-## See also
-
-- [Add interceptors](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/interceptors)
-- [Set the base URL](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/base-url)

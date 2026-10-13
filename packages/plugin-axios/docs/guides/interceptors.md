@@ -74,9 +74,3 @@ Interceptors registered through `client.interceptors` also follow a custom trans
 instance and attach to the new one, and their IDs stay valid for `eject` and `update`. Clearing the
 transport (`client.setConfig({ transport: undefined })`) moves them back to the client's base
 instance. A per-call `transport` still bypasses client interceptors.
-
-## See also
-
-- [Handle errors](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/error-handling)
-- [Authenticate requests](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/authentication)
-- [Use a custom transport](https://kubb.dev/extensions/kubb-labs/plugin-axios/guides/transport)
