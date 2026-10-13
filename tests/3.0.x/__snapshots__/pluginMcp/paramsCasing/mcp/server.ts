@@ -5,8 +5,8 @@
 
 import { updatePetHandler } from './updatePet'
 import { updatePetBodySchema, updatePetHeaderXRequestIDSchema, updatePetPathPetIdSchema, updatePetQueryIncludeDeletedSchema, updatePetQueryRequestSourceSchema, updatePetStatus200Schema } from '../zod/updatePetSchema'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { serveStdio } from '@modelcontextprotocol/server/stdio'
+import { McpServer } from '@modelcontextprotocol/server'
 import { z } from 'zod'
 
 export function getServer() {
@@ -17,10 +17,10 @@ export function getServer() {
 
   server.registerTool("updatePet", {
     description: "Make a POST request to /pets/{pet_id}",
-    outputSchema: { data: updatePetStatus200Schema },
-    inputSchema: { path: z.object({ "pet_id": updatePetPathPetIdSchema }), query: z.object({ "include_deleted": updatePetQueryIncludeDeletedSchema, "request_source": updatePetQueryRequestSourceSchema }), headers: z.object({ "X-Request-ID": updatePetHeaderXRequestIDSchema }), body: updatePetBodySchema },
-  }, async ({ path, query, headers, body }, request) => {
-    return updatePetHandler({ path, query, headers, body }, request)
+    outputSchema: z.object({ data: updatePetStatus200Schema }),
+    inputSchema: z.object({ path: z.object({ "pet_id": updatePetPathPetIdSchema }), query: z.object({ "include_deleted": updatePetQueryIncludeDeletedSchema, "request_source": updatePetQueryRequestSourceSchema }), headers: z.object({ "X-Request-ID": updatePetHeaderXRequestIDSchema }), body: updatePetBodySchema }),
+  }, async ({ path, query, headers, body }, ctx) => {
+    return updatePetHandler({ path, query, headers, body }, ctx)
   })
 
   return server
@@ -29,12 +29,7 @@ export function getServer() {
 export const server = getServer()
 
 export async function startServer() {
-  try {
-      const transport = new StdioServerTransport()
-      await server.connect(transport)
-
-    } catch (error) {
-      console.error('Failed to start server:', error)
-      process.exit(1)
-    }
+  return serveStdio(getServer, {
+      onerror: (error) => console.error('MCP server error:', error),
+    })
 }

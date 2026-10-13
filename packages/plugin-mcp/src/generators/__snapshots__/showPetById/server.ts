@@ -6,8 +6,8 @@
 
 import { showPetByIdHandler } from './showPetById'
 import { showPetByIdPathPetIdSchema, showPetByIdStatus200Schema } from './showPetByIdSchema'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { serveStdio } from '@modelcontextprotocol/server/stdio'
+import { McpServer } from '@modelcontextprotocol/server'
 import { z } from 'zod'
 
 export function getServer() {
@@ -20,11 +20,11 @@ export function getServer() {
     'showPetById',
     {
       description: 'Make a GET request to /pets/{petId}',
-      outputSchema: { data: showPetByIdStatus200Schema },
-      inputSchema: { path: z.object({ petId: showPetByIdPathPetIdSchema }) },
+      outputSchema: z.object({ data: showPetByIdStatus200Schema }),
+      inputSchema: z.object({ path: z.object({ petId: showPetByIdPathPetIdSchema }) }),
     },
-    async ({ path }, request) => {
-      return showPetByIdHandler({ path }, request)
+    async ({ path }, ctx) => {
+      return showPetByIdHandler({ path }, ctx)
     },
   )
 
@@ -34,11 +34,7 @@ export function getServer() {
 export const server = getServer()
 
 export async function startServer() {
-  try {
-    const transport = new StdioServerTransport()
-    await server.connect(transport)
-  } catch (error) {
-    console.error('Failed to start server:', error)
-    process.exit(1)
-  }
+  return serveStdio(getServer, {
+    onerror: (error) => console.error('MCP server error:', error),
+  })
 }

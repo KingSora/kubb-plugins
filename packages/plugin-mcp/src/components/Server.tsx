@@ -8,10 +8,6 @@ import { zodExprFromSchemaNode, zodGroupExpr } from '../utils.ts'
 
 type Props = {
   /**
-   * Variable name for the MCP server instance (e.g. 'server').
-   */
-  name: string
-  /**
    * Human-readable server name passed to `new McpServer({ name })`.
    */
   serverName: string
@@ -52,7 +48,7 @@ type Props = {
 
 const keysPrinter = functionPrinter({ mode: 'call' })
 
-export function Server({ name, serverName, serverVersion, operations }: Props): KubbReactNode {
+export function Server({ serverName, serverVersion, operations }: Props): KubbReactNode {
   const registrations = operations
     .map(({ tool, mcp, zod, node }) => {
       const { path: pathParams } = getOperationParameters(node)
@@ -95,13 +91,13 @@ export function Server({ name, serverName, serverVersion, operations }: Props): 
         : null
 
       const destructured = paramsNode ? (keysPrinter.print(paramsNode) ?? '') : ''
-      const inputSchema = entries.length ? `{ ${entries.map((e) => `${e.key}: ${e.value}`).join(', ')} }` : null
+      const inputSchema = entries.length ? `z.object({ ${entries.map((e) => `${e.key}: ${e.value}`).join(', ')} })` : null
       const outputSchema = zod.responseName
 
       const config = [
         tool.title ? `title: ${JSON.stringify(tool.title)}` : null,
         `description: ${JSON.stringify(tool.description)}`,
-        outputSchema ? `outputSchema: { data: ${outputSchema} }` : null,
+        outputSchema ? `outputSchema: z.object({ data: ${outputSchema} })` : null,
       ]
         .filter(Boolean)
         .join(',\n  ')
@@ -111,8 +107,8 @@ export function Server({ name, serverName, serverVersion, operations }: Props): 
 server.registerTool(${JSON.stringify(tool.name)}, {
   ${config},
   inputSchema: ${inputSchema},
-}, async (${destructured}, request) => {
-  return ${mcp.name}(${destructured}, request)
+}, async (${destructured}, ctx) => {
+  return ${mcp.name}(${destructured}, ctx)
 })
           `
       }
@@ -120,8 +116,8 @@ server.registerTool(${JSON.stringify(tool.name)}, {
       return `
 server.registerTool(${JSON.stringify(tool.name)}, {
   ${config},
-}, async (request) => {
-  return ${mcp.name}(request)
+}, async (ctx) => {
+  return ${mcp.name}(ctx)
 })
           `
     })
@@ -129,30 +125,31 @@ server.registerTool(${JSON.stringify(tool.name)}, {
     .join('\n')
 
   return (
-    <File.Source name={name} isExportable isIndexable>
-      <Function name="getServer" export>
-        {`const server = new McpServer({
+    <>
+      <File.Source name="getServer" isExportable isIndexable>
+        <Function name="getServer" export>
+          {`const server = new McpServer({
   name: '${serverName}',
   version: '${serverVersion}',
 })
 ${registrations}
 return server`}
-      </Function>
+        </Function>
+      </File.Source>
 
-      <Const name={'server'} export>
-        {'getServer()'}
-      </Const>
+      <File.Source name="server" isExportable isIndexable>
+        <Const name={'server'} export>
+          {'getServer()'}
+        </Const>
+      </File.Source>
 
-      <Function name="startServer" async export>
-        {`try {
-    const transport = new StdioServerTransport()
-    await server.connect(transport)
-
-  } catch (error) {
-    console.error('Failed to start server:', error)
-    process.exit(1)
-  }`}
-      </Function>
-    </File.Source>
+      <File.Source name="startServer" isExportable isIndexable>
+        <Function name="startServer" async export>
+          {`return serveStdio(getServer, {
+    onerror: (error) => console.error('MCP server error:', error),
+  })`}
+        </Function>
+      </File.Source>
+    </>
   )
 }

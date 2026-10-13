@@ -4,8 +4,7 @@
 */
 
 import type { AddPetOptions } from '../types/AddPet'
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolResult, ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ServerContext } from '@modelcontextprotocol/server'
 import { addPet } from '../clients/addPet'
 
 /**
@@ -13,8 +12,8 @@ import { addPet } from '../clients/addPet'
  * @summary Add a new pet to the store
  * {@link /pet}
  */
-export async function addPetHandler({ body }: AddPetOptions, request: RequestHandlerExtra<ServerRequest, ServerNotification>): Promise<CallToolResult> {
-  const res = await addPet({ body, signal: request.signal, throwOnError: true })
+export async function addPetHandler({ body }: AddPetOptions, ctx: ServerContext): Promise<CallToolResult> {
+  const res = await addPet({ body, signal: ctx.mcpReq.signal, throwOnError: true })
 
   return {
     content: [
