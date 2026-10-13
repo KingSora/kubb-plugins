@@ -12,7 +12,7 @@ The client plugins `@kubb/plugin-fetch`, `@kubb/plugin-axios`, and `@kubb/plugin
 ## Options worth knowing
 
 - `mini` (beta) generates Zod Mini schemas for smaller bundles, and switches `importPath` to `zod/mini`.
-- `importPath` sets the module the files import `z` from. The default is `zod`.
+- `importPath` sets the module the generated files import `z` from. The default is `zod`.
 - `inferred` adds a `z.infer` type next to each schema, so you can skip `@kubb/plugin-ts`.
 - `coercion` wraps schemas in `z.coerce`, so input is converted before validation. Pass an object to coerce only dates, strings, or numbers.
 - `guidType` picks `z.uuid()` (default) or `z.guid()` for `format: uuid`.
