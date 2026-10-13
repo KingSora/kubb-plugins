@@ -1,8 +1,8 @@
 # TypeScript
 
-Generates TypeScript types and interfaces from your OpenAPI spec. You get a type for every schema, plus the request, response, and parameter types of each operation.
+The TypeScript plugin generates a type or interface for every schema in your OpenAPI spec, plus the request, response, and parameter types of each operation.
 
-Most other Kubb plugins build on these types. The client, query, mock, and test plugins import them, so add this plugin first.
+Kubb runs this plugin before the plugins that import its types, whatever the order of the `plugins` array.
 
 ## Setup
 
@@ -16,7 +16,13 @@ No other plugins or packages are needed.
 - `arrayType` writes arrays as `T[]` (default) or `Array<T>`.
 - `group` splits the output into folders by tag or path. It does not work with `output.mode: 'file'`.
 
+With the default OpenAPI adapter, `int64` fields are typed as `bigint`, while JSON responses hold numbers. Set `integerType: 'number'` on `adapterOas` for most JSON APIs.
+
+See [Options](https://kubb.dev/extensions/kubb-labs/plugin-ts/options) for every option and its default.
+
 ## Example
+
+The config below generates the types into `src/gen/types`.
 
 ```typescript [kubb.config.ts]
 import { defineConfig } from 'kubb/config'
@@ -30,8 +36,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [TypeScript](https://www.typescriptlang.org/)
-- [TypeScript Compiler API](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API)
