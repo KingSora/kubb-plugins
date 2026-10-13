@@ -92,14 +92,19 @@
     "@internals/tanstack-query": "workspace:*",
     "@internals/utils": "workspace:*",
     "@tanstack/vue-query": "^5.104.1",
-    "kubb": "catalog:"
+    "kubb": "catalog:",
+    "vue": "^3.5.43"
   },
   "peerDependencies": {
-    "@tanstack/vue-query": "^5.0.0",
-    "kubb": "catalog:"
+    "@tanstack/vue-query": "^5.41.0",
+    "kubb": "catalog:",
+    "vue": ">=3.3.0"
   },
   "peerDependenciesMeta": {
     "@tanstack/vue-query": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   },
