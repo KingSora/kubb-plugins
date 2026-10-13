@@ -1,4 +1,4 @@
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 /**
  * Validator applied to request and response bodies using schemas from `@kubb/plugin-zod`.
@@ -188,11 +188,11 @@ export type ResolvedOptions = {
  * plugin-axios, plugin-ky) declares its own name and registers itself; this base ties the shared
  * builders, resolver, and components to one option/resolver shape.
  */
-export type PluginContractClient = PluginFactoryOptions<'plugin-contract-client', Options, ResolvedOptions, ResolverClient>
+export type PluginContractClient = PluginType<'plugin-contract-client', Options, ResolvedOptions, ResolverClient>
 
 /**
  * The shape any client plugin (plugin-fetch, plugin-axios) must satisfy to reuse the shared
  * client and SDK generators. Pins the option, resolved-option, and resolver shapes while leaving
  * the plugin name free.
  */
-export type ContractClientFactory = PluginFactoryOptions<string, Options, ResolvedOptions, ResolverClient>
+export type ContractClientFactory = PluginType<string, Options, ResolvedOptions, ResolverClient>

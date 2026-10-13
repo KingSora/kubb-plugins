@@ -303,7 +303,7 @@ describe('buildOptionsSchema', () => {
   test('marks body, path, query, and headers as never when the operation has none of them', () => {
     const node = ast.factory.createOperation({ operationId: 'listPets', method: 'GET', path: '/pets' })
 
-    const schema = buildOptionsSchema(node, resolver)
+    const schema = ast.narrowSchema(buildOptionsSchema(node, resolver), 'object')!
 
     expect(schema.type).toBe('object')
     expect(schema.primitive).toBe('object')
@@ -328,7 +328,7 @@ describe('buildOptionsSchema', () => {
       requestBody: { content: [ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'object' }) })] },
     })
 
-    const schema = buildOptionsSchema(node, resolver)
+    const schema = ast.narrowSchema(buildOptionsSchema(node, resolver), 'object')!
 
     expect(
       schema.properties?.map((property) => ({
