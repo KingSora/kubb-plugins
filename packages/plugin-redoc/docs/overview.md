@@ -1,20 +1,22 @@
 # Redoc
 
-Generates a single HTML page that documents your OpenAPI spec with Redoc. The page is rebuilt on every Kubb run, so the docs always match the spec your code comes from.
+The Redoc plugin generates a single HTML page that documents your OpenAPI spec with Redoc.
 
-The spec is embedded in the page, so you can publish it to any static host without a build step. Viewing the page needs network access, because Redoc's scripts and fonts load from a CDN.
+The whole spec is embedded in the page, so you can publish the page to any static host without a build step. Viewing the page needs network access, because it loads the latest Redoc bundle from `cdn.redoc.ly` and its fonts from Google Fonts.
 
 ## Setup
 
-No other plugins or packages are needed. The plugin reads the spec through Kubb's default OpenAPI adapter.
+No other plugins or packages are needed. The plugin reads the spec through the default OpenAPI adapter, `adapterOas`, and fails with any other adapter.
 
 ## Options worth knowing
 
-- `output.path` is the path of the HTML file. The default is `docs.html`. It points at a file, not a folder, so end it with `.html`.
+- `output.path` sets the HTML file path, relative to the root `output.path`. The default is `docs.html`. End it with `.html`, because it names a file, not a folder.
 
-The plugin takes no other options.
+The plugin has no other options. See [Options](https://kubb.dev/extensions/kubb-labs/plugin-redoc/options) for its type and default.
 
 ## Example
+
+The config below writes the page to `src/gen/docs.html`.
 
 ```typescript [kubb.config.ts]
 import { defineConfig } from 'kubb/config'
@@ -28,8 +30,3 @@ export default defineConfig({
   ],
 })
 ```
-
-## See also
-
-- [Redoc](https://redocly.com/redoc)
-- [adapterOas](https://kubb.dev/extensions/kubb-labs/adapter-oas)
