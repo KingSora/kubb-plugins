@@ -10,7 +10,14 @@
     "light": "https://kubb.dev/feature/axios.svg"
   },
   "tags": ["api-client", "axios", "http-client", "codegen", "openapi", "validator"],
-  "docs": "https://kubb.dev/plugins/plugin-axios",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-axios",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts"],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"

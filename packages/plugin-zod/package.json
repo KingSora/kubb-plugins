@@ -14,7 +14,7 @@
     "validation",
     "zod"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-zod",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-zod",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -40,7 +40,7 @@
     "templates",
     "dist",
     "kubb-extension.json",
-    "OVERVIEW.md",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"

@@ -15,7 +15,7 @@
     "use-swr",
     "use-swr-mutation"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-swr",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-swr",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -40,7 +40,7 @@
   "files": [
     "dist",
     "kubb-extension.json",
-    "OVERVIEW.md",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"

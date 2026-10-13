@@ -10,7 +10,14 @@
     "light": "https://kubb.dev/feature/tanstack.svg"
   },
   "tags": ["vue-query", "tanstack-query", "vue", "composables", "data-fetching", "codegen", "openapi"],
-  "docs": "https://kubb.dev/plugins/plugin-vue-query",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-vue-query",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts"],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"

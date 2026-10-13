@@ -13,7 +13,7 @@
     "types",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-ts",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-ts",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -38,7 +38,7 @@
   "files": [
     "dist",
     "kubb-extension.json",
-    "OVERVIEW.md",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"

@@ -10,7 +10,13 @@
     "light": "https://kubb.dev/feature/openapi.svg"
   },
   "tags": ["redoc", "api-docs", "documentation", "interactive-docs", "codegen", "openapi"],
-  "docs": "https://kubb.dev/plugins/plugin-redoc",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-redoc",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"

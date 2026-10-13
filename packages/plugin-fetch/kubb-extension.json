@@ -10,7 +10,14 @@
     "light": "https://kubb.dev/feature/javascript.svg"
   },
   "tags": ["api-client", "fetch", "http-client", "codegen", "openapi", "validator"],
-  "docs": "https://kubb.dev/plugins/plugin-fetch",
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-fetch",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts"],
   "compatibility": {
     "kubb": ">=5.8.2",
     "node": ">=22"
