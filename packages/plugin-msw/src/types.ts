@@ -1,4 +1,4 @@
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 /**
  * Resolver for MSW that provides naming methods for handler functions.
@@ -80,7 +80,7 @@ export type ResolvedOptions = {
   resolver: ResolverMsw
 }
 
-export type PluginMsw = PluginFactoryOptions<'plugin-msw', Options, ResolvedOptions, ResolverMsw>
+export type PluginMsw = PluginType<'plugin-msw', Options, ResolvedOptions, ResolverMsw>
 
 declare global {
   namespace Kubb {

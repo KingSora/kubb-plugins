@@ -1,4 +1,4 @@
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 import type { PrinterTsNodes } from './printers/printerTs.ts'
 /**
  * The concrete resolver type for `@kubb/plugin-ts`.
@@ -323,7 +323,7 @@ export type ResolvedOptions = {
   printer: Options['printer']
 }
 
-export type PluginTs = PluginFactoryOptions<'plugin-ts', Options, ResolvedOptions, ResolverTs>
+export type PluginTs = PluginType<'plugin-ts', Options, ResolvedOptions, ResolverTs>
 
 declare global {
   namespace Kubb {

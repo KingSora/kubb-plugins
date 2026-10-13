@@ -1,4 +1,4 @@
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 /**
  * Resolver for Cypress that provides naming methods for test functions.
@@ -49,7 +49,7 @@ export type ResolvedOptions = {
   resolver: ResolverCypress
 }
 
-export type PluginCypress = PluginFactoryOptions<'plugin-cypress', Options, ResolvedOptions, ResolverCypress>
+export type PluginCypress = PluginType<'plugin-cypress', Options, ResolvedOptions, ResolverCypress>
 
 declare global {
   namespace Kubb {
