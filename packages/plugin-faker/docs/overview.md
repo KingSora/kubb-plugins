@@ -1,23 +1,28 @@
 # Faker
 
-Generates a Faker.js mock-data factory for every schema in your OpenAPI spec. Use the factories in tests, Storybook, and local development without a running backend. Each factory accepts partial data that overrides the generated values.
+The Faker plugin writes a factory function for every schema in your OpenAPI spec that returns realistic mock data from Faker.js. Each factory accepts partial data that overrides the generated values.
 
-`@kubb/plugin-msw` can use these factories to fill mock responses.
+Use the factories in tests, Storybook, and local development without a running backend. `@kubb/plugin-msw` can use them to fill mock responses.
 
 ## Setup
 
-- Add `@kubb/plugin-ts` for the factory return types.
-- Install `@faker-js/faker` v9 or higher in the app that uses the generated code.
+- Add `@kubb/plugin-ts` for the factory return types. Generation fails without it.
+- Install `@faker-js/faker` v10 in the app that uses the generated code.
+- Install `dayjs`, `moment`, or `randexp` when you pick it in `dateParser` or `regexGenerator`.
 
 ## Options worth knowing
 
 - `seed` passes a fixed seed to `faker.seed(...)`, so every run returns the same data.
 - `locale` sets the Faker locale. The default is `en`.
-- `dateParser` formats date and time strings with `faker` (default), `dayjs`, or `moment`. Install the library you pick.
+- `dateParser` formats `date` and `time` strings with `faker` (default), `dayjs`, or `moment`. `date-time` values always use Faker. `dayjs` and `moment` do not work with `dateType: 'date'` on the adapter.
 - `regexGenerator` turns a `pattern` into a string with `faker` (default) or `randexp`.
-- `typeMode` sets the factory types: `inferred` (default) derives them from the generated values. `schema` uses the declared model type.
+- `typeMode` sets the factory types: `inferred` (default) derives them from the generated values, and `schema` uses the declared model type.
+
+See [Options](https://kubb.dev/extensions/kubb-labs/plugin-faker/options) for every option and its default.
 
 ## Example
+
+The config below generates the factories with a fixed seed.
 
 ```typescript [kubb.config.ts]
 import { defineConfig } from 'kubb/config'
@@ -37,5 +42,4 @@ export default defineConfig({
 ## See also
 
 - [Faker.js](https://fakerjs.dev/)
-- [@kubb/plugin-ts](https://kubb.dev/extensions/kubb-labs/plugin-ts)
-- [@kubb/plugin-msw](https://kubb.dev/extensions/kubb-labs/plugin-msw)
+- [`@kubb/plugin-msw`](https://kubb.dev/extensions/kubb-labs/plugin-msw)
