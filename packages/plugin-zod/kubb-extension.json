@@ -1,0 +1,204 @@
+{
+  "$schema": "https://kubb.dev/schemas/kubb-extension.json",
+  "kind": "plugin",
+  "name": "plugin-zod",
+  "export": "pluginZod",
+  "displayName": "Zod",
+  "description": "Generates Zod v4 schemas from your OpenAPI spec so you validate API responses, form input, and query params at runtime.",
+  "category": "validation",
+  "icon": {
+    "light": "https://kubb.dev/feature/zod.svg"
+  },
+  "tags": ["zod", "validation", "schema", "runtime-validation", "codegen", "openapi"],
+  "docs": "https://kubb.dev/plugins/plugin-zod",
+  "compatibility": {
+    "kubb": ">=5.8.0",
+    "node": ">=22"
+  },
+  "options": [
+    {
+      "key": "outputPath",
+      "path": ["output", "path"],
+      "label": "Output Path",
+      "description": "Output folder for generated files",
+      "type": "text",
+      "default": "zod"
+    },
+    {
+      "key": "barrel",
+      "path": ["output", "barrel"],
+      "label": "Barrel",
+      "description": "How index.ts barrel files are generated",
+      "type": "select",
+      "default": {
+        "type": "named"
+      },
+      "choices": [
+        {
+          "label": "named",
+          "value": {
+            "type": "named"
+          }
+        },
+        {
+          "label": "named (nested)",
+          "value": {
+            "type": "named",
+            "nested": true
+          }
+        },
+        {
+          "label": "all",
+          "value": {
+            "type": "all"
+          }
+        },
+        {
+          "label": "all (nested)",
+          "value": {
+            "type": "all",
+            "nested": true
+          }
+        },
+        {
+          "label": "false (disabled)",
+          "value": false
+        }
+      ]
+    },
+    {
+      "key": "outputMode",
+      "path": ["output", "mode"],
+      "label": "Output Mode",
+      "description": "How the plugin consolidates its code into files. File mode writes everything into a single file, so the output path must include a file extension and cannot be grouped.",
+      "type": "select",
+      "default": "directory",
+      "choices": [
+        {
+          "label": "directory (one file per schema)",
+          "value": "directory"
+        },
+        {
+          "label": "file (single file)",
+          "value": "file"
+        }
+      ]
+    },
+    {
+      "key": "group",
+      "path": ["group"],
+      "label": "Group",
+      "description": "Group generated operations by OpenAPI tag or path",
+      "type": "select",
+      "default": null,
+      "choices": [
+        {
+          "label": "none",
+          "value": null
+        },
+        {
+          "label": "by tag",
+          "value": {
+            "type": "tag"
+          }
+        },
+        {
+          "label": "by path",
+          "value": {
+            "type": "path"
+          }
+        }
+      ]
+    },
+    {
+      "key": "excludeTags",
+      "path": ["exclude"],
+      "label": "Exclude Tags",
+      "description": "Comma-separated OpenAPI tags to exclude from generation",
+      "type": "list",
+      "item": {
+        "type": "tag",
+        "pattern": "$item"
+      }
+    },
+    {
+      "key": "includeTags",
+      "path": ["include"],
+      "label": "Include Tags",
+      "description": "Comma-separated OpenAPI tags to include. Only operations with these tags are generated",
+      "type": "list",
+      "item": {
+        "type": "tag",
+        "pattern": "$item"
+      }
+    },
+    {
+      "key": "mini",
+      "path": ["mini"],
+      "label": "Zod Mini",
+      "description": "Use Zod Mini functional API for better tree-shaking",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "importPath",
+      "path": ["importPath"],
+      "label": "Import Path",
+      "description": "Module specifier used in the import statement",
+      "type": "text",
+      "default": "zod"
+    },
+    {
+      "key": "guidType",
+      "path": ["guidType"],
+      "label": "GUID Type",
+      "description": "Validator used for OpenAPI format: uuid",
+      "type": "select",
+      "default": "uuid",
+      "choices": [
+        {
+          "label": "uuid",
+          "value": "uuid"
+        },
+        {
+          "label": "guid",
+          "value": "guid"
+        }
+      ]
+    },
+    {
+      "key": "regexType",
+      "path": ["regexType"],
+      "label": "Regex Type",
+      "description": "Output form for an OpenAPI pattern inside .regex(...)",
+      "type": "select",
+      "default": "literal",
+      "choices": [
+        {
+          "label": "literal",
+          "value": "literal"
+        },
+        {
+          "label": "constructor",
+          "value": "constructor"
+        }
+      ]
+    },
+    {
+      "key": "inferred",
+      "path": ["inferred"],
+      "label": "Inferred",
+      "description": "Export a z.infer type alias next to every generated schema",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "coercion",
+      "path": ["coercion"],
+      "label": "Coercion",
+      "description": "Wrap schemas in z.coerce so input is coerced before validation",
+      "type": "boolean",
+      "default": false
+    }
+  ]
+}

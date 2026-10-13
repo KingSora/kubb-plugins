@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { zodGenerator } from './generators/zodGenerator.tsx'
 import { resolverZod } from './resolvers/resolverZod.ts'
@@ -38,7 +39,7 @@ export const pluginZodName = 'plugin-zod' satisfies PluginZod['name']
  * ```
  */
 export const pluginZod = definePlugin<PluginZod>({
-  meta: { name: pluginZodName, version, compatibility: { kubb: '>=5.8.0' } },
+  meta: { name: pluginZodName, version, compatibility },
   setup(options) {
     const {
       output = { path: 'zod', barrel: { type: 'named' } },

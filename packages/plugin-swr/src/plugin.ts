@@ -1,5 +1,6 @@
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { resolveContractClient } from '@internals/client'
@@ -36,7 +37,7 @@ export const pluginSwrName = 'plugin-swr' satisfies PluginSwr['name']
  * ```
  */
 export const pluginSwr = definePlugin<PluginSwr>({
-  meta: { name: pluginSwrName, version, compatibility: { kubb: '>=5.8.0' } },
+  meta: { name: pluginSwrName, version, compatibility },
   dependencies: { [pluginTsName]: {} },
   setup(options) {
     const {
