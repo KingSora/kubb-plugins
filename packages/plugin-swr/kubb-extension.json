@@ -12,7 +12,7 @@
   "tags": ["swr", "react", "hooks", "data-fetching", "codegen", "openapi"],
   "docs": "https://kubb.dev/plugins/plugin-swr",
   "compatibility": {
-    "kubb": ">=5.8.0",
+    "kubb": ">=5.8.2",
     "node": ">=22"
   },
   "role": "consumer",

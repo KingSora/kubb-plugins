@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { addGenerator, defineExtension, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginFakerName } from '@kubb/plugin-faker'
@@ -40,7 +40,8 @@ export const pluginMswName = 'plugin-msw' satisfies PluginMsw['name']
  * })
  * ```
  */
-export const pluginMsw = definePlugin<PluginMsw>({
+export const pluginMsw = defineExtension<PluginMsw>({
+  kind: 'plugin',
   meta: { name: pluginMswName, version, compatibility },
   dependencies: (options) => ({ [pluginTsName]: {}, ...(options.parser === 'faker' ? { [pluginFakerName]: {} } : {}) }),
   setup(options) {

@@ -2,7 +2,7 @@ import path from 'node:path'
 import type { AdapterOas } from '@kubb/adapter-oas'
 import { adapterOasName } from '@kubb/adapter-oas'
 
-import { type Adapter, ast, definePlugin, injectFile, useConfig } from 'kubb/kit'
+import { type Adapter, ast, defineExtension, injectFile, useConfig } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { getPageHTML } from './redoc.tsx'
@@ -33,7 +33,8 @@ export const pluginRedocName = 'plugin-redoc' satisfies PluginRedoc['name']
  * })
  * ```
  */
-export const pluginRedoc = definePlugin<PluginRedoc>({
+export const pluginRedoc = defineExtension<PluginRedoc>({
+  kind: 'plugin',
   meta: { name: pluginRedocName, version, compatibility },
   async setup(options) {
     const config = useConfig()

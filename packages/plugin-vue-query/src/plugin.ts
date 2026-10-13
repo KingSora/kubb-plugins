@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { addGenerator, defineExtension, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
@@ -39,7 +39,8 @@ export const pluginVueQueryName = 'plugin-vue-query' satisfies PluginVueQuery['n
  * })
  * ```
  */
-export const pluginVueQuery = definePlugin<PluginVueQuery>({
+export const pluginVueQuery = defineExtension<PluginVueQuery>({
+  kind: 'plugin',
   meta: { name: pluginVueQueryName, version, compatibility },
   dependencies: { [pluginTsName]: {} },
   setup(options) {

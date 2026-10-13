@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { addGenerator, defineExtension, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
@@ -23,7 +23,8 @@ export const pluginClientName = 'plugin-client' satisfies PluginClient['name']
  * pluginClient({ importPath: '../api/client' })
  * ```
  */
-export const pluginClient = definePlugin<PluginClient>({
+export const pluginClient = defineExtension<PluginClient>({
+  kind: 'plugin',
   meta: { name: pluginClientName, version, compatibility },
   dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !options.validator } }),
   setup(options) {

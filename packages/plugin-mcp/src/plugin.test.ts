@@ -1,12 +1,12 @@
 import { createKubb } from 'kubb'
-import { definePlugin, kubbContext } from 'kubb/kit'
+import { defineExtension, kubbContext } from 'kubb/kit'
 import { createMockedSetupContext } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
 import { pluginMcp } from './plugin.ts'
 import type { PluginMcp } from './types.ts'
 
 function setupKubb(pluginNames: Array<string>) {
-  const plugins = pluginNames.map((name) => definePlugin({ meta: { name } })())
+  const plugins = pluginNames.map((name) => defineExtension({ kind: 'plugin', meta: { name } })())
 
   return createKubb({ input: './petStore.yaml', output: { path: './gen' }, plugins: [...plugins, pluginMcp()] }).setup()
 }

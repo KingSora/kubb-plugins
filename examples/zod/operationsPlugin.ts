@@ -1,4 +1,4 @@
-import { ast, defineGenerator, definePlugin } from 'kubb/kit'
+import { ast, defineExtension, defineGenerator } from 'kubb/kit'
 import { pluginZodName, type ResolverZod } from '@kubb/plugin-zod'
 
 const operationSchemaType = `{
@@ -72,8 +72,9 @@ function buildSchemaNames(node: ast.OperationNode, resolver: ResolverZod) {
   }
 }
 
-export const pluginZodOperations = definePlugin(() => ({
-  name: 'plugin-zod-operations',
+export const pluginZodOperations = defineExtension({
+  kind: 'plugin',
+  meta: { name: 'plugin-zod-operations' },
   hooks: {
     'kubb:plugin:setup'(ctx) {
       ctx.addGenerator(
@@ -152,4 +153,4 @@ export const pluginZodOperations = definePlugin(() => ({
       )
     },
   },
-}))
+})
