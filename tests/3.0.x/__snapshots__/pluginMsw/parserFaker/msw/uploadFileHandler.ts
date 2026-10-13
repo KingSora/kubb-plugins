@@ -21,7 +21,7 @@ export function uploadFileHandler(data?: UploadFileResponse | HttpResponseResolv
   return http.post<Record<string, string>, UploadFileBody>('/pet/:petId/uploadImage', function handler(info) {
       if(typeof data === 'function') return data(info)
 
-      return new Response(JSON.stringify(data || createUploadFileResponse(data)), {
+      return new Response(JSON.stringify(data ?? createUploadFileResponse(data)), {
         status: 200,
         headers: {
           'Content-Type': 'application/json'

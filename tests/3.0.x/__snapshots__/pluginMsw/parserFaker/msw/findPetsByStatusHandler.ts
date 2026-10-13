@@ -26,7 +26,7 @@ export function findPetsByStatusHandler(data?: FindPetsByStatusResponse | ((info
   return http.get('/pet/findByStatus', function handler(info) {
       if(typeof data === 'function') return data(info)
 
-      return new Response(JSON.stringify(data || createFindPetsByStatusResponse(data)), {
+      return new Response(JSON.stringify(data ?? createFindPetsByStatusResponse(data)), {
         status: 200,
         headers: {
           'Content-Type': 'application/json'

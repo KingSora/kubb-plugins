@@ -27,7 +27,7 @@ export function listPetsHandler(data?: ListPetsResponse | ((info: Parameters<Par
   return http.get('/pets', function handler(info) {
     if (typeof data === 'function') return data(info)
 
-    return new Response(JSON.stringify(data || createListPetsResponse(data)), {
+    return new Response(JSON.stringify(data ?? createListPetsResponse(data)), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

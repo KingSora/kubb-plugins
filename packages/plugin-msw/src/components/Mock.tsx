@@ -48,7 +48,7 @@ export function Mock({ baseURL = '', name, fakerName, typeName, requestTypeName,
 
   const requestUrl = `${baseURL}${url.replace(/([^/]):/g, '$1\\\\:')}`
   const urlLiteral = fakerName ? `'${requestUrl}'` : `\`${requestUrl}\``
-  const responseBody = fakerName ? `JSON.stringify(data || ${fakerName}(data))` : 'JSON.stringify(data)'
+  const responseBody = fakerName ? `JSON.stringify(data ?? ${fakerName}(data))` : 'JSON.stringify(data)'
   const headersBlock = headers.length ? `\n      headers: {\n        ${headers.join(', \n')}\n      },` : ''
 
   return (
