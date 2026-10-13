@@ -1,14 +1,14 @@
 # Client
 
-The client plugin turns each operation in your OpenAPI spec into a typed function that calls a client module you write. You decide the transport, authentication, and error handling, and the generated code has no Fetch, axios, or Kubb runtime dependency.
+The Client plugin turns each operation in your OpenAPI spec into a typed function that calls a client module you write. The generated code has no Fetch, axios, or Kubb runtime dependency.
 
 Each function takes grouped `path`, `query`, `headers`, and `body` parameters and passes the operation's auth requirements to your client in a `security` list. A single call can pass its own `client` to replace the default. For a ready-made client, or to use the query plugins or `@kubb/plugin-mcp`, use `@kubb/plugin-fetch` or `@kubb/plugin-axios` instead.
 
 ## Setup
 
-- Set `importPath` to your client module. It is required. The module must export `client` and the `Options` and `RequestResult` types. When the spec has server-sent event operations, it must also export `toEventStream` and the `EventStreamResult` and `SuccessOf` types.
+- Set the required `importPath` option to your client module. The module must export `client` and the `Options` and `RequestResult` types. When the spec has server-sent event operations, it must also export `toEventStream` and the `EventStreamResult` and `SuccessOf` types.
 - Add `@kubb/plugin-ts` for the operation types, or `@kubb/plugin-zod` with `inferred: true`.
-- Add `@kubb/plugin-zod` when you set `validator`. Generation fails without it.
+- Add `@kubb/plugin-zod` when you set `validator`, and install `zod` v4. Generation fails without the plugin.
 
 ## Options worth knowing
 

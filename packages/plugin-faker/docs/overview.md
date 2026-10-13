@@ -1,6 +1,6 @@
 # Faker
 
-The Faker plugin writes a factory function for every schema in your OpenAPI spec that returns realistic mock data from Faker.js. Each factory accepts partial data that overrides the generated values.
+The Faker plugin generates one factory function per schema. Each factory returns mock data from Faker.js and accepts partial data that overrides the generated values.
 
 Use the factories in tests, Storybook, and local development without a running backend. `@kubb/plugin-msw` can use them to fill mock responses.
 

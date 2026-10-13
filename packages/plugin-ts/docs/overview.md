@@ -2,7 +2,7 @@
 
 The TypeScript plugin generates a type or interface for every schema in your OpenAPI spec, plus the request, response, and parameter types of each operation.
 
-The client, query, mock, and test plugins import these types, so add this plugin whenever you use them. Kubb runs it before the plugins that need it, whatever the order of the `plugins` array.
+Kubb runs this plugin before the plugins that import its types, whatever the order of the `plugins` array.
 
 ## Setup
 

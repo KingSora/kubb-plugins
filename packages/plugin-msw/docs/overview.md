@@ -1,12 +1,12 @@
 # MSW
 
-The MSW plugin generates a typed MSW request handler for each operation in your OpenAPI spec. Use the handlers to mock the API in tests and during local development.
+The MSW plugin generates a typed MSW request handler for each operation in your OpenAPI spec.
 
-Each handler returns the data you pass to it. With `parser: 'faker'`, a handler without data falls back to mock data from `@kubb/plugin-faker`, for operations that have a success response schema.
+Each handler returns the data you pass to it. With `parser: 'faker'`, a handler called without data returns mock data from `@kubb/plugin-faker`. Only operations with a success response schema get mock data.
 
 ## Setup
 
-- Add `@kubb/plugin-ts`.
+- Add `@kubb/plugin-ts` for the request and response types.
 - Add `@kubb/plugin-faker` when you set `parser: 'faker'`, and install `@faker-js/faker` v10. The default `data` parser does not need it.
 - Install `msw` v2 in the app that uses the generated code.
 

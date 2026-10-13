@@ -1,13 +1,13 @@
 # Cypress
 
-The Cypress plugin generates a typed `cy.request()` helper for each operation in your OpenAPI spec. Your Cypress tests call the API through these helpers, so TypeScript flags a call with the wrong parameters before the test runs.
+The Cypress plugin generates a typed `cy.request()` helper for each operation in your OpenAPI spec.
 
 Each helper takes grouped `path`, `query`, `headers`, and `body` parameters named after the spec. It returns the response body typed as `Cypress.Chainable<{Operation}Response>`.
 
 ## Setup
 
 - Add `@kubb/plugin-ts` for the request and response types.
-- Install `cypress` v15 or v16.
+- Install `cypress` v15 or v16 in the project that runs the tests.
 - Add `"types": ["cypress"]` to the tsconfig that covers the generated files, because the helpers use the global `Cypress` namespace.
 
 ## Options worth knowing

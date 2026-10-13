@@ -2,7 +2,7 @@
 
 The Fetch plugin turns each operation in your OpenAPI spec into a typed async function that sends the request with the native Fetch API. Each function takes grouped `path`, `query`, `headers`, and `body` parameters and returns a result keyed by status code.
 
-The query plugins (`@kubb/plugin-react-query`, `@kubb/plugin-vue-query`, and `@kubb/plugin-swr`) and `@kubb/plugin-mcp` call these functions. The plugin also copies its runtime, `client.ts`, `serializers.ts`, and `standardSchema.ts`, to `.kubb/` in the root output folder.
+The query plugins (`@kubb/plugin-react-query`, `@kubb/plugin-vue-query`, and `@kubb/plugin-swr`) and `@kubb/plugin-mcp` call these functions. The plugin also copies its runtime files (`client.ts`, `serializers.ts`, and `standardSchema.ts`) to `.kubb/` in the root output folder.
 
 ## Setup
 
@@ -12,7 +12,7 @@ The query plugins (`@kubb/plugin-react-query`, `@kubb/plugin-vue-query`, and `@k
 
 ## Options worth knowing
 
-- `baseURL` is prepended to every request. The spec's `servers` URL is not used, so without `baseURL` you set one at run time with `client.setConfig({ baseURL })`.
+- `baseURL` is prepended to every request. The spec's `servers` URL is not used, so without `baseURL` you set one at runtime with `client.setConfig({ baseURL })`.
 - `validator: 'zod'` validates response bodies with the schemas from `@kubb/plugin-zod`. Use `{ request: 'zod', response: 'zod' }` to also validate request bodies.
 - `throwOnErrorDefault: false` returns documented error responses as values instead of throwing. A single call can still pass `throwOnError`.
 - `returnType: 'data'` makes a call resolve to the success body instead of the full result. With `throwOnError: false`, the call still returns the full result.
