@@ -111,10 +111,13 @@ pnpm vitest run --config ./configs/vitest.config.ts -u packages/plugin-ts   # up
 
 ## Plugin options and docs
 
-A plugin's options are documented in the docs repo ([kubb-labs/docs](https://github.com/kubb-labs/docs)):
+A plugin's docs ship inside its package, in `packages/<name>/docs/`. The registry reads the folder from the npm tarball, and kubb.dev renders it at `https://kubb.dev/extensions/kubb-labs/<name>`:
 
-- Each plugin has a hand-written page at `plugins/<name>/index.md` whose frontmatter carries the registry metadata (name, category, npm package, maintainers, compatibility). Options live in the body of that page and its `reference/` subpages.
-- When a change here adds, removes, or alters an option, update the matching page in the same release cycle. It reaches kubb.dev through the platform fetch pipeline.
+- `docs/overview.md` (required) describes the plugin, its setup, an example `kubb.config.ts`, and related links. It has no install commands, because kubb.dev renders installation from data.
+- `docs/options.md` documents every option. `docs/guides/<id>.md` holds one how-to guide per file, listed in file name order.
+- Each file starts with a `# Title` and a one-paragraph description, with no frontmatter. Links are absolute (`https://kubb.dev/...`) and there is no raw HTML.
+- Registry metadata (display name, category, icon, maintainers, dependencies, compatibility) lives in `kubb-extension.json`.
+- When a change here adds, removes, or alters an option, update `docs/options.md` in the same PR.
 - A documented option must exist in the plugin's `src/types.ts` `Options` type and be honored in `src/plugin.ts`. Keep documented defaults in step with the destructuring defaults in `plugin.ts`.
 
 ## Adding a plugin
@@ -129,6 +132,8 @@ packages/plugin-<name>/
 │   ├── components/     # JSX components
 │   ├── generators/     # Code generation logic
 │   └── *.test.ts(x)    # Unit tests
+├── docs/               # kubb.dev pages: overview.md, options.md, guides/
+├── kubb-extension.json # Registry metadata
 ├── package.json
 ├── tsconfig.json       # extends ../../tsconfig.json
 ├── tsdown.config.ts

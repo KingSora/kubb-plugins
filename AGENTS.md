@@ -39,6 +39,8 @@ Each plugin in the `packages/` directory follows a consistent structure:
 - `src/components/` - JSX-renderer components
 - `src/generators/` - Generator implementations
 - `src/*.test.ts` - Tests
+- `docs/` - kubb.dev pages (overview, options, guides)
+- `kubb-extension.json` - Registry metadata
 - `package.json` - Plugin metadata
 
 ### Shared utilities
@@ -50,10 +52,15 @@ The `internals/` directory provides shared utilities:
 
 ### Plugin docs and metadata
 
-Plugin docs live in the docs repo ([kubb-labs/docs](https://github.com/kubb-labs/docs)). Each plugin has an overview at `plugins/<plugin-id>/index.md` whose frontmatter carries the registry metadata (name, category, npm package, maintainers, compatibility). Options live in `plugins/<plugin-id>/reference/options.md`. Task guides live alongside them. The docs are published on [kubb.dev](https://kubb.dev).
+Each plugin ships its docs in `packages/<name>/docs/`. The registry reads the folder from the npm tarball, and [kubb.dev](https://kubb.dev) renders it at `https://kubb.dev/extensions/kubb-labs/<name>`.
+
+- `docs/overview.md` (required): what the plugin does, setup, an `## Example` with `kubb.config.ts`, and `## See also`. No install commands, because kubb.dev renders installation from data.
+- `docs/options.md`: every option. `docs/guides/<id>.md`: one how-to guide per file, in file name order.
+- Every file starts with a `# Title` and a description paragraph. No frontmatter, no raw HTML, and absolute `https://kubb.dev/...` links.
+- Registry metadata (display name, category, icon, maintainers, dependencies, compatibility) lives in `kubb-extension.json`.
 
 > [!IMPORTANT]
-> **Changing a plugin's options? Update its kubb.dev page in the docs repo.**
+> **Changing a plugin's options? Update `packages/<name>/docs/options.md` in the same PR.**
 >
 > A documented option must exist in the plugin's `src/types.ts` `Options` type and be honored in `src/plugin.ts`. Keep the documented defaults matching the destructuring defaults in `plugin.ts`.
 
