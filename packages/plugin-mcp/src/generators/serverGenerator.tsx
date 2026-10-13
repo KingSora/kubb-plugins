@@ -116,12 +116,12 @@ export const serverGenerator = defineGenerator<PluginMcp>({
           banner={resolver.default.banner(ctx.meta, { output, config, file: { path: serverFile.path, baseName: serverFile.baseName } })}
           footer={resolver.default.footer(ctx.meta, { output, config, file: { path: serverFile.path, baseName: serverFile.baseName } })}
         >
-          <File.Import name={['McpServer']} path={'@modelcontextprotocol/sdk/server/mcp.js'} />
+          <File.Import name={['McpServer']} path={'@modelcontextprotocol/server'} />
+          <File.Import name={['serveStdio']} path={'@modelcontextprotocol/server/stdio'} />
           <File.Import name={['z']} path={'zod'} />
-          <File.Import name={['StdioServerTransport']} path={'@modelcontextprotocol/sdk/server/stdio.js'} />
 
           {imports}
-          <Server name={name} serverName={ctx.meta.title ?? 'server'} serverVersion={ctx.meta.version ?? '0.0.0'} operations={operationsMapped} />
+          <Server serverName={ctx.meta.title ?? 'server'} serverVersion={ctx.meta.version ?? '0.0.0'} operations={operationsMapped} />
         </File>
 
         <File baseName={jsonFile.baseName} path={jsonFile.path} meta={jsonFile.meta}>

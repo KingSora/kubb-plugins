@@ -4,8 +4,7 @@
  */
 
 import type { AddFilesOptions } from '../models/ts/AddFiles'
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolResult, ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ServerContext } from '@modelcontextprotocol/server'
 import { addFiles } from '../clients/addFiles'
 
 /**
@@ -13,8 +12,8 @@ import { addFiles } from '../clients/addFiles'
  * @summary Place an file for a pet
  * {@link /pet/files}
  */
-export async function addFilesHandler({ body }: AddFilesOptions, request: RequestHandlerExtra<ServerRequest, ServerNotification>): Promise<CallToolResult> {
-  const res = await addFiles({ body, signal: request.signal, throwOnError: true })
+export async function addFilesHandler({ body }: AddFilesOptions, ctx: ServerContext): Promise<CallToolResult> {
+  const res = await addFiles({ body, signal: ctx.mcpReq.signal, throwOnError: true })
 
   return {
     content: [

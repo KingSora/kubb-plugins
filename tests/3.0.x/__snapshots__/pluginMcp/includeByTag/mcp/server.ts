@@ -13,8 +13,8 @@ import { deletePetHeaderApiKeySchema, deletePetPathPetIdSchema } from '../zod/de
 import { findPetsByStatusQueryStatusSchema, findPetsByStatusStatus200Schema } from '../zod/findPetsByStatusSchema'
 import { getPetByIdPathPetIdSchema, getPetByIdStatus200Schema } from '../zod/getPetByIdSchema'
 import { uploadFileBodySchema, uploadFilePathPetIdSchema, uploadFileQueryAdditionalMetadataSchema, uploadFileStatus200Schema } from '../zod/uploadFileSchema'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { serveStdio } from '@modelcontextprotocol/server/stdio'
+import { McpServer } from '@modelcontextprotocol/server'
 import { z } from 'zod'
 
 export function getServer() {
@@ -26,49 +26,49 @@ export function getServer() {
   server.registerTool("addPet", {
     title: "Add a new pet to the store",
     description: "Add a new pet to the store",
-    outputSchema: { data: addPetStatus200Schema },
-    inputSchema: { body: addPetBodySchema },
-  }, async ({ body }, request) => {
-    return addPetHandler({ body }, request)
+    outputSchema: z.object({ data: addPetStatus200Schema }),
+    inputSchema: z.object({ body: addPetBodySchema }),
+  }, async ({ body }, ctx) => {
+    return addPetHandler({ body }, ctx)
   })
 
 
   server.registerTool("findPetsByStatus", {
     title: "Finds Pets by status",
     description: "Multiple status values can be provided with comma separated strings",
-    outputSchema: { data: findPetsByStatusStatus200Schema },
-    inputSchema: { query: z.object({ "status": findPetsByStatusQueryStatusSchema }) },
-  }, async ({ query }, request) => {
-    return findPetsByStatusHandler({ query }, request)
+    outputSchema: z.object({ data: findPetsByStatusStatus200Schema }),
+    inputSchema: z.object({ query: z.object({ "status": findPetsByStatusQueryStatusSchema }) }),
+  }, async ({ query }, ctx) => {
+    return findPetsByStatusHandler({ query }, ctx)
   })
 
 
   server.registerTool("getPetById", {
     title: "Find pet by ID",
     description: "Returns a single pet",
-    outputSchema: { data: getPetByIdStatus200Schema },
-    inputSchema: { path: z.object({ "petId": getPetByIdPathPetIdSchema }) },
-  }, async ({ path }, request) => {
-    return getPetByIdHandler({ path }, request)
+    outputSchema: z.object({ data: getPetByIdStatus200Schema }),
+    inputSchema: z.object({ path: z.object({ "petId": getPetByIdPathPetIdSchema }) }),
+  }, async ({ path }, ctx) => {
+    return getPetByIdHandler({ path }, ctx)
   })
 
 
   server.registerTool("deletePet", {
     title: "Deletes a pet",
     description: "delete a pet",
-    inputSchema: { path: z.object({ "petId": deletePetPathPetIdSchema }), headers: z.object({ "api_key": deletePetHeaderApiKeySchema }) },
-  }, async ({ path, headers }, request) => {
-    return deletePetHandler({ path, headers }, request)
+    inputSchema: z.object({ path: z.object({ "petId": deletePetPathPetIdSchema }), headers: z.object({ "api_key": deletePetHeaderApiKeySchema }) }),
+  }, async ({ path, headers }, ctx) => {
+    return deletePetHandler({ path, headers }, ctx)
   })
 
 
   server.registerTool("uploadFile", {
     title: "uploads an image",
     description: "Make a POST request to /pet/{petId}/uploadImage",
-    outputSchema: { data: uploadFileStatus200Schema },
-    inputSchema: { path: z.object({ "petId": uploadFilePathPetIdSchema }), query: z.object({ "additionalMetadata": uploadFileQueryAdditionalMetadataSchema }), body: uploadFileBodySchema },
-  }, async ({ path, query, body }, request) => {
-    return uploadFileHandler({ path, query, body }, request)
+    outputSchema: z.object({ data: uploadFileStatus200Schema }),
+    inputSchema: z.object({ path: z.object({ "petId": uploadFilePathPetIdSchema }), query: z.object({ "additionalMetadata": uploadFileQueryAdditionalMetadataSchema }), body: uploadFileBodySchema }),
+  }, async ({ path, query, body }, ctx) => {
+    return uploadFileHandler({ path, query, body }, ctx)
   })
 
   return server
@@ -77,12 +77,7 @@ export function getServer() {
 export const server = getServer()
 
 export async function startServer() {
-  try {
-      const transport = new StdioServerTransport()
-      await server.connect(transport)
-
-    } catch (error) {
-      console.error('Failed to start server:', error)
-      process.exit(1)
-    }
+  return serveStdio(getServer, {
+      onerror: (error) => console.error('MCP server error:', error),
+    })
 }

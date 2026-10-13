@@ -33,12 +33,12 @@ export function McpHandler({ name, clientName, node, resolver, returnType = 'ful
   if (!ast.isHttpOperationNode(node)) return null
 
   const { signature, groups } = buildRequestParamsSignature(node, resolver, { isConfigurable: false })
-  const paramsSignature = [signature, 'request: RequestHandlerExtra<ServerRequest, ServerNotification>'].filter(Boolean).join(', ')
+  const paramsSignature = [signature, 'ctx: ServerContext'].filter(Boolean).join(', ')
 
   // Forward the grouped config and MCP cancellation signal through the contract client. `throwOnError: true`
   // pins the result shape, since `throwOnErrorDefault: false` would otherwise resolve to the full result.
   const callArgs = requestGroupOrder.filter((key) => groups[key])
-  const callConfig = `{ ${[...callArgs, 'signal: request.signal', 'throwOnError: true'].join(', ')} }`
+  const callConfig = `{ ${[...callArgs, 'signal: ctx.mcpReq.signal', 'throwOnError: true'].join(', ')} }`
   const body = returnType === 'data' ? 'res' : 'res.data'
 
   const callToolResult = `return {

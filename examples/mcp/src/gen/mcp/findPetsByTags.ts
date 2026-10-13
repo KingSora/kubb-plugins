@@ -4,8 +4,7 @@
  */
 
 import type { FindPetsByTagsOptions } from '../models/ts/FindPetsByTags'
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolResult, ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ServerContext } from '@modelcontextprotocol/server'
 import { findPetsByTags } from '../clients/findPetsByTags'
 
 /**
@@ -13,11 +12,8 @@ import { findPetsByTags } from '../clients/findPetsByTags'
  * @summary Finds Pets by tags
  * {@link /pet/findByTags}
  */
-export async function findPetsByTagsHandler(
-  { query, headers }: FindPetsByTagsOptions,
-  request: RequestHandlerExtra<ServerRequest, ServerNotification>,
-): Promise<CallToolResult> {
-  const res = await findPetsByTags({ query, headers, signal: request.signal, throwOnError: true })
+export async function findPetsByTagsHandler({ query, headers }: FindPetsByTagsOptions, ctx: ServerContext): Promise<CallToolResult> {
+  const res = await findPetsByTags({ query, headers, signal: ctx.mcpReq.signal, throwOnError: true })
 
   return {
     content: [
