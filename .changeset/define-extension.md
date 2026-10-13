@@ -14,4 +14,4 @@
 '@kubb/plugin-zod': patch
 ---
 
-Define each plugin with `defineExtension` instead of the deprecated `definePlugin`. The plugins now require Kubb 5.8.2 or later.
+Define each plugin with `defineExtension` instead of the deprecated `definePlugin`. The plugins now require Kubb 5.8.3 or later.
