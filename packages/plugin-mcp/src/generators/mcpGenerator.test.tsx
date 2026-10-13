@@ -164,7 +164,7 @@ describe('mcpGenerator — Operation', () => {
     for (const source of rawSources(driver.fileManager.files)) {
       if (source.includes('structuredContent')) {
         expect(source, 'handler return is indented at the function-body baseline').toContain('\n  return {\n    content: [')
-        expect(source, 'handler forwards the MCP cancellation signal to the client').toContain('signal: request.signal')
+        expect(source, 'handler forwards the MCP cancellation signal to the client').toContain('signal: ctx.mcpReq.signal')
       }
     }
 
@@ -204,7 +204,7 @@ describe("mcpGenerator — the client plugin's returnType", () => {
 
   // Pinning throwOnError keeps the result shape fixed under a client `throwOnErrorDefault: false`.
   test.each([undefined, 'full', 'data'] as const)('calls the client with throwOnError: true (returnType %s)', async (returnType) => {
-    expect(await renderHandler(returnType)).toContain('await getPets({ signal: request.signal, throwOnError: true })')
+    expect(await renderHandler(returnType)).toContain('await getPets({ signal: ctx.mcpReq.signal, throwOnError: true })')
   })
 
   test("reads the body off the full result when the client returns 'full'", async () => {
@@ -253,7 +253,7 @@ describe("mcpGenerator — the client plugin's returnType", () => {
     })
 
     const source = rawSources(driver.fileManager.files).join('\n')
-    expect(source).toContain('await getPetById({ path, query, signal: request.signal, throwOnError: true })')
+    expect(source).toContain('await getPetById({ path, query, signal: ctx.mcpReq.signal, throwOnError: true })')
     expect(source).toContain('text: JSON.stringify(res)')
   })
 
@@ -280,7 +280,7 @@ describe("mcpGenerator — the client plugin's returnType", () => {
     })
 
     const source = rawSources(driver.fileManager.files).join('\n')
-    expect(source).toContain('await getPets({ signal: request.signal, throwOnError: true })')
+    expect(source).toContain('await getPets({ signal: ctx.mcpReq.signal, throwOnError: true })')
     expect(source).toContain('text: JSON.stringify(res)')
     expect(source).toContain('structuredContent: { data: res }')
   })
@@ -318,7 +318,7 @@ describe("mcpGenerator — the client plugin's returnType", () => {
     })
 
     const source = rawSources(driver.fileManager.files).join('\n')
-    expect(source).toContain('await createPet({ body, signal: request.signal, throwOnError: true })')
+    expect(source).toContain('await createPet({ body, signal: ctx.mcpReq.signal, throwOnError: true })')
     expect(source).toContain('text: JSON.stringify(res)')
   })
 
@@ -352,7 +352,7 @@ describe("mcpGenerator — the client plugin's returnType", () => {
     })
 
     const source = rawSources(driver.fileManager.files).join('\n')
-    expect(source).toContain('await getPetWithHeaders({ headers, signal: request.signal, throwOnError: true })')
+    expect(source).toContain('await getPetWithHeaders({ headers, signal: ctx.mcpReq.signal, throwOnError: true })')
     expect(source).toContain('text: JSON.stringify(res.data)')
   })
 

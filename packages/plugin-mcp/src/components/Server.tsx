@@ -95,13 +95,13 @@ export function Server({ name, serverName, serverVersion, operations }: Props): 
         : null
 
       const destructured = paramsNode ? (keysPrinter.print(paramsNode) ?? '') : ''
-      const inputSchema = entries.length ? `{ ${entries.map((e) => `${e.key}: ${e.value}`).join(', ')} }` : null
+      const inputSchema = entries.length ? `z.object({ ${entries.map((e) => `${e.key}: ${e.value}`).join(', ')} })` : null
       const outputSchema = zod.responseName
 
       const config = [
         tool.title ? `title: ${JSON.stringify(tool.title)}` : null,
         `description: ${JSON.stringify(tool.description)}`,
-        outputSchema ? `outputSchema: { data: ${outputSchema} }` : null,
+        outputSchema ? `outputSchema: z.object({ data: ${outputSchema} })` : null,
       ]
         .filter(Boolean)
         .join(',\n  ')
@@ -111,8 +111,8 @@ export function Server({ name, serverName, serverVersion, operations }: Props): 
 server.registerTool(${JSON.stringify(tool.name)}, {
   ${config},
   inputSchema: ${inputSchema},
-}, async (${destructured}, request) => {
-  return ${mcp.name}(${destructured}, request)
+}, async (${destructured}, ctx) => {
+  return ${mcp.name}(${destructured}, ctx)
 })
           `
       }
@@ -120,8 +120,8 @@ server.registerTool(${JSON.stringify(tool.name)}, {
       return `
 server.registerTool(${JSON.stringify(tool.name)}, {
   ${config},
-}, async (request) => {
-  return ${mcp.name}(request)
+}, async (ctx) => {
+  return ${mcp.name}(ctx)
 })
           `
     })
@@ -144,14 +144,9 @@ return server`}
       </Const>
 
       <Function name="startServer" async export>
-        {`try {
-    const transport = new StdioServerTransport()
-    await server.connect(transport)
-
-  } catch (error) {
-    console.error('Failed to start server:', error)
-    process.exit(1)
-  }`}
+        {`return serveStdio(getServer, {
+    onerror: (error) => console.error('MCP server error:', error),
+  })`}
       </Function>
     </File.Source>
   )

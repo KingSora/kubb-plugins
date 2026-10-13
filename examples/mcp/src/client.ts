@@ -1,5 +1,4 @@
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol'
-import type { ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types'
+import type { ServerContext } from '@modelcontextprotocol/server'
 import type { AxiosError, AxiosHeaders, AxiosRequestConfig, AxiosResponse } from 'axios'
 import axios from 'axios'
 
@@ -36,18 +35,15 @@ export const axiosInstance = axios.create({
   headers: typeof AXIOS_HEADERS !== 'undefined' ? (JSON.parse(AXIOS_HEADERS) as AxiosHeaders) : undefined,
 })
 
-export type Client = <TData, _TError = unknown, TVariables = unknown>(
-  config: RequestConfig<TVariables>,
-  request?: RequestHandlerExtra<ServerRequest, ServerNotification>,
-) => Promise<ResponseConfig<TData>>
+export type Client = <TData, _TError = unknown, TVariables = unknown>(config: RequestConfig<TVariables>, ctx?: ServerContext) => Promise<ResponseConfig<TData>>
 
 export const client = async <TData, TError = unknown, TVariables = unknown>(
   config: RequestConfig<TVariables>,
-  request?: RequestHandlerExtra<ServerRequest, ServerNotification>,
+  ctx?: ServerContext,
 ): Promise<ResponseConfig<TData>> => {
   const { query, body, ...axiosConfig } = config
   const promise = axiosInstance
-    .request<TVariables, ResponseConfig<TData>>({ signal: request?.signal, ...axiosConfig, params: query, data: body })
+    .request<TVariables, ResponseConfig<TData>>({ signal: ctx?.mcpReq.signal, ...axiosConfig, params: query, data: body })
     .catch((e: AxiosError<TError>) => {
       throw e
     })

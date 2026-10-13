@@ -36,8 +36,8 @@ import {
   createPetsQueryOffsetSchema,
   createPetsStatus201Schema,
 } from '../zod/pets/createPetsSchema'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { serveStdio } from '@modelcontextprotocol/server/stdio'
+import { McpServer } from '@modelcontextprotocol/server'
 import { z } from 'zod'
 
 export function getServer() {
@@ -51,16 +51,16 @@ export function getServer() {
     {
       title: 'Create a pet',
       description: 'Make a POST request to /pets/{uuid}',
-      outputSchema: { data: createPetsStatus201Schema },
-      inputSchema: {
+      outputSchema: z.object({ data: createPetsStatus201Schema }),
+      inputSchema: z.object({
         path: z.object({ uuid: createPetsPathUuidSchema }),
         query: z.object({ bool_param: createPetsQueryBoolParamSchema, offset: createPetsQueryOffsetSchema }),
         headers: z.object({ 'X-EXAMPLE': createPetsHeaderXEXAMPLESchema }),
         body: createPetsBodySchema,
-      },
+      }),
     },
-    async ({ path, query, headers, body }, request) => {
-      return createPetsHandler({ path, query, headers, body }, request)
+    async ({ path, query, headers, body }, ctx) => {
+      return createPetsHandler({ path, query, headers, body }, ctx)
     },
   )
 
@@ -69,11 +69,11 @@ export function getServer() {
     {
       title: 'Update an existing pet',
       description: 'Update an existing pet by Id',
-      outputSchema: { data: updatePetStatus200Schema },
-      inputSchema: { body: updatePetBodySchema },
+      outputSchema: z.object({ data: updatePetStatus200Schema }),
+      inputSchema: z.object({ body: updatePetBodySchema }),
     },
-    async ({ body }, request) => {
-      return updatePetHandler({ body }, request)
+    async ({ body }, ctx) => {
+      return updatePetHandler({ body }, ctx)
     },
   )
 
@@ -82,10 +82,10 @@ export function getServer() {
     {
       title: 'Add a new pet to the store',
       description: 'Add a new pet to the store',
-      inputSchema: { body: addPetBodySchema },
+      inputSchema: z.object({ body: addPetBodySchema }),
     },
-    async ({ body }, request) => {
-      return addPetHandler({ body }, request)
+    async ({ body }, ctx) => {
+      return addPetHandler({ body }, ctx)
     },
   )
 
@@ -94,11 +94,11 @@ export function getServer() {
     {
       title: 'Finds Pets by status',
       description: 'Multiple status values can be provided with comma separated strings',
-      outputSchema: { data: findPetsByStatusStatus200Schema },
-      inputSchema: { path: z.object({ step_id: findPetsByStatusPathStepIdSchema }) },
+      outputSchema: z.object({ data: findPetsByStatusStatus200Schema }),
+      inputSchema: z.object({ path: z.object({ step_id: findPetsByStatusPathStepIdSchema }) }),
     },
-    async ({ path }, request) => {
-      return findPetsByStatusHandler({ path }, request)
+    async ({ path }, ctx) => {
+      return findPetsByStatusHandler({ path }, ctx)
     },
   )
 
@@ -107,14 +107,14 @@ export function getServer() {
     {
       title: 'Finds Pets by tags',
       description: 'Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.',
-      outputSchema: { data: findPetsByTagsStatus200Schema },
-      inputSchema: {
+      outputSchema: z.object({ data: findPetsByTagsStatus200Schema }),
+      inputSchema: z.object({
         query: z.object({ tags: findPetsByTagsQueryTagsSchema, page: findPetsByTagsQueryPageSchema, pageSize: findPetsByTagsQueryPageSizeSchema }),
         headers: z.object({ 'X-EXAMPLE': findPetsByTagsHeaderXEXAMPLESchema }),
-      },
+      }),
     },
-    async ({ query, headers }, request) => {
-      return findPetsByTagsHandler({ query, headers }, request)
+    async ({ query, headers }, ctx) => {
+      return findPetsByTagsHandler({ query, headers }, ctx)
     },
   )
 
@@ -123,11 +123,11 @@ export function getServer() {
     {
       title: 'Find pet by ID',
       description: 'Returns a single pet',
-      outputSchema: { data: getPetByIdStatus200Schema },
-      inputSchema: { path: z.object({ petId: getPetByIdPathPetIdSchema }) },
+      outputSchema: z.object({ data: getPetByIdStatus200Schema }),
+      inputSchema: z.object({ path: z.object({ petId: getPetByIdPathPetIdSchema }) }),
     },
-    async ({ path }, request) => {
-      return getPetByIdHandler({ path }, request)
+    async ({ path }, ctx) => {
+      return getPetByIdHandler({ path }, ctx)
     },
   )
 
@@ -136,13 +136,13 @@ export function getServer() {
     {
       title: 'Updates a pet in the store with form data',
       description: 'Make a POST request to /pet/{petId}:search',
-      inputSchema: {
+      inputSchema: z.object({
         path: z.object({ petId: updatePetWithFormPathPetIdSchema }),
         query: z.object({ name: updatePetWithFormQueryNameSchema, status: updatePetWithFormQueryStatusSchema }),
-      },
+      }),
     },
-    async ({ path, query }, request) => {
-      return updatePetWithFormHandler({ path, query }, request)
+    async ({ path, query }, ctx) => {
+      return updatePetWithFormHandler({ path, query }, ctx)
     },
   )
 
@@ -151,10 +151,10 @@ export function getServer() {
     {
       title: 'Deletes a pet',
       description: 'delete a pet',
-      inputSchema: { path: z.object({ petId: deletePetPathPetIdSchema }), headers: z.object({ api_key: deletePetHeaderApiKeySchema }) },
+      inputSchema: z.object({ path: z.object({ petId: deletePetPathPetIdSchema }), headers: z.object({ api_key: deletePetHeaderApiKeySchema }) }),
     },
-    async ({ path, headers }, request) => {
-      return deletePetHandler({ path, headers }, request)
+    async ({ path, headers }, ctx) => {
+      return deletePetHandler({ path, headers }, ctx)
     },
   )
 
@@ -163,11 +163,11 @@ export function getServer() {
     {
       title: 'Place an file for a pet',
       description: 'Place a new file in the store',
-      outputSchema: { data: addFilesStatus200Schema },
-      inputSchema: { body: addFilesBodySchema },
+      outputSchema: z.object({ data: addFilesStatus200Schema }),
+      inputSchema: z.object({ body: addFilesBodySchema }),
     },
-    async ({ body }, request) => {
-      return addFilesHandler({ body }, request)
+    async ({ body }, ctx) => {
+      return addFilesHandler({ body }, ctx)
     },
   )
 
@@ -176,15 +176,15 @@ export function getServer() {
     {
       title: 'uploads an image',
       description: 'Make a POST request to /pet/{petId}/uploadImage',
-      outputSchema: { data: uploadFileStatus200Schema },
-      inputSchema: {
+      outputSchema: z.object({ data: uploadFileStatus200Schema }),
+      inputSchema: z.object({
         path: z.object({ petId: uploadFilePathPetIdSchema }),
         query: z.object({ additionalMetadata: uploadFileQueryAdditionalMetadataSchema }),
         body: uploadFileBodySchema,
-      },
+      }),
     },
-    async ({ path, query, body }, request) => {
-      return uploadFileHandler({ path, query, body }, request)
+    async ({ path, query, body }, ctx) => {
+      return uploadFileHandler({ path, query, body }, ctx)
     },
   )
 
@@ -194,11 +194,7 @@ export function getServer() {
 export const server = getServer()
 
 export async function startServer() {
-  try {
-    const transport = new StdioServerTransport()
-    await server.connect(transport)
-  } catch (error) {
-    console.error('Failed to start server:', error)
-    process.exit(1)
-  }
+  return serveStdio(getServer, {
+    onerror: (error) => console.error('MCP server error:', error),
+  })
 }

@@ -4,15 +4,14 @@
  */
 
 import type { CreatePetsOptions } from './CreatePets'
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolResult, ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ServerContext } from '@modelcontextprotocol/server'
 import { createPets } from './clients/createPets'
 
 /**
  * {@link /pets}
  */
-export async function createPetsHandler({ body }: CreatePetsOptions, request: RequestHandlerExtra<ServerRequest, ServerNotification>): Promise<CallToolResult> {
-  const res = await createPets({ body, signal: request.signal, throwOnError: true })
+export async function createPetsHandler({ body }: CreatePetsOptions, ctx: ServerContext): Promise<CallToolResult> {
+  const res = await createPets({ body, signal: ctx.mcpReq.signal, throwOnError: true })
 
   return {
     content: [

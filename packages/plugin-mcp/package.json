@@ -76,17 +76,17 @@
     "@internals/client": "workspace:*",
     "@internals/shared": "workspace:*",
     "@internals/utils": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@modelcontextprotocol/server": "^2.3.1",
     "kubb": "catalog:",
     "zod": "^4.6.5"
   },
   "peerDependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
     "kubb": "catalog:",
-    "zod": "^4.0.0"
+    "zod": "^4.2.0"
   },
   "peerDependenciesMeta": {
-    "@modelcontextprotocol/sdk": {
+    "@modelcontextprotocol/server": {
       "optional": true
     },
     "zod": {
