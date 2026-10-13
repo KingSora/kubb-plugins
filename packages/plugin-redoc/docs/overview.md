@@ -2,7 +2,7 @@
 
 The Redoc plugin generates a single HTML page that documents your OpenAPI spec with Redoc.
 
-The whole spec is embedded in the page, so you can publish the page to any static host without a build step. Viewing the page needs network access, because it loads the latest Redoc bundle from `cdn.redoc.ly` and its fonts from Google Fonts.
+The whole spec is embedded in the page, so you can publish the page to any static host without a build step. Viewing the page needs network access, because it loads a pinned Redoc bundle from jsDelivr, checked with a Subresource Integrity hash, and its fonts from Google Fonts.
 
 ## Setup
 

@@ -243,7 +243,7 @@ Routes every hook through your own function that returns extra options such as `
 
 #### customOptions.importPath
 
-Module of your custom-options hook, imported as a named import.
+Module of your custom-options hook, imported as a named import. It resolves from the generated hooks folder. When the module does not exist yet, Kubb writes a starter file there, but only when `importPath` stays inside the plugin's output folder. For a path outside it, create the module yourself.
 
 |          |                                    |
 | -------- | ---------------------------------- |
