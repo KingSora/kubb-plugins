@@ -1,5 +1,31 @@
 # @kubb/plugin-vue-query
 
+## 5.3.0
+
+### Minor Changes
+
+- [#1018](https://github.com/kubb-labs/plugins/pull/1018) [`17e2e49`](https://github.com/kubb-labs/plugins/commit/17e2e49d8405480f5f18532daa42d4d0fc3f2747) Thanks [@xeoneux](https://github.com/xeoneux)! - Make infinite query page params configurable and fix the default previous page.
+  
+  - `infinite.getNextPageParam` and `infinite.getPreviousPageParam` take either a function expression string or a typed function (including via the new `definePageParam` helper) for pages whose next param has to be computed (for example `definePageParam((lastPage) => (lastPage.hasNext ? lastPage.number + 1 : undefined))`). They take precedence over `nextParam`, `previousParam` and `cursorParam`.
+  - `getPreviousPageParam` compares against `initialPageParam` when explicitly configured (e.g. `initialPageParam: 0` compares `<= 0`), while preserving the legacy `<= 1` threshold when omitted for backward compatibility.
+  - Generation warns when an operation falls back to the default page params with a response that isn't an array. Those params only stop on an empty array, so `hasNextPage` never turned false for such a response.
+
+### Patch Changes
+
+- [#1068](https://github.com/kubb-labs/plugins/pull/1068) [`7ffc2da`](https://github.com/kubb-labs/plugins/commit/7ffc2dae18a350de6cae382e53a26fbba4b2cd32) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Define every plugin with the object form of `definePlugin`. Each plugin now carries `meta` with its name and package version, and `setup` returns its resolved options.
+  
+  Required plugins move from `ctx.requirePlugin` to a `dependencies` record. A config without a required plugin now fails before any plugin runs, with `KUBB_MISSING_DEPENDENCY` instead of `KUBB_PLUGIN_NOT_FOUND`. The rules for which plugin needs which stay the same:
+  
+  - cypress, faker, mcp, msw, react-query, swr, and vue-query need `@kubb/plugin-ts`.
+  - mcp needs `@kubb/plugin-zod`, and msw needs `@kubb/plugin-faker` when `parser: 'faker'` is set.
+  - client needs `@kubb/plugin-zod` when `validator` is set. axios, fetch, and client only order themselves after plugin-ts and plugin-zod.
+  
+  Every plugin now requires Kubb 5.8.0 or newer. The object form of `definePlugin` ships in 5.7.0, and 5.8.0 makes the plugin context work in CommonJS configs. `meta.compatibility.kubb` is `>=5.8.0`, and the `kubb` and `@kubb/*` peer ranges move to `^5.8.0`.
+
+- [#1067](https://github.com/kubb-labs/plugins/pull/1067) [`80b22f5`](https://github.com/kubb-labs/plugins/commit/80b22f5aac29f8ec295930219b7e4ca82966d890) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Set up each plugin with the `kubb/kit` composables, such as `addGenerator()`, `setResolver()`, and `injectFile()`, instead of the `kubb` argument. The generated code is unchanged. These plugins now need Kubb 5.8.0 or later, which shares the plugin context between ESM and CommonJS configs.
+- Updated dependencies [[`7ffc2da`](https://github.com/kubb-labs/plugins/commit/7ffc2dae18a350de6cae382e53a26fbba4b2cd32), [`80b22f5`](https://github.com/kubb-labs/plugins/commit/80b22f5aac29f8ec295930219b7e4ca82966d890)]:
+  - @kubb/plugin-ts@5.0.7
+
 ## 5.2.1
 
 ### Patch Changes
