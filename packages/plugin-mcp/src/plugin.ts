@@ -22,12 +22,15 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  * operation becomes a typed MCP tool that AI assistants (Claude Desktop, Claude
  * Code, MCP-compatible clients) can call directly. Each handler calls a contract
  * client `<op>` from a registered `@kubb/plugin-axios` or `@kubb/plugin-fetch`.
+ * Next to the handlers it writes `server.ts`, a `start.ts` entry that serves the
+ * tools over stdio, and a `.mcp.json` that runs `start.ts` with `tsx`.
  *
  * @example
  * ```ts
  * import { defineConfig } from 'kubb/config'
  * import { pluginTs } from '@kubb/plugin-ts'
  * import { pluginZod } from '@kubb/plugin-zod'
+ * import { pluginFetch } from '@kubb/plugin-fetch'
  * import { pluginMcp } from '@kubb/plugin-mcp'
  *
  * export default defineConfig({
@@ -36,10 +39,8 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  *   plugins: [
  *     pluginTs(),
  *     pluginZod(),
- *     pluginMcp({
- *       output: { path: './mcp' },
- *       baseURL: 'https://petstore.swagger.io/v2',
- *     }),
+ *     pluginFetch({ baseURL: 'https://petstore.swagger.io/v2' }),
+ *     pluginMcp({ output: { path: 'mcp' } }),
  *   ],
  * })
  * ```

@@ -27,32 +27,54 @@ export default defineConfig({
 })
 ```
 
-Run `kubb generate`. The plugin writes tool handlers, `server.ts`, and `.mcp.json`. Each generated handler calls its HTTP operation, forwards the cancellation signal, and throws for non-2xx responses. Tool results include text content and structured response data. `server.ts` registers tools with Zod input and output schemas.
+Run `kubb generate`. The plugin writes tool handlers, `server.ts`, `start.ts`, and `.mcp.json`. Each generated handler calls its HTTP operation, forwards the cancellation signal, and throws for non-2xx responses. Tool results include text content and structured response data. `server.ts` registers tools with Zod input and output schemas, and `start.ts` calls its `startServer()` to serve them over stdio.
 
 ## Start the server
 
 Install the generated server's runtime dependencies and a TypeScript runner:
 
 ```shell [Terminal]
-npm install @modelcontextprotocol/server@^2 zod@^4.2 axios@^1
+npm install @modelcontextprotocol/server@^2 zod@^4.2 axios@^1.20.0
 npm install -D tsx
 ```
 
-Import the generated `startServer` function.
-
-```typescript [server.ts]
-import { startServer } from './src/gen/mcp/server'
-
-await startServer()
-```
-
-Run the entry point:
+Run the generated entry from the project root:
 
 ```shell [Terminal]
-npx tsx server.ts
+npx tsx src/gen/mcp/start.ts
 ```
 
+The server reads MCP messages from stdin, prints nothing on startup, and logs transport errors to stderr. Press `Ctrl+C` to stop it.
+
+## Connect a client
+
+The generated `.mcp.json` runs the same command:
+
+```json [src/gen/mcp/.mcp.json]
+{
+  "mcpServers": {
+    "Swagger Petstore": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "./src/gen/mcp/start.ts"]
+    }
+  }
+}
+```
+
+The server name comes from `info.title` in your OpenAPI spec. MCP clients start the command from their own working directory, so the `args` path is relative to the Kubb `root`, not to the `.mcp.json` folder. Claude Code reads `.mcp.json` from the project root, so copy the entry under `mcpServers` into that file. For a client that starts in another folder, such as Claude Desktop, use an absolute path to `start.ts`.
+
 ::
+
+## Use your own entry file
+
+To run setup code first, such as loading environment variables, import `startServer` from the generated `server.ts` in your own entry file and point `args` at that file instead of `start.ts`.
+
+```typescript [mcp.ts]
+import { startServer } from './src/gen/mcp/server'
+
+startServer()
+```
 
 ## Select a client
 
