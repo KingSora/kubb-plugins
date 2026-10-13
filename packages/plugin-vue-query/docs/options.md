@@ -10,7 +10,7 @@ Pass these options to `pluginVueQuery()`. Shared options link to [Shared plugin 
 | [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)       | Split output by tag or path: `type`, `name`.                           | None                                                                                 |
 | [`client`](#client)                                                       | Which registered client plugin the composables call.                   | Auto-detected                                                                        |
 | [`infinite`](#infinite)                                                   | Add `useInfiniteQuery` composables for paginated reads.                | `false`                                                                              |
-| [`query`](#query)                                                         | Configure or disable query composables.                                | `{ methods: ['GET'], importPath: '@tanstack/vue-query' }`                            |
+| [`query`](#query)                                                         | Configure or disable query composables.                                | `{ methods: ['GET', 'QUERY'], importPath: '@tanstack/vue-query' }`                   |
 | [`queryKey`](#querykey)                                                   | Build the `queryKey` for each query composable.                        | Built-in `queryKeyTransformer`                                                       |
 | [`mutation`](#mutation)                                                   | Configure or disable mutation composables.                             | `{ methods: ['POST', 'PUT', 'PATCH', 'DELETE'], importPath: '@tanstack/vue-query' }` |
 | [`mutationKey`](#mutationkey)                                             | Build the `mutationKey` for each mutation composable.                  | Built-in `mutationKeyTransformer`                                                    |
@@ -140,21 +140,21 @@ Source code for TanStack Query's `getPreviousPageParam`, copied into the generat
 
 Decides which operations are treated as queries. The plugin generates a `queryOptions` factory for each match by default. Pass `false` to skip, or set [`hooks`](#hooks) to also emit `useQuery`.
 
-|          |                                                           |
-| -------- | --------------------------------------------------------- |
-| Type     | `Partial<Query> \| false`                                 |
-| Required | `false`                                                   |
-| Default  | `{ methods: ['GET'], importPath: '@tanstack/vue-query' }` |
+|          |                                                                    |
+| -------- | ------------------------------------------------------------------ |
+| Type     | `Partial<Query> \| false`                                          |
+| Required | `false`                                                            |
+| Default  | `{ methods: ['GET', 'QUERY'], importPath: '@tanstack/vue-query' }` |
 
 #### query.methods
 
 HTTP methods treated as queries. A matching operation generates a `queryOptions` factory instead of a mutation.
 
-|          |                 |
-| -------- | --------------- |
-| Type     | `Array<string>` |
-| Required | `false`         |
-| Default  | `['GET']`       |
+|          |                    |
+| -------- | ------------------ |
+| Type     | `Array<string>`    |
+| Required | `false`            |
+| Default  | `['GET', 'QUERY']` |
 
 #### query.importPath
 

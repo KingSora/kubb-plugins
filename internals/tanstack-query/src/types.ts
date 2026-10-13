@@ -25,7 +25,7 @@ export type Query = {
    * HTTP methods treated as queries. Operations using these methods produce
    * `useQuery`-style hooks.
    *
-   * @default ['GET']
+   * @default ['GET', 'QUERY']
    */
   methods?: Array<string>
   /**

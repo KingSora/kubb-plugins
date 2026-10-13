@@ -100,7 +100,7 @@ type Query = {
   /**
    * HTTP methods to use for queries.
    *
-   * @default ['GET']
+   * @default ['GET', 'QUERY']
    */
   methods?: Array<string>
   /**

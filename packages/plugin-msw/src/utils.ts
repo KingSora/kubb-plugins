@@ -36,10 +36,23 @@ function getResponseContentType(response: ast.ResponseNode | null | undefined): 
 }
 
 /**
- * Converts an HTTP method to its lowercase MSW equivalent (e.g., 'POST' → 'post').
+ * Whether the operation uses the HTTP QUERY method (RFC 10008). Compared as a string because
+ * `HttpMethod` only lists `'QUERY'` from a later `@kubb/ast` release than this repo builds against.
+ */
+export function isQueryOperation(node: ast.OperationNode): boolean {
+  return ast.isHttpOperationNode(node) && (node.method as string) === 'QUERY'
+}
+
+/**
+ * Converts an HTTP method to its lowercase MSW equivalent (e.g., 'POST' → 'post'). MSW has no
+ * `http.query`, so a QUERY operation maps to `http.all` and its handler checks the method itself.
  */
 export function getMswMethod(node: ast.OperationNode): string {
-  return ast.isHttpOperationNode(node) ? node.method.toLowerCase() : ''
+  if (!ast.isHttpOperationNode(node)) {
+    return ''
+  }
+
+  return isQueryOperation(node) ? 'all' : node.method.toLowerCase()
 }
 
 /**

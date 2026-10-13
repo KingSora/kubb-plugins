@@ -3,7 +3,7 @@ import { ast, Url } from 'kubb/kit'
 import { createFunctionParameter, createFunctionParameters, functionPrinter } from '@kubb/plugin-ts'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import { getContentType, getMswMethod, hasResponseSchema } from '../utils.ts'
+import { getContentType, getMswMethod, hasResponseSchema, isQueryOperation } from '../utils.ts'
 
 type Props = {
   name: string
@@ -18,6 +18,8 @@ const declarationPrinter = functionPrinter({ mode: 'declaration' })
 
 export function Mock({ baseURL = '', name, fakerName, typeName, requestTypeName, node }: Props): KubbReactNode {
   const method = getMswMethod(node)
+  // `http.all` matches every method on the path, so the QUERY handler lets the others pass through.
+  const methodGuard = isQueryOperation(node) ? `if (info.request.method !== 'QUERY') return\n\n    ` : ''
   const successResponse = getPrimarySuccessResponse(node)
   const statusCode = successResponse ? Number(successResponse.statusCode) : 200
   const contentType = getContentType(successResponse)
@@ -55,7 +57,7 @@ export function Mock({ baseURL = '', name, fakerName, typeName, requestTypeName,
     <File.Source name={name} isIndexable isExportable>
       <Function name={name} export params={params ?? ''}>
         {`return ${httpCall}(${urlLiteral}, function handler(info) {
-    if(typeof data === 'function') return data(info)
+    ${methodGuard}if(typeof data === 'function') return data(info)
 
     return new Response(${responseBody}, {
       status: ${statusCode},${headersBlock}

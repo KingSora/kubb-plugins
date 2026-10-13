@@ -285,6 +285,13 @@ describe('createClientCore', () => {
     expect(calls[0]?.method).toBe('GET')
   })
 
+  test('sends a QUERY request with its JSON body', async () => {
+    const { client, calls } = createClient()
+    await client({ method: 'QUERY', url: '/pet/search', body: { name: 'odie' } })
+    expect(calls[0]?.method).toBe('QUERY')
+    expect(calls[0]?.body).toBe('{"name":"odie"}')
+  })
+
   test('serializes array and object path params instead of [object Object]', async () => {
     const { client, calls } = createClient()
     await client({ method: 'GET', url: '/pet/{ids}/{point}', path: { ids: [3, 4], point: { x: 1, y: 2 } } })

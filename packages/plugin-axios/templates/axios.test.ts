@@ -387,6 +387,14 @@ describe('createClientCore', () => {
     expect(headers['Content-Type']).toBe('application/json')
   })
 
+  test('sends a QUERY request with its JSON body', async () => {
+    const { instance, calls } = fakeAxios()
+    const client = createClientCore({ transport: instance })
+    await client({ method: 'QUERY', url: '/pet/search', body: { name: 'odie' } })
+    expect(calls[0]?.method).toBe('QUERY')
+    expect(calls[0]?.data).toBe('{"name":"odie"}')
+  })
+
   test('serializes JSON body without explicit contentType and sets Content-Type', async () => {
     const { instance, calls } = fakeAxios()
     const client = createClientCore({ transport: instance })

@@ -14,6 +14,9 @@ import { resolverMsw } from '../resolvers/resolverMsw.ts'
 import type { PluginMsw } from '../types.ts'
 import { mswGenerator } from './mswGenerator.tsx'
 
+// `HttpMethod` lists 'QUERY' from a later @kubb/ast release than this repo builds against.
+const queryMethod = 'QUERY' as string as ast.HttpMethod
+
 const testConfig: Config = {
   root: '.',
   input: {},
@@ -47,6 +50,20 @@ const mockedFakerPlugin = createMockedPlugin<PluginFaker>({
   name: pluginFakerName,
   options: { output: { path: '.', mode: 'directory' }, group: null } as PluginFaker['resolvedOptions'],
   resolver: resolverFaker,
+})
+
+const searchPetsNode = ast.factory.createOperation({
+  operationId: 'searchPets',
+  method: queryMethod,
+  path: '/pets/search',
+  tags: ['pets'],
+  responses: [
+    ast.factory.createResponse({
+      statusCode: '200',
+      description: 'Matching pets',
+      schema: ast.factory.createSchema({ type: 'array', items: [ast.factory.createSchema({ type: 'object', properties: [] })] }),
+    }),
+  ],
 })
 
 const listPetsNode = ast.factory.createOperation({
@@ -206,6 +223,7 @@ describe('mswGenerator operation', () => {
     { name: 'createPet', node: createPetsNode, options: {} },
     { name: 'deletePet', node: deletePetsPetidNode, options: {} },
     { name: 'createPetFaker', node: createPetsNode, options: { parser: 'faker' as const } },
+    { name: 'searchPets', node: searchPetsNode, options: {} },
     { name: 'responseNameCollision', node: responseNameCollisionNode, options: {} },
     {
       name: 'enumResponseNameCollision',
@@ -227,6 +245,31 @@ describe('mswGenerator operation', () => {
     const files = await renderOperation(props)
 
     await matchFiles(files, props.name)
+  })
+})
+
+describe('mswGenerator QUERY handler', () => {
+  // MSW has no `http.query`, so the handler is registered with `http.all` and answers QUERY only.
+  async function getResponse(method: string) {
+    const files = await renderOperation({ name: 'searchPets', node: searchPetsNode, options: {} })
+    const [source] = rawSources(files)
+    const { outputText } = ts.transpileModule(source!, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } })
+    const handlers: Record<string, any> = {}
+    new Function('require', 'exports', outputText)((id: string) => ({ msw })[id], handlers)
+
+    return msw.getResponse([handlers.searchPetsHandler([{ id: 1 }])], new Request('http://localhost/pets/search', { method, body: '{}' }), {
+      baseUrl: 'http://localhost',
+    })
+  }
+
+  test('answers a QUERY request', async () => {
+    const response = await getResponse('QUERY')
+
+    expect(await response?.json()).toEqual([{ id: 1 }])
+  })
+
+  test('lets other methods on the same path pass through', async () => {
+    expect(await getResponse('POST')).toBeUndefined()
   })
 })
 

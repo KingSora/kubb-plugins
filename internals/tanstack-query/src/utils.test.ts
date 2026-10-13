@@ -8,7 +8,12 @@ import {
   hasQueryKeyParams,
   matchesInfinite,
   resolveInfiniteConfig,
+  resolveMutationConfig,
+  resolveQueryConfig,
 } from './utils.ts'
+
+// `HttpMethod` lists 'QUERY' from a later @kubb/ast release than this repo builds against.
+const queryMethod = 'QUERY' as string as ast.HttpMethod
 
 describe('classifyOperation', () => {
   test('classifies a GET as a query when methods include it', () => {
@@ -48,6 +53,16 @@ describe('classifyOperation', () => {
     expect(
       classifyOperation(node, { query: false, mutation: { methods: ['POST', 'PUT', 'PATCH', 'DELETE'], importPath: '@tanstack/react-query' } }),
     ).toStrictEqual({ isQuery: false, isMutation: true })
+  })
+
+  test('classifies a QUERY as a query with the default methods', () => {
+    const node = ast.factory.createOperation({ operationId: 'searchPets', method: queryMethod, path: '/pets/search' })
+    const options = { importPath: '@tanstack/react-query' }
+
+    expect(classifyOperation(node, { query: resolveQueryConfig({}, options), mutation: resolveMutationConfig({}, options) })).toStrictEqual({
+      isQuery: true,
+      isMutation: false,
+    })
   })
 
   test('mutation: false still allows an operation to be classified as a query', () => {
