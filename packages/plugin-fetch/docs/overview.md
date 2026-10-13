@@ -14,7 +14,7 @@ The query plugins (`@kubb/plugin-react-query`, `@kubb/plugin-vue-query`, and `@k
 
 - `baseURL` is prepended to every request. The spec's `servers` URL is not used, so without `baseURL` you set one at runtime with `client.setConfig({ baseURL })`.
 - `validator: 'zod'` validates response bodies with the schemas from `@kubb/plugin-zod`. Use `{ request: 'zod', response: 'zod' }` to also validate request bodies.
-- `throwOnErrorDefault: false` returns documented error responses as values instead of throwing. A single call can still pass `throwOnError`.
+- `throwOnErrorDefault: false` returns non-2xx responses as values instead of throwing. A single call can still pass `throwOnError`.
 - `returnType: 'data'` makes a call resolve to the success body instead of the full result. With `throwOnError: false`, the call still returns the full result.
 - `sdk` generates a class-based SDK, grouped by tag or flat, instead of standalone functions. The query plugins and `@kubb/plugin-mcp` need the standalone functions, so leave `sdk` unset when you use them.
 
