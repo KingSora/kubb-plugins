@@ -44,7 +44,7 @@ Run the generated entry from the project root:
 npx tsx src/gen/mcp/start.ts
 ```
 
-The server reads MCP messages from stdin and writes nothing to the terminal on its own. Press `Ctrl+C` to stop it.
+The server reads MCP messages from stdin, prints nothing on startup, and logs transport errors to stderr. Press `Ctrl+C` to stop it.
 
 ## Connect a client
 
