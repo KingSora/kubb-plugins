@@ -113,8 +113,10 @@ pnpm vitest run --config ./configs/vitest.config.ts -u packages/plugin-ts   # up
 
 A plugin's docs ship inside its package, in `packages/<name>/docs/`. The registry reads the folder from the npm tarball, and kubb.dev renders it at `https://kubb.dev/extensions/kubb-labs/<name>`:
 
-- `docs/overview.md` (required) describes the plugin, its setup, an example `kubb.config.ts`, and related links. It has no install commands, because kubb.dev renders installation from data.
-- `docs/options.md` documents every option. `docs/guides/<id>.md` holds one how-to guide per file, listed in file name order.
+- `docs/overview.md` (required) describes the plugin, its setup, an example `kubb.config.ts`, and related links. It has no install commands, because kubb.dev adds the install steps to the page.
+- `docs/options.md` documents every option. It opens with an "Options overview" table with "Option", "Purpose", and "Default" columns. It lists nested settings too. Each row uses the full option path and links to its detail heading. Rows for the shared options (`output`, `group`, `include`, `exclude`, `override`, `resolver`, `macros`) link to `https://kubb.dev/docs/5.x/reference/plugin-options#<option>` and give only the plugin's default.
+- "Option details" follows the table and covers only the plugin's own options. Keep existing heading anchors. Under each heading, a table lists the type, whether the option is required, and the default when there is one. Keep long types out of the overview table, escape `|` in table cells, and keep usage examples and generated output below the table.
+- `docs/guides/<id>.md` holds one how-to guide per file, listed in file name order.
 - Each file starts with a `# Title` and a one-paragraph description, with no frontmatter. Links are absolute (`https://kubb.dev/...`) and there is no raw HTML.
 - Registry metadata (display name, category, icon, maintainers, dependencies, compatibility) lives in `kubb-extension.json`.
 - When a change here adds, removes, or alters an option, update `docs/options.md` in the same PR.

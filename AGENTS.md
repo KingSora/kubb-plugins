@@ -54,9 +54,10 @@ The `internals/` directory provides shared utilities:
 
 Each plugin ships its docs in `packages/<name>/docs/`. The registry reads the folder from the npm tarball, and [kubb.dev](https://kubb.dev) renders it at `https://kubb.dev/extensions/kubb-labs/<name>`.
 
-- `docs/overview.md` (required): what the plugin does, setup, an `## Example` with `kubb.config.ts`, and `## See also`. No install commands, because kubb.dev renders installation from data.
-- `docs/options.md`: every option. `docs/guides/<id>.md`: one how-to guide per file, in file name order.
-- Every file starts with a `# Title` and a description paragraph. No frontmatter, no raw HTML, and absolute `https://kubb.dev/...` links.
+- `docs/overview.md` (required): what the plugin does, setup, an `## Example` with `kubb.config.ts`, and `## See also`. No install commands, because kubb.dev adds the install steps to the page.
+- `docs/options.md`: every option.
+- `docs/guides/<id>.md`: one how-to guide per file, in file name order.
+- Every file starts with a `# Title` line and a one-paragraph description. Use no frontmatter or raw HTML, and write links as absolute `https://kubb.dev/...` URLs.
 - Registry metadata (display name, category, icon, maintainers, dependencies, compatibility) lives in `kubb-extension.json`.
 
 > [!IMPORTANT]
