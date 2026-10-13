@@ -1,5 +1,5 @@
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, assertPluginOption, definePlugin, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { addGenerator, assertPluginOption, defineExtension, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { typeGenerator } from './generators/typeGenerator.tsx'
@@ -62,7 +62,8 @@ function assertEnumLikeOptions({
  * })
  * ```
  */
-export const pluginTs = definePlugin<PluginTs>({
+export const pluginTs = defineExtension<PluginTs>({
+  kind: 'plugin',
   meta: { name: pluginTsName, version, compatibility },
   setup(options) {
     const {

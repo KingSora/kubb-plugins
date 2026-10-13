@@ -12,7 +12,7 @@
   "tags": ["react-query", "tanstack-query", "react", "hooks", "data-fetching", "codegen", "openapi"],
   "docs": "https://kubb.dev/plugins/plugin-react-query",
   "compatibility": {
-    "kubb": ">=5.8.0",
+    "kubb": ">=5.9.0",
     "node": ">=22"
   },
   "role": "consumer",

@@ -12,7 +12,7 @@
   "tags": ["zod", "validation", "schema", "runtime-validation", "codegen", "openapi"],
   "docs": "https://kubb.dev/plugins/plugin-zod",
   "compatibility": {
-    "kubb": ">=5.8.0",
+    "kubb": ">=5.9.0",
     "node": ">=22"
   },
   "options": [

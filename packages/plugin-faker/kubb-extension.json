@@ -12,7 +12,7 @@
   "tags": ["faker", "mock-data", "mocks", "fixtures", "testing", "codegen", "openapi"],
   "docs": "https://kubb.dev/plugins/plugin-faker",
   "compatibility": {
-    "kubb": ">=5.8.0",
+    "kubb": ">=5.9.0",
     "node": ">=22"
   },
   "options": [
