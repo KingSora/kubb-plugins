@@ -32,7 +32,7 @@ export function getPetByIdHandler(data?: GetPetByIdResponse | ((info: Parameters
   return http.get('/pet/:petId', function handler(info) {
       if(typeof data === 'function') return data(info)
 
-      return new Response(JSON.stringify(data || createGetPetByIdResponse(data)), {
+      return new Response(JSON.stringify(data ?? createGetPetByIdResponse(data)), {
         status: 200,
         headers: {
           'Content-Type': 'application/json'

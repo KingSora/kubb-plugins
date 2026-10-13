@@ -27,7 +27,7 @@ export function addPetHandler(data?: AddPetResponse | HttpResponseResolver<Recor
   return http.post<Record<string, string>, AddPetBody>('/pet', function handler(info) {
       if(typeof data === 'function') return data(info)
 
-      return new Response(JSON.stringify(data || createAddPetResponse(data)), {
+      return new Response(JSON.stringify(data ?? createAddPetResponse(data)), {
         status: 200,
         headers: {
           'Content-Type': 'application/json'

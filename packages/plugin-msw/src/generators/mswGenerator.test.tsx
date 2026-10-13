@@ -6,8 +6,10 @@ import type { PluginFaker } from '@kubb/plugin-faker'
 import { pluginFakerName, resolverFaker } from '@kubb/plugin-faker'
 import type { PluginTs } from '@kubb/plugin-ts'
 import { resolverTs } from '@kubb/plugin-ts'
-import { describe, test } from 'vitest'
-import { matchFiles } from '#mocks'
+import * as msw from 'msw'
+import ts from 'typescript'
+import { describe, expect, test } from 'vitest'
+import { matchFiles, rawSources } from '#mocks'
 import { resolverMsw } from '../resolvers/resolverMsw.ts'
 import type { PluginMsw } from '../types.ts'
 import { mswGenerator } from './mswGenerator.tsx'
@@ -147,14 +149,56 @@ const enumResponseNameCollisionNode = ast.factory.createOperation({
   ],
 })
 
+type RenderProps = {
+  name: string
+  node: ast.OperationNode
+  options: Partial<PluginMsw['resolvedOptions']>
+  tsEnum?: PluginTs['resolvedOptions']['enum']
+  enumNames?: Array<string>
+}
+
+async function renderOperation(props: RenderProps) {
+  const options: PluginMsw['resolvedOptions'] = {
+    ...defaultOptions,
+    ...props.options,
+  }
+  const plugin = createMockedPlugin<PluginMsw>({ name: 'plugin-msw', options, resolver: resolverMsw })
+  const driver = createMockedPluginDriver({ name: props.name })
+  const tsPlugin = props.tsEnum
+    ? createMockedPlugin<PluginTs>({
+        name: 'plugin-ts',
+        options: { output: { path: '.', mode: 'directory' }, group: null, enum: props.tsEnum } as PluginTs['resolvedOptions'],
+        resolver: resolverTs,
+      })
+    : mockedTsPlugin
+
+  driver.getPlugin = ((pluginName: string) => {
+    if (pluginName === 'plugin-ts') return tsPlugin
+    if (pluginName === pluginFakerName) return mockedFakerPlugin
+    return undefined
+  }) as typeof driver.getPlugin
+
+  driver.getResolver = ((pluginName: string) => {
+    if (pluginName === 'plugin-ts') return tsPlugin.resolver
+    if (pluginName === pluginFakerName) return mockedFakerPlugin.resolver
+    return undefined
+  }) as typeof driver.getResolver
+
+  await renderGeneratorOperation(mswGenerator, props.node, {
+    config: testConfig,
+    adapter: createMockedAdapter(),
+    driver,
+    plugin,
+    options,
+    resolver: resolverMsw,
+    meta: { enumNames: props.enumNames ?? [], circularNames: [] },
+  })
+
+  return driver.fileManager.files
+}
+
 describe('mswGenerator operation', () => {
-  const testData: Array<{
-    name: string
-    node: ast.OperationNode
-    options: Partial<PluginMsw['resolvedOptions']>
-    tsEnum?: PluginTs['resolvedOptions']['enum']
-    enumNames?: Array<string>
-  }> = [
+  const testData: Array<RenderProps> = [
     { name: 'showPetById', node: showPetByIdNode, options: {} },
     { name: 'getPets', node: listPetsNode, options: {} },
     { name: 'getPetsTemplateBaseUrl', node: listPetsNode, options: { baseURL: '${123456}' } },
@@ -180,42 +224,34 @@ describe('mswGenerator operation', () => {
   ]
 
   test.each(testData)('$name', async (props) => {
-    const options: PluginMsw['resolvedOptions'] = {
-      ...defaultOptions,
-      ...props.options,
-    }
-    const plugin = createMockedPlugin<PluginMsw>({ name: 'plugin-msw', options, resolver: resolverMsw })
-    const driver = createMockedPluginDriver({ name: props.name })
-    const tsPlugin = props.tsEnum
-      ? createMockedPlugin<PluginTs>({
-          name: 'plugin-ts',
-          options: { output: { path: '.', mode: 'directory' }, group: null, enum: props.tsEnum } as PluginTs['resolvedOptions'],
-          resolver: resolverTs,
-        })
-      : mockedTsPlugin
+    const files = await renderOperation(props)
 
-    driver.getPlugin = ((pluginName: string) => {
-      if (pluginName === 'plugin-ts') return tsPlugin
-      if (pluginName === pluginFakerName) return mockedFakerPlugin
-      return undefined
-    }) as typeof driver.getPlugin
+    await matchFiles(files, props.name)
+  })
+})
 
-    driver.getResolver = ((pluginName: string) => {
-      if (pluginName === 'plugin-ts') return tsPlugin.resolver
-      if (pluginName === pluginFakerName) return mockedFakerPlugin.resolver
-      return undefined
-    }) as typeof driver.getResolver
+describe('mswGenerator faker fallback', () => {
+  const fakerData = [{ id: 1, name: 'faker' }]
 
-    await renderGeneratorOperation(mswGenerator, props.node, {
-      config: testConfig,
-      adapter: createMockedAdapter(),
-      driver,
-      plugin,
-      options,
-      resolver: resolverMsw,
-      meta: { enumNames: props.enumNames ?? [], circularNames: [] },
-    })
+  // Runs the generated handler with MSW, with a stub standing in for the `@kubb/plugin-faker` output.
+  async function getResponseBody(data: unknown) {
+    const files = await renderOperation({ name: 'getPetsFaker', node: listPetsNode, options: { parser: 'faker' } })
+    const [source] = rawSources(files)
+    const { outputText } = ts.transpileModule(source!, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } })
+    const modules: Record<string, unknown> = { msw, './createListPets': { createListPetsResponse: () => fakerData } }
+    const handlers: Record<string, any> = {}
+    new Function('require', 'exports', outputText)((id: string) => modules[id], handlers)
 
-    await matchFiles(driver.fileManager.files, props.name)
+    const response = await msw.getResponse([handlers.listPetsHandler(data)], new Request('http://localhost/pets'), { baseUrl: 'http://localhost' })
+
+    return response?.json()
+  }
+
+  test.each([0, false, ''])('returns the falsy payload %j instead of Faker data', async (data) => {
+    expect(await getResponseBody(data)).toBe(data)
+  })
+
+  test.each([undefined, null])('falls back to Faker data when data is %s', async (data) => {
+    expect(await getResponseBody(data)).toEqual(fakerData)
   })
 })
