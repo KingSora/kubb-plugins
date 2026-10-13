@@ -1,30 +1,21 @@
 # Options
 
-Pass these options to `pluginClient()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options), which documents their behavior once.
+Pass these options to `pluginClient()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options).
 
 ## Options overview
 
-| Option                                                                                | Purpose                                             | Default                                          |
-| ------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------ |
-| [`importPath`](#importpath)                                                           | Import specifier of your client module.             | Required                                         |
-| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)                 | Where the generated files are written and exported. | `{ path: 'clients', barrel: { type: 'named' } }` |
-| ↳ [`output.path`](https://kubb.dev/docs/5.x/reference/plugin-options#output-path)     | Choose the output folder or file.                   | `'clients'`                                      |
-| ↳ [`output.mode`](https://kubb.dev/docs/5.x/reference/plugin-options#output-mode)     | Write a single file or a directory of files.        | Inferred from `output.path`                      |
-| ↳ [`output.barrel`](https://kubb.dev/docs/5.x/reference/plugin-options#output-barrel) | Configure barrel exports.                           | `{ type: 'named' }`                              |
-| ↳ [`output.banner`](https://kubb.dev/docs/5.x/reference/plugin-options#output-banner) | Add content before generated code.                  | None                                             |
-| ↳ [`output.footer`](https://kubb.dev/docs/5.x/reference/plugin-options#output-footer) | Add content after generated code.                   | None                                             |
-| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)                   | Split output into per-tag or per-path folders.      | None                                             |
-| ↳ [`group.type`](https://kubb.dev/docs/5.x/reference/plugin-options#group-type)       | Group operations by tag or URL path.                | Required with `group`                            |
-| ↳ [`group.name`](https://kubb.dev/docs/5.x/reference/plugin-options#group-name)       | Customize output group names.                       | camelCased tag or raw path segment               |
-| [`throwOnErrorDefault`](#throwonerrordefault)                                         | Default `throwOnError` value passed to your client. | `true`                                           |
-| [`validator`](#validator)                                                             | Pass Zod schemas to your client.                    | `false`                                          |
-| ↳ [`validator.request`](#validator)                                                   | Pass request body schemas.                          | None                                             |
-| ↳ [`validator.response`](#validator)                                                  | Pass response body schemas.                         | None                                             |
-| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)               | Keep only operations that match.                    | None                                             |
-| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)               | Skip operations that match.                         | `[]`                                             |
-| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override)             | Apply different options per pattern.                | `[]`                                             |
-| [`resolver`](https://kubb.dev/docs/5.x/reference/plugin-options#resolver)             | Customize generated names and file paths.           | `resolverClient`                                 |
-| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)                 | Rewrite AST nodes before printing.                  | `[]`, run after the built-in client macros       |
+| Option                                                                    | Purpose                                                                | Default                                          |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------ |
+| [`importPath`](#importpath)                                               | Import specifier of your client module.                                | Required                                         |
+| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)     | Where files are written: `path`, `mode`, `barrel`, `banner`, `footer`. | `{ path: 'clients', barrel: { type: 'named' } }` |
+| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)       | Split output by tag or path: `type`, `name`.                           | None                                             |
+| [`throwOnErrorDefault`](#throwonerrordefault)                             | Default `throwOnError` value passed to your client.                    | `true`                                           |
+| [`validator`](#validator)                                                 | Pass Zod schemas to your client.                                       | `false`                                          |
+| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)   | Keep only operations that match.                                       | None                                             |
+| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)   | Skip operations that match.                                            | `[]`                                             |
+| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override) | Apply different options per pattern.                                   | `[]`                                             |
+| [`resolver`](https://kubb.dev/docs/5.x/reference/plugin-options#resolver) | Customize generated names and file paths.                              | `resolverClient`                                 |
+| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)     | Rewrite AST nodes before printing.                                     | `[]`, run after the built-in client macros       |
 
 ## Option details
 
@@ -60,7 +51,7 @@ The setting applies to the whole plugin, so you cannot set it in `override`.
 
 ### validator
 
-Passes Zod schemas from `@kubb/plugin-zod` to your client on `config.validator`. The plugin does not run the schemas, your client reads `config.validator` and validates. See [validate requests and responses](https://kubb.dev/extensions/kubb-labs/plugin-client/guides/validate-requests-and-responses).
+Passes Zod schemas from `@kubb/plugin-zod` to your client on `config.validator`. The plugin does not run the schemas. Your client reads `config.validator` and runs them. See [validate requests and responses](https://kubb.dev/extensions/kubb-labs/plugin-client/guides/validate-requests-and-responses).
 
 |          |                                                           |
 | -------- | --------------------------------------------------------- |

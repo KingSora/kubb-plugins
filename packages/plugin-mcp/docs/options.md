@@ -1,32 +1,25 @@
 # Options
 
-Pass these options to `pluginMcp()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options), which documents their behavior once.
+Pass these options to `pluginMcp()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options).
 
 ## Options overview
 
-| Option                                                                                | Purpose                                                | Default                                      |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------- |
-| [`output`](#output)                                                                   | Where the generated handlers are written and exported. | `{ path: 'mcp', barrel: { type: 'named' } }` |
-| ↳ [`output.path`](#output)                                                            | Choose the output folder.                              | `'mcp'`                                      |
-| ↳ [`output.mode`](#output)                                                            | Directory output only.                                 | `'directory'`                                |
-| ↳ [`output.barrel`](https://kubb.dev/docs/5.x/reference/plugin-options#output-barrel) | Configure barrel exports.                              | `{ type: 'named' }`                          |
-| ↳ [`output.banner`](https://kubb.dev/docs/5.x/reference/plugin-options#output-banner) | Add content before generated code.                     | None                                         |
-| ↳ [`output.footer`](https://kubb.dev/docs/5.x/reference/plugin-options#output-footer) | Add content after generated code.                      | None                                         |
-| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)                   | Split handlers into per-tag or per-path folders.       | None                                         |
-| ↳ [`group.type`](https://kubb.dev/docs/5.x/reference/plugin-options#group-type)       | Group operations by tag or URL path.                   | Required with `group`                        |
-| ↳ [`group.name`](https://kubb.dev/docs/5.x/reference/plugin-options#group-name)       | Customize output group names.                          | camelCased tag or raw path segment           |
-| [`client`](#client)                                                                   | Which registered client plugin the handlers call.      | Auto-detected                                |
-| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)               | Keep only operations that match.                       | None                                         |
-| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)               | Skip operations that match.                            | `[]`                                         |
-| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override)             | Apply different options per pattern.                   | `[]`                                         |
-| [`resolver`](#resolver)                                                               | Customize generated names and file paths.              | `resolverMcp`                                |
-| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)                 | Rewrite AST nodes before printing.                     | `[]`                                         |
+| Option                                                                    | Purpose                                                                   | Default                                      |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------- |
+| [`output`](#output)                                                       | Where handlers are written: `path`, `mode`, `barrel`, `banner`, `footer`. | `{ path: 'mcp', barrel: { type: 'named' } }` |
+| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)       | Split output by tag or path: `type`, `name`.                              | None                                         |
+| [`client`](#client)                                                       | Which registered client plugin the handlers call.                         | Auto-detected                                |
+| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)   | Keep only operations that match.                                          | None                                         |
+| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)   | Skip operations that match.                                               | `[]`                                         |
+| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override) | Apply different options per pattern.                                      | `[]`                                         |
+| [`resolver`](#resolver)                                                   | Customize generated names and file paths.                                 | `resolverMcp`                                |
+| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)     | Rewrite AST nodes before printing.                                        | `[]`                                         |
 
 ## Option details
 
 ### output
 
-Where the generated MCP handler files are written. The plugin writes `server.ts` and `.mcp.json` at the root of `output.path`, next to the per-operation handlers, so keep `output.path` an extensionless directory name such as the default `'mcp'`. A single-file output (`output.mode: 'file'`, or a `path` with an extension) has nowhere to put those files. With `group`, the handlers move into subfolders while `server.ts` and `.mcp.json` keep their place at the root.
+Where the generated MCP handler files are written. The plugin writes `server.ts` and `.mcp.json` at the root of `output.path`, next to the handlers. Keep `output.path` a folder name such as the default `'mcp'`. Single-file output (`output.mode: 'file'`, or a `path` with an extension) has no room for those two files. With `group`, handlers move into subfolders and the two files stay at the root.
 
 |          |                                              |
 | -------- | -------------------------------------------- |

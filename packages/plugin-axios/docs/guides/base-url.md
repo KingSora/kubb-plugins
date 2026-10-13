@@ -3,11 +3,11 @@
 Set `baseURL` on the client plugin or on the generated client.
 
 > [!NOTE]
-> OpenAPI server URLs do not configure the client automatically. The adapter's server option only sets document metadata.
+> OpenAPI server URLs do not configure the client automatically. The `server` option of `adapterOas` only sets document metadata. It does not set `baseURL`.
 
 ## Use the baseURL option
 
-Pass `baseURL` to the client plugin to set the generated default. Include `pluginTs`, which the client requires.
+Pass `baseURL` to `pluginAxios` to set the generated default. Add `pluginTs` for the operation types.
 
 ```typescript [kubb.config.ts]
 import { defineConfig } from 'kubb/config'

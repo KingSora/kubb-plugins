@@ -1,41 +1,30 @@
 # Options
 
-Pass these options to `pluginFetch()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options), which documents their behavior once.
+Pass these options to `pluginFetch()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options).
 
 ## Options overview
 
-| Option                                                                                | Purpose                                                          | Default                                          |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------ |
-| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)                 | Where the generated files are written and exported.              | `{ path: 'clients', barrel: { type: 'named' } }` |
-| ↳ [`output.path`](https://kubb.dev/docs/5.x/reference/plugin-options#output-path)     | Choose the output folder or file.                                | `'clients'`                                      |
-| ↳ [`output.mode`](https://kubb.dev/docs/5.x/reference/plugin-options#output-mode)     | Write a single file or a directory of files.                     | Inferred from `output.path`                      |
-| ↳ [`output.barrel`](https://kubb.dev/docs/5.x/reference/plugin-options#output-barrel) | Configure barrel exports.                                        | `{ type: 'named' }`                              |
-| ↳ [`output.banner`](https://kubb.dev/docs/5.x/reference/plugin-options#output-banner) | Add content before generated code.                               | None                                             |
-| ↳ [`output.footer`](https://kubb.dev/docs/5.x/reference/plugin-options#output-footer) | Add content after generated code.                                | None                                             |
-| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)                   | Split output into per-tag or per-path folders.                   | None                                             |
-| ↳ [`group.type`](https://kubb.dev/docs/5.x/reference/plugin-options#group-type)       | Group operations by tag or URL path.                             | Required with `group`                            |
-| ↳ [`group.name`](https://kubb.dev/docs/5.x/reference/plugin-options#group-name)       | Customize output group names.                                    | camelCased tag or raw path segment               |
-| [`baseURL`](#baseurl)                                                                 | Base URL prepended to every request.                             | None                                             |
-| [`throwOnErrorDefault`](#throwonerrordefault)                                         | Default error behavior and return type for generated operations. | `true`                                           |
-| [`validator`](#validator)                                                             | Validate request and response bodies with Zod.                   | `false`                                          |
-| ↳ [`validator.request`](#validator)                                                   | Validate request bodies with Zod.                                | None                                             |
-| ↳ [`validator.response`](#validator)                                                  | Validate response bodies with Zod.                               | None                                             |
-| [`comments`](#comments)                                                               | How much of each description reaches the JSDoc.                  | `'full'`                                         |
-| [`sdk`](#sdk)                                                                         | Generate a class-based SDK instead of functions.                 | None                                             |
-| ↳ [`sdk.mode`](#sdk)                                                                  | Generate one SDK class per tag or a flat SDK.                    | `'tag'`                                          |
-| ↳ [`sdk.name`](#sdk)                                                                  | Name the composed or flat SDK class.                             | None                                             |
-| [`returnType`](#returntype)                                                           | Shape of the value a generated call resolves to.                 | `'full'`                                         |
-| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)               | Keep only operations that match.                                 | None                                             |
-| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)               | Skip operations that match.                                      | `[]`                                             |
-| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override)             | Apply different options per pattern.                             | `[]`                                             |
-| [`resolver`](#resolver)                                                               | Customize generated names and file paths.                        | `resolverClient`                                 |
-| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)                 | Rewrite AST nodes before printing.                               | `[]`, run after the built-in client macros       |
+| Option                                                                    | Purpose                                                                | Default                                          |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------ |
+| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)     | Where files are written: `path`, `mode`, `barrel`, `banner`, `footer`. | `{ path: 'clients', barrel: { type: 'named' } }` |
+| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)       | Split output by tag or path: `type`, `name`.                           | None                                             |
+| [`baseURL`](#baseurl)                                                     | Base URL prepended to every request.                                   | None                                             |
+| [`throwOnErrorDefault`](#throwonerrordefault)                             | Default error behavior and return type for generated operations.       | `true`                                           |
+| [`validator`](#validator)                                                 | Validate request and response bodies with Zod.                         | `false`                                          |
+| [`comments`](#comments)                                                   | How much of each description reaches the JSDoc.                        | `'full'`                                         |
+| [`sdk`](#sdk)                                                             | Generate a class-based SDK instead of functions.                       | None                                             |
+| [`returnType`](#returntype)                                               | Shape of the value a generated call resolves to.                       | `'full'`                                         |
+| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)   | Keep only operations that match.                                       | None                                             |
+| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)   | Skip operations that match.                                            | `[]`                                             |
+| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override) | Apply different options per pattern.                                   | `[]`                                             |
+| [`resolver`](#resolver)                                                   | Customize generated names and file paths.                              | `resolverClient`                                 |
+| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)     | Rewrite AST nodes before printing.                                     | `[]`, run after the built-in client macros       |
 
 ## Option details
 
 ### baseURL
 
-Base URL prepended to every request. When omitted, no host is prepended and each request uses the operation's relative path from the spec. A value containing a `${...}` interpolation is emitted as a template literal in the generated client config, so `baseURL: '${process.env.API_URL}'` reads the environment variable at runtime.
+Base URL prepended to every request. When omitted, each request uses the operation's relative path from the spec. A value with a `${...}` interpolation is emitted as a template literal in the generated client config, so `baseURL: '${process.env.API_URL}'` reads the environment variable at runtime.
 
 |          |          |
 | -------- | -------- |
@@ -44,7 +33,7 @@ Base URL prepended to every request. When omitted, no host is prepended and each
 
 ### throwOnErrorDefault
 
-Set `throwOnErrorDefault: false` to return documented error responses as values by default. This sets the fallback on each generated request and the default `ThrowOnError` type parameter on standalone functions and SDK methods. A call with `throwOnError: true` still throws for a non-2xx response and narrows its return type to successful responses.
+Set `throwOnErrorDefault: false` to return documented error responses as values by default. It sets the fallback on each generated request and the default `ThrowOnError` type parameter on functions and SDK methods. It applies to the whole plugin, so `override` cannot set it. A call that passes `throwOnError` still wins. With `throwOnError: true`, a non-2xx response throws and the return type narrows to successful responses. Query hooks always pass `throwOnError: true`.
 
 |          |           |
 | -------- | --------- |
@@ -53,16 +42,14 @@ Set `throwOnErrorDefault: false` to return documented error responses as values 
 | Default  | `true`    |
 
 ```typescript
-// pluginAxios({ throwOnErrorDefault: false }) or pluginFetch({ throwOnErrorDefault: false })
+// with pluginFetch({ throwOnErrorDefault: false })
 const result = await getPetById({ path: { petId: 1 } })
 if (result.status !== 200) console.error(result.status, result.error)
 ```
 
-This setting applies to the whole plugin and cannot be set in `override`. Pass `throwOnError` on a call to override it. Query hooks continue to set `throwOnError: true` explicitly.
-
 ### validator
 
-Validates request and response bodies using schemas from `@kubb/plugin-zod`. Add `pluginZod()` when either direction uses `'zod'`. Invalid bodies cause the generated function to throw a `ParseError`.
+Validates request and response bodies with schemas from `@kubb/plugin-zod`, so add `pluginZod()` too. An invalid body makes the generated function throw a `ParseError`.
 
 |          |                                                           |
 | -------- | --------------------------------------------------------- |
@@ -81,7 +68,7 @@ Validates the success response body, and the error body when a non-2xx call does
 :::
 
 :::field{name="{ request?: 'zod', response?: 'zod' }"}
-Opts in per direction, validating the request body before the call and the response body after.
+Opts in per direction. `request` validates the request body before the call, and `response` validates the response body after it.
 :::
 
 ::
@@ -131,7 +118,7 @@ Omits JSDoc but keeps the generated-by banner.
 
 ### sdk
 
-Generates a class-based SDK. Each instance receives a client configuration, so environments can use separate clients. Leave `sdk` unset to keep the standalone functions used by query plugins.
+Generates a class-based SDK. Each instance takes its own client config, so environments can use separate clients. Leave `sdk` unset to keep the standalone functions that query plugins call.
 
 |          |                                             |
 | -------- | ------------------------------------------- |
@@ -141,30 +128,22 @@ Generates a class-based SDK. Each instance receives a client configuration, so e
 ::field-group
 
 :::field{name="'tag'"}
-Default value for `sdk.mode`. Generates one class per tag, such as `PetClient` and `StoreClient`. Set `sdk.name` to also generate a root class that instantiates the tag clients from one shared configuration, used as `new PetStore(config).pet.getPetById(...)`.
+Default value for `sdk.mode`. Generates one class per tag, such as `PetClient`. Set `sdk.name` to also get a root class that shares one config, used as `new PetStore(config).pet.getPetById(...)`.
 :::
 
 :::field{name="'flat'"}
-Generates a single class named by `sdk.name`, with every operation as a direct method. Supports single-file output.
+Generates one class named by `sdk.name`, with every operation as a method. Supports single-file output.
 :::
 
 ::
 
-`mode: 'tag'` needs one file per tag, so pairing it with a single-file `output` (`output.mode: 'file'`, or an `output.path` that already names a file such as `'clients.ts'`) throws [`KUBB_INVALID_PLUGIN_OPTIONS`](https://kubb.dev/docs/5.x/reference/diagnostics#kubb-invalid-plugin-options). Use `mode: 'flat'` for a single-file SDK, or give `output.path` a directory so `mode: 'tag'` can split per tag.
+`mode: 'tag'` needs one file per tag, so it throws [`KUBB_INVALID_PLUGIN_OPTIONS`](https://kubb.dev/docs/5.x/reference/diagnostics#kubb-invalid-plugin-options) with single-file output. Use `mode: 'flat'` for a single file.
 
-Construct a class with a client config, then call a method with the grouped options object (`{ path, query, headers, body }`). Each call resolves to `{ status, data, error, contentType, request, response }`. With the default `throwOnErrorDefault: true`, a resolved call means the request succeeded and `data` is set. Pass `throwOnError: false` to get the discriminated union instead, keyed on the top-level `status`:
+Methods take the same grouped options and return the same result as the standalone functions. See [Call operations](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/calling-operations).
 
 ```typescript
-import { PetClient } from './src/gen/clients/petClient'
-
 const pet = new PetClient({ baseURL: 'https://petstore.swagger.io/v2' })
-const { status, data, error } = await pet.getPetById({ path: { petId: 1 }, throwOnError: false })
-
-if (status === 200) {
-  console.log(data) // data is the success body, error is undefined
-} else {
-  console.error(status, error) // status is the documented error code, error is its parsed body
-}
+const { data } = await pet.getPetById({ path: { petId: 1 } })
 ```
 
 ### returnType
@@ -184,7 +163,7 @@ Default value. Returns `{ status, data, error, contentType, request, response }`
 :::
 
 :::field{name="'data'"}
-Returns the success body when `throwOnError` is `true`. With `throwOnError: false`, returns the full result so callers can distinguish errors from successful responses.
+Returns the success body when `throwOnError` is `true`. With `throwOnError: false`, returns the full result so callers can tell errors from successes.
 :::
 
 ::
@@ -195,17 +174,7 @@ pluginFetch({ returnType: 'data' })
 const pet = await getPetById({ path: { petId: 1 } }) // Pet, not { status, data, ... }
 ```
 
-This applies to the standalone functions and the class-based SDK. `@kubb/plugin-react-query`, `@kubb/plugin-vue-query`, `@kubb/plugin-swr`, and `@kubb/plugin-mcp` read the same option, so their hooks and tool handlers give you the success body as `data` either way. They also honor a per-operation `returnType` set through [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override).
-
-To read response headers such as `ETag` under `'data'`, pass `throwOnError: false` on the call. It then resolves to the full result, and a non-2xx comes back on `error` instead of throwing:
-
-```typescript
-const result = await getPetById({ path: { petId: 1 }, throwOnError: false })
-
-if (result.error === undefined) {
-  const etag = result.response.headers.get('etag')
-}
-```
+It applies to the functions and the SDK. The query plugins and `@kubb/plugin-mcp` read it too, including a per-operation value set through [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override). To read headers such as `ETag` under `'data'`, pass `throwOnError: false` and call `result.response.headers.get('etag')`.
 
 ### resolver
 

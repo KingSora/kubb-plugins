@@ -4,10 +4,9 @@
 
 ## Options overview
 
-| Option                          | Purpose                                   | Default                 |
-| ------------------------------- | ----------------------------------------- | ----------------------- |
-| [`output`](#output)             | Where the generated HTML file is written. | `{ path: 'docs.html' }` |
-| ↳ [`output.path`](#output-path) | Choose the generated HTML file path.      | `'docs.html'`           |
+| Option              | Purpose                                 | Default                 |
+| ------------------- | --------------------------------------- | ----------------------- |
+| [`output`](#output) | Where the HTML file is written: `path`. | `{ path: 'docs.html' }` |
 
 ## Option details
 
@@ -23,7 +22,7 @@ Where the generated Redoc HTML file is written.
 
 #### output.path
 
-File path of the generated HTML, resolved against the global `output.path`. Unlike most plugins, this points at a single file, not a directory. End the path with `.html`. If you leave the extension off, Kubb still writes the file and uses the path as the plugin output name.
+File path of the generated HTML, resolved against the global `output.path`. Unlike most plugins, this points at a single file, not a directory. End the path with `.html`. Without `.html`, Kubb writes the file at that exact path, with no extension.
 
 |          |               |
 | -------- | ------------- |

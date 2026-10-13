@@ -1,6 +1,6 @@
 # Configure serialization
 
-The generated client encodes parameters using OpenAPI `style` and `explode`, serializes request bodies by content type, and decodes responses by media type. Generated operations carry the metadata. Most requests need no additional configuration.
+The generated client encodes parameters using OpenAPI `style` and `explode`, serializes request bodies by content type, and decodes responses by media type. Each generated operation carries its parameter styles and content types, so most requests need no extra setup.
 
 ## Override parameter serialization
 
@@ -40,8 +40,8 @@ call.
 > value you set is dropped for that request.
 
 To encode a content type the default serializer does not handle, register a codec for that media
-type. `codecs` is keyed by content type, and each entry holds a `serialize` for the request body
-and a `deserialize` for the response, so either half is optional:
+type. `codecs` is keyed by content type. Each entry takes a `serialize` for the request body, a
+`deserialize` for the response, or both:
 
 ```typescript
 import { client } from './gen/.kubb/client'
@@ -61,9 +61,9 @@ stays a string, and a binary type becomes a `Blob`. The negotiated media type is
 `contentType`, so a `switch (result.contentType)` narrows `data` for an operation that returns
 more than one.
 
-To decode a media type the runtime does not handle, register a codec's `deserialize` for it. It
-receives the raw body and the content type and returns the parsed value, and runs before
-validation, so a custom format is transformed first and then checked against its schema:
+To decode a media type the runtime does not handle, register a codec's `deserialize` for it.
+`deserialize` receives the raw body and the content type and returns the parsed value. It runs
+before validation, so the schema checks the parsed value:
 
 ```typescript
 import { client } from './gen/.kubb/client'
@@ -80,20 +80,20 @@ over the client one for that content type.
 
 When the runtime picks the wrong parse mode because a response omits its `Content-Type` or sets a
 misleading one, force the mode with `responseType` on the call. It accepts `'json'`, `'text'`,
-`'blob'`, `'arraybuffer'`, and `'document'` (`@kubb/plugin-axios` adds `'formdata'`):
+`'blob'`, `'arraybuffer'`, and `'document'`:
 
 ```typescript
 const { data } = await downloadInvoice({ path: { id: '123' }, responseType: 'blob' })
 // data is a Blob even when the server leaves Content-Type unset
 ```
 
-The server-sent events guide covers `responseType: 'stream'`.
+[Server-sent events](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/server-sent-events) covers `responseType: 'stream'`.
 
 For bidirectional formats, supply both `serialize` and `deserialize` in the media type codec, then set the operation's request and response `contentType`.
 
 ## Validate responses
 
-Enable `validator` on the client plugin and register `pluginZod` in the same configuration. Validation is disabled by default. `pluginAxios` takes the same option.
+Enable `validator` on the client plugin and register `pluginZod` in the same configuration. Validation is disabled by default.
 
 ```typescript
 import { pluginFetch } from '@kubb/plugin-fetch'
@@ -110,9 +110,8 @@ pluginFetch({ validator: { request: 'zod', response: 'zod' } })
 ```
 
 With a validator set, Kubb passes the matching schema to each generated call, and the runtime
-parses the body through it. The schemas are Standard Schema compatible, so this works the same
-with Zod, valibot, and arktype. A body that does not match throws a `ParseError` carrying the
-schema's `issues`, covered in the error handling guide.
+parses the body through it. A body that does not match throws a `ParseError` with the schema's
+`issues`.
 
 ## See also
 

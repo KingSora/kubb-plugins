@@ -1,47 +1,33 @@
 # Options
 
-Pass these options to `pluginZod()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options), which documents their behavior once.
+Pass these options to `pluginZod()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options) for details.
 
 ## Options overview
 
-| Option                                                                                | Purpose                                                  | Default                                      |
-| ------------------------------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------- |
-| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)                 | Where the generated files are written and exported.      | `{ path: 'zod', barrel: { type: 'named' } }` |
-| ↳ [`output.path`](https://kubb.dev/docs/5.x/reference/plugin-options#output-path)     | Choose the output folder or file.                        | `'zod'`                                      |
-| ↳ [`output.mode`](https://kubb.dev/docs/5.x/reference/plugin-options#output-mode)     | Write a single file or a directory of files.             | Inferred from `output.path`                  |
-| ↳ [`output.barrel`](https://kubb.dev/docs/5.x/reference/plugin-options#output-barrel) | Configure barrel exports.                                | `{ type: 'named' }`                          |
-| ↳ [`output.banner`](https://kubb.dev/docs/5.x/reference/plugin-options#output-banner) | Add content before generated code.                       | None                                         |
-| ↳ [`output.footer`](https://kubb.dev/docs/5.x/reference/plugin-options#output-footer) | Add content after generated code.                        | None                                         |
-| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)                   | Split output into per-tag or per-path folders.           | None                                         |
-| ↳ [`group.type`](https://kubb.dev/docs/5.x/reference/plugin-options#group-type)       | Group operations by tag or URL path.                     | Required with `group`                        |
-| ↳ [`group.name`](https://kubb.dev/docs/5.x/reference/plugin-options#group-name)       | Customize output group names.                            | camelCased tag or raw path segment           |
-| [`importPath`](#importpath)                                                           | Module the generated files import `z` from.              | `'zod'`, or `'zod/mini'` with `mini`         |
-| [`inferred`](#inferred)                                                               | Emit a `z.infer` alias next to each schema.              | `false`                                      |
-| [`coercion`](#coercion)                                                               | Coerce input before validation.                          | `false`                                      |
-| ↳ [`coercion.dates`](#coercion)                                                       | Coerce Date-typed fields before validation.              | `false`                                      |
-| ↳ [`coercion.strings`](#coercion)                                                     | Coerce strings before validation.                        | `false`                                      |
-| ↳ [`coercion.numbers`](#coercion)                                                     | Coerce numbers before validation.                        | `false`                                      |
-| [`guidType`](#guidtype)                                                               | Validator for `format: uuid` properties.                 | `'uuid'`                                     |
-| [`regexType`](#regextype)                                                             | How an OpenAPI `pattern` is written.                     | `'literal'`                                  |
-| [`compile`](#compile)                                                                 | Wrap schemas in `z.compile` for fast-path validation.    | `false`                                      |
-| ↳ [`compile.strict`](#compile)                                                        | Require schemas to compile without interpreter fallback. | `false`                                      |
-| [`mini`](#mini)                                                                       | Generate Zod Mini schemas.                               | `false`                                      |
-| [`typeGuards`](#typeguards)                                                           | Generate `is*` type guards and `assert*` assertions.     | `false`                                      |
-| ↳ [`typeGuards.is`](#typeguards)                                                      | Generate type guard functions.                           | `false`                                      |
-| ↳ [`typeGuards.assert`](#typeguards)                                                  | Generate assertion functions.                            | `false`                                      |
-| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)               | Keep only operations and schemas that match.             | None                                         |
-| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)               | Skip operations and schemas that match.                  | `[]`                                         |
-| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override)             | Apply different options per pattern.                     | `[]`                                         |
-| [`resolver`](#resolver)                                                               | Customize generated names and file paths.                | `resolverZod`                                |
-| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)                 | Rewrite AST nodes before printing.                       | `[]`                                         |
-| [`printer`](#printer)                                                                 | Replace the handler for a schema type.                   | None                                         |
-| ↳ [`printer.nodes`](#printer)                                                         | Customize handlers for schema node types.                | None                                         |
+| Option                                                                    | Purpose                                                                | Default                                      |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------- |
+| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)     | Where files are written: `path`, `mode`, `barrel`, `banner`, `footer`. | `{ path: 'zod', barrel: { type: 'named' } }` |
+| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)       | Split output by tag or path: `type`, `name`.                           | None                                         |
+| [`importPath`](#importpath)                                               | Module the generated files import `z` from.                            | `'zod'`, or `'zod/mini'` with `mini`         |
+| [`inferred`](#inferred)                                                   | Emit a `z.infer` alias next to each schema.                            | `false`                                      |
+| [`coercion`](#coercion)                                                   | Coerce input before validation.                                        | `false`                                      |
+| [`guidType`](#guidtype)                                                   | Validator for `format: uuid` properties.                               | `'uuid'`                                     |
+| [`regexType`](#regextype)                                                 | How an OpenAPI `pattern` is written.                                   | `'literal'`                                  |
+| [`compile`](#compile)                                                     | Wrap schemas in `z.compile` for fast-path validation.                  | `false`                                      |
+| [`mini`](#mini)                                                           | Generate Zod Mini schemas.                                             | `false`                                      |
+| [`typeGuards`](#typeguards)                                               | Generate `is*` type guards and `assert*` assertions.                   | `false`                                      |
+| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)   | Keep only operations and schemas that match.                           | None                                         |
+| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)   | Skip operations and schemas that match.                                | `[]`                                         |
+| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override) | Apply different options per pattern.                                   | `[]`                                         |
+| [`resolver`](#resolver)                                                   | Customize generated names and file paths.                              | `resolverZod`                                |
+| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)     | Rewrite AST nodes before printing.                                     | `[]`                                         |
+| [`printer`](#printer)                                                     | Replace the handler for a schema type.                                 | None                                         |
 
 ## Option details
 
 ### importPath
 
-Module specifier for the `import { z } from '...'` statement in every generated file, so you can re-export Zod from your own module.
+Module the generated files import `z` from. Point it at your own module to re-export Zod.
 
 |          |                             |
 | -------- | --------------------------- |
@@ -49,12 +35,11 @@ Module specifier for the `import { z } from '...'` statement in every generated 
 | Required | `false`                     |
 | Default  | `mini ? 'zod/mini' : 'zod'` |
 
-> [!NOTE]
-> `'zod'` and `'zod/mini'` import the `z` namespace (`import * as z`), but a custom module imports the named `z` export (`import { z }`), so re-export `z` from there.
+`'zod'` and `'zod/mini'` are imported as `import * as z`. A custom module is imported as `import { z }`, so export `z` by name.
 
 ### inferred
 
-Exports a `z.infer<typeof schema>` type alias next to every generated schema, so the schema is the single source of truth and you do not import types from `@kubb/plugin-ts`. The alias is the PascalCased schema name with a `SchemaType` suffix, so `petSchema` becomes `PetSchemaType`.
+Exports a `z.infer<typeof schema>` type next to each schema, so you do not need `@kubb/plugin-ts`. The type takes the PascalCase schema name plus `SchemaType`, so `petSchema` gets `PetSchemaType`.
 
 |          |           |
 | -------- | --------- |
@@ -63,16 +48,10 @@ Exports a `z.infer<typeof schema>` type alias next to every generated schema, so
 | Default  | `false`   |
 
 ```typescript
-import * as z from 'zod'
-
-export const petSchema = z.object({
-  name: z.string(),
-})
-
 export type PetSchemaType = z.infer<typeof petSchema>
 ```
 
-It also generates a `ResponsesSchema` per operation, the per-status responses record, with its inferred type. [`@kubb/plugin-fetch`](https://kubb.dev/extensions/kubb-labs/plugin-fetch) and [`@kubb/plugin-axios`](https://kubb.dev/extensions/kubb-labs/plugin-axios) key their `RequestResult` on it when `@kubb/plugin-ts` is absent.
+It also writes a `ResponsesSchema` for each operation (one schema per status code) and its inferred type. [`@kubb/plugin-fetch`](https://kubb.dev/extensions/kubb-labs/plugin-fetch) and [`@kubb/plugin-axios`](https://kubb.dev/extensions/kubb-labs/plugin-axios) key their `RequestResult` on it when `@kubb/plugin-ts` is absent.
 
 ### coercion
 
@@ -87,7 +66,7 @@ Wraps schemas in `z.coerce` so input is coerced before validation, for form data
 ::field-group
 
 :::field{name="false"}
-Default value. Coerces nothing and validates strictly, except `bigint` fields (`format: int64`), which always use `z.coerce.bigint()`.
+Coerces nothing and validates strictly, except `bigint` fields (`format: int64`), which always use `z.coerce.bigint()`.
 :::
 
 :::field{name="true"}
@@ -101,9 +80,7 @@ Chooses which primitives to coerce.
 ::
 
 > [!NOTE]
-> `dates` coerces only `Date`-typed fields (from `dateType: 'date'`). Fields kept as ISO strings (`z.iso.date()`, `z.iso.datetime()`) are never coerced.
->
-> `format: time` fields are never coerced either, because `new Date()` cannot parse a bare `HH:mm:ss`. With `dateType.time: 'date'`, a time decodes into a `Date` on `1970-01-01` UTC and encodes back to `HH:mm:ss` (fractional seconds are dropped). For a real time-of-day type such as `Temporal.PlainTime`, see [Encode a custom type on requests](https://kubb.dev/extensions/kubb-labs/plugin-zod/guides/customization#encode-custom-types).
+> `dates` coerces only `Date`-typed fields (from `dateType: 'date'`). ISO-string fields are never coerced, and neither are `format: time` fields, because `new Date()` cannot parse a bare `HH:mm:ss`. For a time-of-day type such as `Temporal.PlainTime`, see [Encode custom types](https://kubb.dev/extensions/kubb-labs/plugin-zod/guides/customization#encode-custom-types).
 
 ### guidType
 
@@ -118,7 +95,7 @@ Validator used for OpenAPI properties with `format: uuid`.
 ::field-group
 
 :::field{name="'uuid'"}
-Default value. Generates `z.uuid()`, a standard RFC 4122 UUID.
+Generates `z.uuid()`, a standard RFC 4122 UUID.
 :::
 
 :::field{name="'guid'"}
@@ -140,7 +117,7 @@ Controls how an OpenAPI `pattern` is written inside `.regex(...)`. Use `'constru
 ::field-group
 
 :::field{name="'literal'"}
-Default value. Emits a regex literal, such as `.regex(/^[a-z]+$/)`.
+Emits a regex literal, such as `.regex(/^[a-z]+$/)`.
 :::
 
 :::field{name="'constructor'"}
@@ -151,7 +128,7 @@ Emits the `RegExp` constructor, such as `.regex(new RegExp('^[a-z]+$'))`.
 
 ### compile
 
-Wraps schemas in `z.compile(...)` to generate validation code instead of interpreting the schema on each call.
+Wraps schemas in `z.compile(...)` to generate validation code instead of interpreting the schema on each call. Needs Zod v4.5.0 or higher.
 
 |          |                                   |
 | -------- | --------------------------------- |
@@ -162,7 +139,7 @@ Wraps schemas in `z.compile(...)` to generate validation code instead of interpr
 ::field-group
 
 :::field{name="false"}
-Default value. Leaves schemas uncompiled.
+Leaves schemas uncompiled.
 :::
 
 :::field{name="true"}
@@ -175,24 +152,11 @@ Passes `{ strict: true }` to `z.compile(...)`, which throws when any part of the
 
 ::
 
-> [!NOTE]
-> `compile` requires Zod v4.5.0 or higher. Schemas with circular references (`z.lazy`) and bare `$ref` response aliases are kept uncompiled to prevent runtime errors.
-
-```typescript [compile: { strict: true }]
-import * as z from 'zod'
-
-export const petSchema = z.compile(
-  z.object({
-    id: z.number(),
-    name: z.string(),
-  }),
-  { strict: true }, // omitted with compile: true
-)
-```
+Schemas with circular references (`z.lazy`) and bare `$ref` response aliases stay uncompiled to prevent runtime errors.
 
 ### mini
 
-Switches code generation to [Zod Mini](https://zod.dev/packages/mini), which uses the functional API (`z.optional(z.string())`) instead of the chainable one (`z.string().optional()`) so bundlers can tree-shake unused validators. `mini: true` also defaults `importPath` to `'zod/mini'`.
+Generates [Zod Mini](https://zod.dev/packages/mini) schemas. They use functions (`z.optional(z.string())`) instead of method chains (`z.string().optional()`), so bundlers can drop unused validators. Also sets the `importPath` default to `'zod/mini'`.
 
 |          |           |
 | -------- | --------- |
@@ -200,17 +164,9 @@ Switches code generation to [Zod Mini](https://zod.dev/packages/mini), which use
 | Required | `false`   |
 | Default  | `false`   |
 
-```typescript
-import * as z from 'zod/mini'
-
-z.optional(z.string())
-z.nullable(z.number())
-z.array(z.string()).check(z.minLength(1), z.maxLength(10))
-```
-
 ### typeGuards
 
-Generates TypeScript type guards (`is*`) and assertion functions (`assert*`) for schemas using Zod v4's native `validate` API.
+Generates TypeScript type guards (`is*`) and assertion functions (`assert*`) with Zod's `validate` API. Needs Zod v4.6.0 or higher.
 
 |          |                                                 |
 | -------- | ----------------------------------------------- |
@@ -218,13 +174,10 @@ Generates TypeScript type guards (`is*`) and assertion functions (`assert*`) for
 | Required | `false`                                         |
 | Default  | `false`                                         |
 
-> [!IMPORTANT]
-> The generated type guards and assertions require Zod v4.6.0 or higher.
-
 ::field-group
 
 :::field{name="false"}
-Default value. Generates only the Zod schemas.
+Generates only the Zod schemas.
 :::
 
 :::field{name="true"}
@@ -239,30 +192,9 @@ Enables type guards or assertions separately.
 
 When [`inferred`](#inferred) is `true`, the guards narrow to the generated type alias such as `PetSchemaType`. When [`mini`](#mini) is `true`, they route through `z.validate` and `z.parse`.
 
-Use the generated guard to filter unknown data, or assert a value before reading it:
-
-```typescript [usage.ts]
-import { isPet, assertPet } from './src/gen/zod/petSchema'
-
-const items: unknown[] = []
-const pets = items.filter(isPet)
-
-export function processPayload(payload: unknown) {
-  assertPet(payload)
-  console.log(payload.name)
-}
-```
-
-::code-collapse{name="Generated petSchema.ts with typeGuards: true"}
+::code-collapse{name="Guards added to petSchema.ts with typeGuards: true"}
 
 ```typescript [src/gen/zod/petSchema.ts]
-import * as z from 'zod'
-
-export const petSchema = z.object({
-  id: z.int32(),
-  name: z.string(),
-})
-
 export const isPet = (data: unknown): data is z.infer<typeof petSchema> => petSchema.validate(data)
 
 export function assertPet(data: unknown): asserts data is z.infer<typeof petSchema> {
@@ -287,33 +219,28 @@ Overrides generated file and symbol names. Omitted members keep `resolverZod`. T
 
 ```typescript [Partial override]
 type ResolverZodPatch = {
-  name?(name: string): string
-  file?: {
-    baseName?(params: { name: string; extname: string }): string
-    path?(params: { baseName: string; output: Output }): string
-  }
-  imports?(options: ResolveImportsOptions): Array<ImportNode>
+  // plus the shared name, file, and imports members
   schema?: {
-    typeName?(name: string): string       // → 'PetSchemaType'
-    type?(name: string): string           // → 'PetSchemaType'
-    inputName?(name: string): string      // → 'orderInputSchema'
-    inputTypeName?(name: string): string  // → 'OrderInputSchemaType'
-    isName?(name: string): string         // → 'isPet'
-    assertName?(name: string): string     // → 'assertPet'
+    typeName?(name: string): string
+    type?(name: string): string
+    inputName?(name: string): string
+    inputTypeName?(name: string): string
+    isName?(name: string): string
+    assertName?(name: string): string
   }
   param?: {
-    name?(node: OperationNode, param: ParameterNode): string    // → 'deletePetPathPetIdSchema'
-    path?(node: OperationNode, param: ParameterNode): string     // → 'deletePetPathSchema'
-    query?(node: OperationNode, param: ParameterNode): string    // → 'findPetsByStatusQuerySchema'
-    headers?(node: OperationNode, param: ParameterNode): string  // → 'deletePetHeadersSchema'
+    name?(node: OperationNode, param: ParameterNode): string
+    path?(node: OperationNode, param: ParameterNode): string
+    query?(node: OperationNode, param: ParameterNode): string
+    headers?(node: OperationNode, param: ParameterNode): string
   }
   response?: {
-    status?(node: OperationNode, statusCode: StatusCode): string // → 'listPetsStatus200Schema'
-    body?(node: OperationNode): string                           // → 'createPetBodySchema'
-    responses?(node: OperationNode): string                      // → 'listPetsResponsesSchema'
-    response?(node: OperationNode): string                       // → 'listPetsResponseSchema'
-    error?(node: OperationNode): string                          // → 'listPetsErrorSchema'
-    options?(node: OperationNode): string                        // → 'ListPetsOptionsSchemaType'
+    status?(node: OperationNode, statusCode: StatusCode): string
+    body?(node: OperationNode): string
+    responses?(node: OperationNode): string
+    response?(node: OperationNode): string
+    error?(node: OperationNode): string
+    options?(node: OperationNode): string
   }
 }
 ```
@@ -322,7 +249,7 @@ type ResolverZodPatch = {
 
 ### printer
 
-Replaces the Zod handler for a schema type such as `'integer'` or `'string'`, each returning the Zod expression as a string and targeting the Zod Mini printer when `mini: true`. Inside a handler, `this.base(node)` returns the built-in output to wrap and `this.transform(node)` recurses into nested nodes. See the [printer guide](https://kubb.dev/docs/5.x/how-to/printers).
+Replaces the handler for a schema type such as `'integer'` or `'string'`. Each handler returns the Zod expression as a string, in Zod Mini syntax when `mini: true`. Inside a handler, `this.base(node)` returns the built-in output to wrap and `this.transform(node)` recurses into nested nodes. See the [printer guide](https://kubb.dev/docs/5.x/how-to/printers).
 
 |          |                                                      |
 | -------- | ---------------------------------------------------- |
@@ -338,12 +265,9 @@ pluginZod({
       integer() {
         return 'z.number()'
       },
-      date() {
-        return 'z.string().date()'
-      },
     },
   },
 })
 ```
 
-A handler that reads `this.options.direction` (`'decode'` for responses, `'encode'` for request bodies and parameters) and returns a different expression per direction registers a two-way conversion: the generator detects the difference and emits an `${name}InputSchema` variant for request bodies to resolve to, including through a `$ref`. See [Encode a custom type on requests](https://kubb.dev/extensions/kubb-labs/plugin-zod/guides/customization#encode-custom-types).
+A handler can read `this.options.direction`, which is `'decode'` for responses and `'encode'` for request bodies and parameters. If it returns a different expression per direction, Kubb also writes an `${name}InputSchema`. Request bodies use it, including bodies that reach the schema through a `$ref`. See [Encode custom types](https://kubb.dev/extensions/kubb-labs/plugin-zod/guides/customization#encode-custom-types).

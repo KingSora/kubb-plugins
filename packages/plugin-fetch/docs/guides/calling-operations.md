@@ -1,6 +1,6 @@
 # Call operations
 
-The generated client accepts grouped request options on every operation and returns a typed `RequestResult` by default. The Fetch and Axios clients share the calling convention below.
+The generated client accepts grouped request options on every operation and returns a typed `RequestResult` by default.
 
 ## Call an operation
 
@@ -31,9 +31,7 @@ await updatePet({
 })
 ```
 
-Each key is optional and only appears when the operation declares it, so an operation with no
-parameters is called with an empty object, `getStatus({})`. The serialization guide covers how
-Kubb encodes arrays and objects in each location.
+Each key is optional and only appears when the operation declares it. Call an operation with no parameters with an empty object: `getStatus({})`.
 
 ## Read the result
 
@@ -45,8 +43,8 @@ type RequestResult = {
   data: TData // the parsed success body, undefined on an error result
   error: TError // the parsed error body, undefined on a success result
   contentType: string | undefined // the negotiated response media type
-  request: Request // the native request (AxiosRequestConfig on plugin-axios)
-  response: Response // the native response (AxiosResponse on plugin-axios)
+  request: Request // the native request
+  response: Response // the native response
 }
 ```
 
@@ -71,8 +69,6 @@ if (result.status === 200) {
 }
 ```
 
-The error handling guide covers reading the `error` body and handling failures.
-
 ## Unwrap the success body
 
 Call `.unwrap()` to return the success body. Awaiting the operation directly returns the full result.
@@ -84,23 +80,7 @@ const pet = await getPetById({ path: { petId: 1 } }).unwrap()
 //    ^ the parsed pet, not the full RequestResult
 ```
 
-How `unwrap()` handles a failure depends on `throwOnError`. With `throwOnError: true`, a non-2xx
-response already throws a `ResponseError` before the call resolves, so `unwrap()` throws the same
-`ResponseError` a plain `await` would:
-
-```typescript
-import { ResponseError } from './gen/.kubb/client'
-
-try {
-  const pet = await getPetById({ path: { petId: 1 } }).unwrap()
-} catch (error) {
-  if (ResponseError.is(error)) {
-    console.error(error.status) // 404
-  }
-}
-```
-
-With `throwOnError: false`, `.unwrap()` rejects with the parsed error body instead of a `ResponseError`:
+With `throwOnError: true`, a non-2xx response throws the same `ResponseError` a plain `await` would. With `throwOnError: false`, `.unwrap()` rejects with the parsed error body instead:
 
 ```typescript
 try {
@@ -130,33 +110,19 @@ await getPet({
 })
 ```
 
-For operations that already declare a single content type, Kubb bakes it into the generated
-function, so a multipart upload needs only the body:
-
-```typescript
-import { uploadFile } from './gen/clients/uploadFile'
-
-// the generated function already sets contentType: { request: 'multipart/form-data' }
-await uploadFile({ path: { petId: '123' }, body: { file: pngBlob } })
-```
-
-The serialization guide covers how each content type maps to a request body and how a response
-body is decoded.
+An operation that declares a single content type has it built in, so a multipart upload such as `uploadFile({ path: { petId: '123' }, body: { file: pngBlob } })` needs only the body.
 
 ## Pass native client options
 
-Pass `options` on an operation for native transport settings:
+Pass `options` on an operation for native fetch settings, such as `cache`, `mode`, `redirect`, `keepalive`, `duplex`, or `next`:
 
 ```typescript [src/app.ts]
 import { getPetById } from './gen/clients/getPetById'
 
-// Axios client
-await getPetById({ path: { petId: 1 }, options: { timeout: 5_000 } })
+await getPetById({ path: { petId: 1 }, options: { cache: 'no-store' } })
 ```
 
-For Fetch clients, use options such as `cache`, `mode`, `redirect`, `keepalive`, `duplex`, or `next`. Axios supports `timeout`, `proxy`, `maxRedirects`, `decompress`, and `onUploadProgress`.
-
-Set `client.setConfig({ options })` for shared defaults. Per-call options take precedence. Kubb keeps control of serialization and HTTP error handling, as described in the custom transport guide.
+Set `client.setConfig({ options })` for shared defaults. Per-call options take precedence. Kubb keeps control of serialization and HTTP error handling. See [Use a custom transport](https://kubb.dev/extensions/kubb-labs/plugin-fetch/guides/transport).
 
 ## Build a URL without sending
 

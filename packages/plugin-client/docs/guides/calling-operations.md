@@ -20,10 +20,11 @@ The keys are `path`, `query`, `headers`, and `body`. Kubb types each from the sp
 ```typescript
 const result = await getPetById({ path: { petId: 1n }, throwOnError: false })
 
+if (result.error === undefined) {
+  console.log('pet', result.data.name)
+}
 if (result.error !== undefined) {
   console.log('failed', result.response.status)
-} else {
-  console.log('pet', result.data.name)
 }
 ```
 

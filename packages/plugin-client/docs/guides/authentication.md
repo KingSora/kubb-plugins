@@ -19,7 +19,7 @@ An operation without security requirements passes no `security` field. Use that 
 
 ## Add a bearer token from an async source
 
-The client can `await` anything before it sends the request. This one asks a registered function for a token, so the token can come from a secrets store or a refresh call:
+The client can `await` anything before it sends the request. The client below awaits a token function you register with `setAuth`, so the token can come from a secrets store or a refresh call:
 
 ::code-group
 

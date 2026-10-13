@@ -1,35 +1,23 @@
 # Options
 
-Pass these options to `pluginTs()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options), which documents their behavior once.
+Pass these options to `pluginTs()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options) for details.
 
 ## Options overview
 
-| Option                                                                                | Purpose                                             | Default                                                                               |
-| ------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)                 | Where the generated files are written and exported. | `{ path: 'types', barrel: { type: 'named' } }`                                        |
-| ↳ [`output.path`](https://kubb.dev/docs/5.x/reference/plugin-options#output-path)     | Choose the output folder or file.                   | `'types'`                                                                             |
-| ↳ [`output.mode`](https://kubb.dev/docs/5.x/reference/plugin-options#output-mode)     | Write a single file or a directory of files.        | Inferred from `output.path`                                                           |
-| ↳ [`output.barrel`](https://kubb.dev/docs/5.x/reference/plugin-options#output-barrel) | Configure barrel exports.                           | `{ type: 'named' }`                                                                   |
-| ↳ [`output.banner`](https://kubb.dev/docs/5.x/reference/plugin-options#output-banner) | Add content before generated code.                  | None                                                                                  |
-| ↳ [`output.footer`](https://kubb.dev/docs/5.x/reference/plugin-options#output-footer) | Add content after generated code.                   | None                                                                                  |
-| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)                   | Split output into per-tag or per-path folders.      | None                                                                                  |
-| ↳ [`group.type`](https://kubb.dev/docs/5.x/reference/plugin-options#group-type)       | Group operations by tag or URL path.                | Required with `group`                                                                 |
-| ↳ [`group.name`](https://kubb.dev/docs/5.x/reference/plugin-options#group-name)       | Customize output group names.                       | camelCased tag or raw path segment                                                    |
-| [`enum`](#enum)                                                                       | How enums are generated and cased.                  | `{ type: 'asConst', constCasing: 'camelCase', typeSuffix: 'Key', keyCasing: 'none' }` |
-| ↳ [`enum.type`](#enum-type)                                                           | Choose how enums are generated.                     | `'asConst'`                                                                           |
-| ↳ [`enum.constCasing`](#enum-constcasing)                                             | Set the casing of enum constants.                   | `'camelCase'`                                                                         |
-| ↳ [`enum.typeSuffix`](#enum-typesuffix)                                               | Set the companion type suffix.                      | `'Key'`                                                                               |
-| ↳ [`enum.keyCasing`](#enum-keycasing)                                                 | Set the casing of enum keys.                        | `'none'`                                                                              |
-| [`syntaxType`](#syntaxtype)                                                           | Emit object schemas as type aliases or interfaces.  | `'type'`                                                                              |
-| [`optionalType`](#optionaltype)                                                       | How optional properties are written.                | `'questionToken'`                                                                     |
-| [`arrayType`](#arraytype)                                                             | `Type[]` or `Array<Type>`.                          | `'array'`                                                                             |
-| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)               | Keep only operations and schemas that match.        | None                                                                                  |
-| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)               | Skip operations and schemas that match.             | `[]`                                                                                  |
-| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override)             | Apply different options per pattern.                | `[]`                                                                                  |
-| [`resolver`](#resolver)                                                               | Customize generated names and file paths.           | `resolverTs`                                                                          |
-| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)                 | Rewrite AST nodes before printing.                  | `[]`                                                                                  |
-| [`printer`](#printer)                                                                 | Replace the handler for a schema type.              | None                                                                                  |
-| ↳ [`printer.nodes`](#printer)                                                         | Customize handlers for schema node types.           | None                                                                                  |
+| Option                                                                    | Purpose                                                                | Default                                                                               |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)     | Where files are written: `path`, `mode`, `barrel`, `banner`, `footer`. | `{ path: 'types', barrel: { type: 'named' } }`                                        |
+| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)       | Split output by tag or path: `type`, `name`.                           | None                                                                                  |
+| [`enum`](#enum)                                                           | How enums are generated and cased.                                     | `{ type: 'asConst', constCasing: 'camelCase', typeSuffix: 'Key', keyCasing: 'none' }` |
+| [`syntaxType`](#syntaxtype)                                               | Emit object schemas as type aliases or interfaces.                     | `'type'`                                                                              |
+| [`optionalType`](#optionaltype)                                           | How optional properties are written.                                   | `'questionToken'`                                                                     |
+| [`arrayType`](#arraytype)                                                 | `Type[]` or `Array<Type>`.                                             | `'array'`                                                                             |
+| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)   | Keep only operations and schemas that match.                           | None                                                                                  |
+| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)   | Skip operations and schemas that match.                                | `[]`                                                                                  |
+| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override) | Apply different options per pattern.                                   | `[]`                                                                                  |
+| [`resolver`](#resolver)                                                   | Customize generated names and file paths.                              | `resolverTs`                                                                          |
+| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)     | Rewrite AST nodes before printing.                                     | `[]`                                                                                  |
+| [`printer`](#printer)                                                     | Replace the handler for a schema type.                                 | None                                                                                  |
 
 ## Option details
 
@@ -58,7 +46,7 @@ Representation of each enum.
 ::field-group
 
 :::field{name="'asConst'"}
-Default value. Emits an `as const` object plus a key/value type. Tree-shakeable, with no runtime.
+Emits an `as const` object and a union type of its values. Bundlers drop the object when nothing uses it.
 :::
 
 :::field{name="'enum'"}
@@ -99,14 +87,6 @@ export enum PetStatus {
 }
 ```
 
-```typescript ['constEnum']
-export const enum PetStatus {
-  available = 'available',
-  pending = 'pending',
-  sold = 'sold',
-}
-```
-
 ```typescript ['literal']
 export type PetStatus = 'available' | 'pending' | 'sold'
 ```
@@ -126,7 +106,7 @@ Casing of the generated const object when `type` is `'asConst'`.
 ::field-group
 
 :::field{name="'camelCase'"}
-Default value. Names the const `petStatus`.
+Names the const `petStatus`.
 :::
 
 :::field{name="'pascalCase'"}
@@ -162,7 +142,7 @@ Casing applied to enum key names.
 ::field-group
 
 :::field{name="'none'"}
-Default value. Keeps the raw enum value from the spec as the key.
+Keeps the raw enum value from the spec as the key.
 :::
 
 :::field{name="'camelCase'"}
@@ -196,7 +176,7 @@ How object schemas are declared.
 ::field-group
 
 :::field{name="'type'"}
-Default value. Generates type aliases, `export type Pet = { name: string }`.
+Generates type aliases, `export type Pet = { name: string }`.
 :::
 
 :::field{name="'interface'"}
@@ -218,7 +198,7 @@ How optional properties are written.
 ::field-group
 
 :::field{name="'questionToken'"}
-Default value. Writes `type?: string`, so the property may be missing.
+Writes `type?: string`, so the property may be missing.
 :::
 
 :::field{name="'undefined'"}
@@ -226,7 +206,7 @@ Writes `type: string | undefined`, so it must exist but may be `undefined`.
 :::
 
 :::field{name="'questionTokenAndUndefined'"}
-Writes `type?: string | undefined`, the strictest form. Use it with `"exactOptionalPropertyTypes": true`.
+Writes `type?: string | undefined`, so the property may be missing or `undefined`. Use it with `"exactOptionalPropertyTypes": true`.
 :::
 
 ::
@@ -244,7 +224,7 @@ Syntax for array types.
 ::field-group
 
 :::field{name="'array'"}
-Default value. Uses the postfix `tags: string[]`.
+Uses the postfix `tags: string[]`.
 :::
 
 :::field{name="'generic'"}
@@ -266,12 +246,7 @@ Overrides generated file and symbol names. Omitted members keep `resolverTs`. Th
 
 ```typescript [Partial override]
 type ResolverTsPatch = {
-  name?(name: string): string
-  file?: {
-    baseName?(params: { name: string; extname: string }): string
-    path?(params: { baseName: string; output: Output }): string
-  }
-  imports?(options: ResolveImportsOptions): Array<ImportNode>
+  // plus the shared name, file, and imports members
   param?: {
     name?(node: OperationNode, param: ParameterNode): string    // → 'DeletePetPathPetId'
     path?(node: OperationNode, param: ParameterNode): string     // → 'GetPetByIdPath'
@@ -302,20 +277,4 @@ Replaces the node handler for a schema type such as `'integer'` or `'date'` with
 | Type     | `{ nodes?: PrinterTsNodes }` |
 | Required | `false`                      |
 
-```typescript [Map date schemas to the Date object]
-import ts from 'typescript'
-import { pluginTs } from '@kubb/plugin-ts'
-
-pluginTs({
-  printer: {
-    nodes: {
-      date() {
-        return ts.factory.createTypeReferenceNode('Date', [])
-      },
-      integer() {
-        return ts.factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword)
-      },
-    },
-  },
-})
-```
+See [Map schema types](https://kubb.dev/extensions/kubb-labs/plugin-ts/guides/customization#map-schema-types) for an example.

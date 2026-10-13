@@ -62,7 +62,7 @@ Use this array as `defineConfig.plugins`. Calling `getPetByIdHandler()` without 
 
 ## Register the handler collection
 
-With `handlers: true`, Kubb exports an operation-ordered collection from `handlers.ts`. Register it in Node or a browser.
+With `handlers: true`, `handlers.ts` exports a `handlers` array with every handler in operation order. Register it in Node or a browser.
 
 ::code-group
 
@@ -82,4 +82,4 @@ export const worker = setupWorker(...handlers)
 
 ::
 
-Start the server or worker through your test or application setup.
+Call `server.listen()` in your test setup, or `await worker.start()` in your browser entry.

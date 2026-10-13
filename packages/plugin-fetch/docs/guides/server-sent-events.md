@@ -1,6 +1,6 @@
 # Server-sent events
 
-Operations returning `text/event-stream` produce a typed stream rather than a `RequestResult`. Both clients support streaming. The Axios client switches to the axios fetch adapter for these calls unless you set `adapter` yourself, because the default XHR adapter buffers the whole body.
+Operations returning `text/event-stream` produce a typed stream rather than a `RequestResult`.
 
 ## Consume a stream
 

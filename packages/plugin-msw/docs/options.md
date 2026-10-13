@@ -1,28 +1,21 @@
 # Options
 
-Pass these options to `pluginMsw()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options), which documents their behavior once.
+Pass these options to `pluginMsw()`. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options).
 
 ## Options overview
 
-| Option                                                                                | Purpose                                                | Default                                           |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------- |
-| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)                 | Where the generated handlers are written and exported. | `{ path: 'handlers', barrel: { type: 'named' } }` |
-| ↳ [`output.path`](https://kubb.dev/docs/5.x/reference/plugin-options#output-path)     | Choose the output folder or file.                      | `'handlers'`                                      |
-| ↳ [`output.mode`](https://kubb.dev/docs/5.x/reference/plugin-options#output-mode)     | Write a single file or a directory of files.           | Inferred from `output.path`                       |
-| ↳ [`output.barrel`](https://kubb.dev/docs/5.x/reference/plugin-options#output-barrel) | Configure barrel exports.                              | `{ type: 'named' }`                               |
-| ↳ [`output.banner`](https://kubb.dev/docs/5.x/reference/plugin-options#output-banner) | Add content before generated code.                     | None                                              |
-| ↳ [`output.footer`](https://kubb.dev/docs/5.x/reference/plugin-options#output-footer) | Add content after generated code.                      | None                                              |
-| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)                   | Split output into per-tag or per-path folders.         | None                                              |
-| ↳ [`group.type`](https://kubb.dev/docs/5.x/reference/plugin-options#group-type)       | Group operations by tag or URL path.                   | Required with `group`                             |
-| ↳ [`group.name`](https://kubb.dev/docs/5.x/reference/plugin-options#group-name)       | Customize output group names.                          | camelCased tag or raw path segment                |
-| [`baseURL`](#baseurl)                                                                 | Base URL prepended to every handler's request.         | None                                              |
-| [`handlers`](#handlers)                                                               | Emit a `handlers.ts` that re-exports every handler.    | `false`                                           |
-| [`parser`](#parser)                                                                   | Source of the response body each handler returns.      | `'data'`                                          |
-| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)               | Keep only operations that match.                       | None                                              |
-| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)               | Skip operations that match.                            | `[]`                                              |
-| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override)             | Apply different options per pattern.                   | `[]`                                              |
-| [`resolver`](#resolver)                                                               | Customize generated names and file paths.              | `resolverMsw`                                     |
-| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)                 | Rewrite AST nodes before printing.                     | `[]`                                              |
+| Option                                                                    | Purpose                                                                | Default                                           |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------- |
+| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)     | Where files are written: `path`, `mode`, `barrel`, `banner`, `footer`. | `{ path: 'handlers', barrel: { type: 'named' } }` |
+| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)       | Split output by tag or path: `type`, `name`.                           | None                                              |
+| [`baseURL`](#baseurl)                                                     | Base URL prepended to every handler's request.                         | None                                              |
+| [`handlers`](#handlers)                                                   | Emit a `handlers.ts` that re-exports every handler.                    | `false`                                           |
+| [`parser`](#parser)                                                       | Source of the response body each handler returns.                      | `'data'`                                          |
+| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)   | Keep only operations that match.                                       | None                                              |
+| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)   | Skip operations that match.                                            | `[]`                                              |
+| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override) | Apply different options per pattern.                                   | `[]`                                              |
+| [`resolver`](#resolver)                                                   | Customize generated names and file paths.                              | `resolverMsw`                                     |
+| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)     | Rewrite AST nodes before printing.                                     | `[]`                                              |
 
 ## Option details
 
@@ -65,7 +58,7 @@ Source of the response body each handler returns.
 ::field-group
 
 :::field{name="'data'"}
-Default value. Returns a typed payload from `@kubb/plugin-ts` that you supply in tests. The handler uses `new Response(JSON.stringify(data), ...)`.
+Default value. Returns the data you pass to the handler, typed with the `@kubb/plugin-ts` types. The handler uses `new Response(JSON.stringify(data), ...)`.
 :::
 
 :::field{name="'faker'"}

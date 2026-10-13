@@ -2,7 +2,7 @@
 
 Handle failures from the client Kubb generates. Catch a `ResponseError`, switch to a returned error result with `throwOnError`, and tell a network failure apart from a 4xx or 5xx response.
 
-The generated client throws on non-2xx responses by default. Set the generated default on the client plugin. Individual operations can override it:
+The generated client throws a `ResponseError` on non-2xx responses by default:
 
 ```typescript
 import { getPetById } from './gen/clients/getPetById'
@@ -19,7 +19,7 @@ try {
 }
 ```
 
-A `ResponseError` includes the HTTP method and URL (without query parameters, keeping credentials safe) in its `message`, e.g. `GET https://api.example.com/pets/1 failed with status 404 Not Found`.
+The `message` holds the HTTP method and the URL without its query string, so query credentials stay out of logs. For example: `GET https://api.example.com/pets/1 failed with status 404 Not Found`.
 
 The error exposes these fields:
 
@@ -30,12 +30,12 @@ class ResponseError extends Error {
   status: number
   statusText: string
   contentType: string | undefined
-  request: Request // AxiosRequestConfig on plugin-axios
-  response: Response // AxiosResponse on plugin-axios
+  request: Request
+  response: Response
 }
 ```
 
-Use `ResponseError.is(error)` to narrow errors across generated packages, which each bundle their own class. It checks the error name.
+Each generated package bundles its own `ResponseError` class, so narrow with `ResponseError.is(error)` instead of `instanceof`. `is()` checks the error name.
 
 ## Return the error instead
 
@@ -54,8 +54,6 @@ if (result.status !== 200) {
 }
 ```
 
-Check `status` to narrow responses to a specific documented status code.
-
 ## Set the generated default
 
 Set `throwOnErrorDefault` on the client plugin to choose how generated operations handle non-2xx
@@ -73,17 +71,16 @@ const list = await searchPets({ query: { status: 'available' } })
 const pet = await getPetById({ path: { petId: 1 }, throwOnError: true })
 ```
 
-The generated operation passes its selected value to the client runtime, so setting
-`throwOnError` with `client.setConfig` does not change this default. Configure the plugin to
-change the generated default.
+`client.setConfig({ throwOnError })` does not change this default, because each generated
+operation passes its own value. Set it on the plugin.
 
 ## Network failures still throw
 
 > [!IMPORTANT]
-> `throwOnError` governs the response status, not the send: a dropped connection, DNS failure, or
-> aborted `AbortSignal` rejects regardless of the setting. A `ResponseError` means the server
-> answered with a non-2xx, and a `ParseError` means a body failed validation. Anything else
-> usually means the request never completed.
+> `throwOnError` only applies when the server answers. A dropped connection, a DNS failure, or an
+> aborted `AbortSignal` always rejects. A `ResponseError` means the server answered with a non-2xx
+> status, and a `ParseError` means a body failed validation. Any other error usually means the
+> request never completed.
 
 ```typescript
 try {
@@ -99,9 +96,8 @@ Pass an `AbortSignal` to cancel a request. The call rejects with the abort reaso
 
 ## Validation failures
 
-When you turn on the `validator` option, a body that does not match its schema throws a
-`ParseError` instead of returning. It carries the raw `issues` from the schema, so the same
-handling works across Zod, valibot, and arktype:
+When you turn on the `validator` option, a body that does not match its Zod schema throws a
+`ParseError` instead of returning. It carries the schema's raw `issues`:
 
 ```typescript
 import { ParseError } from './gen/.kubb/standardSchema'
@@ -116,7 +112,7 @@ try {
 }
 ```
 
-A `ParseError` reports schema validation issues. A `ResponseError` reports a non-2xx status. On the non-throwing path, configured error schemas validate the error body separately from success schemas.
+A `ParseError` reports schema validation issues. A `ResponseError` reports a non-2xx status. With `throwOnError: false`, the error body is checked against its own error schema.
 
 Calling `.unwrap()` on a `throwOnError: false` call turns that same `error` into a rejection, so a
 `try`/`catch` works there too.

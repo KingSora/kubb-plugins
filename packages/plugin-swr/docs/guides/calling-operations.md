@@ -1,6 +1,6 @@
 # Call operations
 
-`@kubb/plugin-swr` turns each operation into an SWR hook that wraps the client function from `@kubb/plugin-axios` or `@kubb/plugin-fetch`. Read operations become `useFoo` with `useSWR`, write operations become `useFoo` with `useSWRMutation`, and every hook is typed from the spec.
+`@kubb/plugin-swr` generates a typed SWR hook for each operation. `GET` operations get `useSWR` hooks such as `useGetPetById`, and `POST`, `PUT`, `PATCH`, and `DELETE` operations get `useSWRMutation` hooks such as `useCreatePet`. Each hook calls the client function from `@kubb/plugin-fetch` or `@kubb/plugin-axios`.
 
 ## Queries
 
@@ -12,7 +12,7 @@ import { useGetPetById } from './gen/hooks/useGetPetById'
 const { data, error, isLoading } = useGetPetById({ path: { petId: 1n } })
 ```
 
-The second argument holds the SWR configuration plus two Kubb switches, `shouldFetch` and `immutable`, explained below. `query` takes any `SWRConfiguration` and `client` takes per-call request config for the underlying client:
+The second argument takes `query` (any `SWRConfiguration`), `client` (request config for this call, such as `baseURL`), and the Kubb options `shouldFetch` and `immutable`, covered in [Skip requests until ready](#skip-requests-until-ready) and [Fetch immutable data](#fetch-immutable-data):
 
 ```typescript
 import { useGetPetById } from './gen/hooks/useGetPetById'
@@ -26,11 +26,11 @@ useGetPetById(
 )
 ```
 
-The exported `queryKey` helper includes the operation URL and request parameters. Use it with `mutate` to target cache updates.
+The exported `queryKey` helper includes the operation URL and request parameters. Pass it to SWR's `mutate` to update or revalidate that entry.
 
 ## Mutations
 
-A mutation hook takes only an options object. The grouped request config travels through `trigger(...)` as the mutation argument:
+A mutation hook takes only an options object. Pass the grouped request config to `trigger(...)`:
 
 ```typescript
 import { mutate } from 'swr'
@@ -48,7 +48,7 @@ A `mutationKey` helper is exported next to the hook.
 
 ## Errors and transport
 
-The generated hooks call the client operation with `throwOnError: true`, so failures surface through the query library's `error` state, typed from the spec's error responses. Transport concerns (base URL, authentication, interceptors, serialization, validation) live on the client plugin: see the [plugin-fetch](https://kubb.dev/extensions/kubb-labs/plugin-fetch) or [plugin-axios](https://kubb.dev/extensions/kubb-labs/plugin-axios) guides.
+Each generated hook calls the client function with `throwOnError: true`. A failed request sets SWR's `error`, typed from the error responses in the spec. Set the base URL, authentication, interceptors, serialization, and validation on the client plugin. See the [plugin-fetch](https://kubb.dev/extensions/kubb-labs/plugin-fetch) or [plugin-axios](https://kubb.dev/extensions/kubb-labs/plugin-axios) guide.
 
 ## Skip requests until ready
 

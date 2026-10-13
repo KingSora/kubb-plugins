@@ -14,7 +14,7 @@ client.setConfig({
 })
 ```
 
-The resolver is a token string, or a function (which can be async) that returns one or `undefined` to skip a scheme. When an operation accepts more than one scheme, the runtime tries each in turn until one hands back a token.
+`auth` takes a token string or a function. The function can be async and returns a token, or `undefined` to skip that scheme. When an operation accepts several schemes, the runtime tries each until one returns a token.
 
 ## Return the right token per scheme
 

@@ -4,7 +4,7 @@ Generates typed operation functions from your OpenAPI spec that call a client mo
 
 Each function takes grouped `path`, `query`, `headers`, and `body` parameters and passes the operation's auth requirements to your client in a `security` list. A single call can pass its own `client` to replace the default.
 
-Use it for signed requests, a shared client, or an existing HTTP layer. For a ready-made client, use `@kubb/plugin-fetch` or `@kubb/plugin-axios` instead.
+Use it to connect the generated functions to an HTTP layer you already have, or to sign requests. For a ready-made client, use `@kubb/plugin-fetch` or `@kubb/plugin-axios` instead.
 
 ## Setup
 

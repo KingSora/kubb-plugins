@@ -1,6 +1,6 @@
 # Call operations
 
-`@kubb/plugin-vue-query` turns each operation into a composable that wraps the client function from `@kubb/plugin-axios` or `@kubb/plugin-fetch`. Read operations become `useFoo`, write operations become `useFoo` mutations, and every composable is typed from the spec.
+`@kubb/plugin-vue-query` can generate a typed TanStack Query composable for each operation. `GET` operations get query composables such as `useGetPetById`, and `POST`, `PUT`, `PATCH`, and `DELETE` operations get mutation composables such as `useUpdatePetWithForm`. Each composable calls the client function from `@kubb/plugin-fetch` or `@kubb/plugin-axios`.
 
 > [!IMPORTANT]
 > By default the plugin emits only the factory helpers (`queryOptions`, `queryKey`, `mutationKey`). Set [`hooks: true`](https://kubb.dev/extensions/kubb-labs/plugin-vue-query/options#hooks) in the plugin options to also generate the `use*` composables shown below.
@@ -15,7 +15,7 @@ import { useGetPetById } from './gen/hooks/useGetPetById'
 const { data, error, isLoading } = useGetPetById({ path: { petId: 1n } })
 ```
 
-The second argument holds two option groups. `query` takes any TanStack Query option plus a `client` to target a specific `QueryClient`. `client` takes per-call request config for the underlying client:
+The second argument has two optional groups. `query` takes any TanStack Query option, and `query.client` sets the `QueryClient` to use. The top-level `client` takes request config for this call, such as `baseURL`:
 
 ```typescript
 import { useFindPetsByTags } from './gen/hooks/useFindPetsByTags'
@@ -64,27 +64,11 @@ mutate({ path: { petId: 1n }, query: { name: 'Fluffy' } })
 
 ## Errors and transport
 
-The generated hooks call the client operation with `throwOnError: true`, so failures surface through the query library's `error` state, typed from the spec's error responses. Transport concerns (base URL, authentication, interceptors, serialization, validation) live on the client plugin: see the [plugin-fetch](https://kubb.dev/extensions/kubb-labs/plugin-fetch) or [plugin-axios](https://kubb.dev/extensions/kubb-labs/plugin-axios) guides.
+Each generated composable calls the client function with `throwOnError: true`. A failed request sets TanStack Query's `error`, typed from the error responses in the spec. Set the base URL, authentication, interceptors, serialization, and validation on the client plugin. See the [plugin-fetch](https://kubb.dev/extensions/kubb-labs/plugin-fetch) or [plugin-axios](https://kubb.dev/extensions/kubb-labs/plugin-axios) guide.
 
 ## Customize cache keys
 
 Set `queryKey` on the plugin to change generated keys. String entries are emitted as source code, so use `JSON.stringify` for a string literal.
-
-::tabs
-
-:::tabs-item{label="React Query"}
-
-```typescript [kubb.config.ts]
-import { pluginReactQuery } from '@kubb/plugin-react-query'
-
-pluginReactQuery({
-  queryKey: ({ node }) => [JSON.stringify(node.operationId)],
-})
-```
-
-:::
-
-:::tabs-item{label="Vue Query"}
 
 ```typescript [kubb.config.ts]
 import { pluginVueQuery } from '@kubb/plugin-vue-query'
@@ -94,46 +78,14 @@ pluginVueQuery({
 })
 ```
 
-:::
-
-::
-
 > [!WARNING]
-> This produces a fixed key such as `['getUserByName']`, independent of arguments. Include relevant path and query parameters in the key when their values identify different resources.
+> This `queryKey` gives every call the same key, such as `['getUserByName']`. If path or query values select different data, add them to the key.
 
 ## Load more pages
 
 Configure `infinite` with a query parameter declared by the operation, its initial value, and the response path for the next cursor. Infinite output needs `hooks: true`, and only operations that declare the `queryParam` receive it.
 
-::tabs
-
-:::tabs-item{label="React Query"}
-
-```typescript [kubb.config.ts]
-import { pluginReactQuery } from '@kubb/plugin-react-query'
-
-pluginReactQuery({
-  hooks: true,
-  infinite: {
-    queryParam: 'page',
-    initialPageParam: 0,
-    nextParam: 'pagination.next.cursor',
-  },
-})
-```
-
-```typescript [usage.ts]
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { findPetsByTagsInfiniteQueryOptions } from './gen/hooks/useFindPetsByTagsInfinite'
-
-const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(
-  findPetsByTagsInfiniteQueryOptions({ query: { tags: ['dog'] } }),
-)
-```
-
-:::
-
-:::tabs-item{label="Vue Query"}
+::code-group
 
 ```typescript [kubb.config.ts]
 import { pluginVueQuery } from '@kubb/plugin-vue-query'
@@ -156,8 +108,6 @@ const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(
   findPetsByTagsInfiniteQueryOptions({ query: () => ({ tags: ['dog'] }) }),
 )
 ```
-
-:::
 
 ::
 

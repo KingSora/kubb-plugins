@@ -113,9 +113,9 @@ Generated files import `myCodec` from `my-codec/zod`. Leave `root` unset on this
 
 ## Format and type mappings
 
-`@kubb/plugin-zod` generates native Zod v4 schemas for standard OpenAPI types and formats:
+`@kubb/plugin-zod` maps OpenAPI types and formats to Zod v4:
 
-| OpenAPI Type / Format                      | Standard Zod Output                   | Zod Mini Output                       | Notes                                                                   |
+| OpenAPI type and format                    | Zod                                   | Zod Mini                              | Notes                                                                   |
 | :----------------------------------------- | :------------------------------------ | :------------------------------------ | :---------------------------------------------------------------------- |
 | `integer`                                  | `z.int()`                             | `z.int()`                             | Coerces to `z.coerce.number().int()` when `coercion.numbers` is enabled |
 | `integer`, `format: int32`                 | `z.int32()`                           | `z.int32()`                           | 32-bit signed integer                                                   |
@@ -137,11 +137,11 @@ Generated files import `myCodec` from `my-codec/zod`. Leave `root` unset on this
 | `object`, `additionalProperties: <schema>` | `z.record(z.string(), schema)`        | `z.record(z.string(), schema)`        | Dictionary with no fixed properties                                     |
 | `object`, `additionalProperties: true`     | `z.looseObject(shape)`                | `z.looseObject(shape)`                | Open/passthrough object allowing extra keys                             |
 | `object`, `propertyNames: <schema>`        | `z.record(keySchema, schema)`         | `z.record(keySchema, schema)`         | Dynamic map with validated key schema (e.g. pattern, format)            |
-| `object`, `propertyNames: <enum>`          | `z.partialRecord(enumSchema, schema)` | `z.partialRecord(enumSchema, schema)` | Closed key schemas use partial record to avoid exhaustiveness           |
+| `object`, `propertyNames: <enum>`          | `z.partialRecord(enumSchema, schema)` | `z.partialRecord(enumSchema, schema)` | Enum keys may be missing                                                |
 
 ## Dictionaries, open objects, and key schemas
 
-OpenAPI 3.1 `propertyNames` validates dictionary keys. Open key schemas use `z.record(keySchema, valueSchema)`, including regex, UUID, and length constraints. Closed keys, such as enums, literals, or unions of enums, use `z.partialRecord` so only present keys are validated. This preserves OpenAPI's partial semantics and infers `Partial<Record<Keys, Value>>`.
+OpenAPI 3.1 `propertyNames` validates dictionary keys. Open key schemas use `z.record(keySchema, valueSchema)`, including regex, UUID, and length constraints. Closed keys, such as enums, literals, or unions of enums, use `z.partialRecord` so only present keys are validated. Keys may be missing, as in OpenAPI, and the inferred type is `Partial<Record<Keys, Value>>`.
 
 `patternProperties` combines key regex patterns into an alternation and emits `z.record(z.string().regex(...), valueSchema)`. Zod Mini uses `z.string().check(z.regex(...))` for the key schema.
 

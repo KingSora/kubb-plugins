@@ -1,6 +1,6 @@
 # Call operations
 
-`@kubb/plugin-react-query` turns each operation into a hook that wraps the client function from `@kubb/plugin-axios` or `@kubb/plugin-fetch`. Read operations become `useFoo`, write operations become `useFoo` mutations, and every hook is typed from the spec.
+`@kubb/plugin-react-query` can generate a typed TanStack Query hook for each operation. `GET` operations get query hooks such as `useGetPetById`, and `POST`, `PUT`, `PATCH`, and `DELETE` operations get mutation hooks such as `useDeletePet`. Each hook calls the client function from `@kubb/plugin-fetch` or `@kubb/plugin-axios`.
 
 > [!IMPORTANT]
 > By default the plugin emits only the factory helpers (`queryOptions`, `mutationOptions`, `queryKey`, `mutationKey`). Set [`hooks: true`](https://kubb.dev/extensions/kubb-labs/plugin-react-query/options#hooks) in the plugin options to also generate the `use*` hooks shown below.
@@ -15,7 +15,7 @@ import { useGetPetById } from './gen/hooks/useGetPetById'
 const { data, error, isLoading } = useGetPetById({ path: { petId: 1n } })
 ```
 
-The second argument holds two option groups. `query` takes any TanStack Query option plus a `client` to target a specific `QueryClient`. `client` takes per-call request config for the underlying client, such as `baseURL` or `signal`:
+The second argument has two optional groups. `query` takes any TanStack Query option, and `query.client` sets the `QueryClient` to use. The top-level `client` takes request config for this call, such as `baseURL` or `signal`:
 
 ```typescript
 import { useGetPetById } from './gen/hooks/useGetPetById'
@@ -31,7 +31,7 @@ useGetPetById(
 
 ## Factories
 
-Every operation also exports a `queryOptions` factory and a `queryKey` helper, so you can prefetch, seed, or compose outside a hook. The key includes the operation URL and path parameters, followed by query or body values when present:
+Each query operation also exports a `queryOptions` factory and a `queryKey` helper. Use them to prefetch or invalidate a query outside a hook. The key includes the operation URL and path parameters, followed by query or body values when present:
 
 ```typescript
 import { useQueryClient } from '@tanstack/react-query'
@@ -60,19 +60,15 @@ const { mutate } = useDeletePet({
 mutate({ path: { petId: 1n } })
 ```
 
-A `mutationOptions` factory and `mutationKey` helper are exported next to the hook, mirroring the query factories.
+Each mutation also exports a `mutationOptions` factory and a `mutationKey` helper.
 
 ## Errors and transport
 
-The generated hooks call the client operation with `throwOnError: true`, so failures surface through the query library's `error` state, typed from the spec's error responses. Transport concerns (base URL, authentication, interceptors, serialization, validation) live on the client plugin: see the [plugin-fetch](https://kubb.dev/extensions/kubb-labs/plugin-fetch) or [plugin-axios](https://kubb.dev/extensions/kubb-labs/plugin-axios) guides.
+Each generated hook calls the client function with `throwOnError: true`. A failed request sets TanStack Query's `error`, typed from the error responses in the spec. Set the base URL, authentication, interceptors, serialization, and validation on the client plugin. See the [plugin-fetch](https://kubb.dev/extensions/kubb-labs/plugin-fetch) or [plugin-axios](https://kubb.dev/extensions/kubb-labs/plugin-axios) guide.
 
 ## Customize cache keys
 
 Set `queryKey` on the plugin to change generated keys. String entries are emitted as source code, so use `JSON.stringify` for a string literal.
-
-::tabs
-
-:::tabs-item{label="React Query"}
 
 ```typescript [kubb.config.ts]
 import { pluginReactQuery } from '@kubb/plugin-react-query'
@@ -82,32 +78,14 @@ pluginReactQuery({
 })
 ```
 
-:::
-
-:::tabs-item{label="Vue Query"}
-
-```typescript [kubb.config.ts]
-import { pluginVueQuery } from '@kubb/plugin-vue-query'
-
-pluginVueQuery({
-  queryKey: ({ node }) => [JSON.stringify(node.operationId)],
-})
-```
-
-:::
-
-::
-
 > [!WARNING]
-> This produces a fixed key such as `['getUserByName']`, independent of arguments. Include relevant path and query parameters in the key when their values identify different resources.
+> This `queryKey` gives every call the same key, such as `['getUserByName']`. If path or query values select different data, add them to the key.
 
 ## Load more pages
 
 Configure `infinite` with a query parameter declared by the operation, its initial value, and the response path for the next cursor. Infinite output needs `hooks: true`, and only operations that declare the `queryParam` receive it.
 
-::tabs
-
-:::tabs-item{label="React Query"}
+::code-group
 
 ```typescript [kubb.config.ts]
 import { pluginReactQuery } from '@kubb/plugin-react-query'
@@ -130,34 +108,6 @@ const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(
   findPetsByTagsInfiniteQueryOptions({ query: { tags: ['dog'] } }),
 )
 ```
-
-:::
-
-:::tabs-item{label="Vue Query"}
-
-```typescript [kubb.config.ts]
-import { pluginVueQuery } from '@kubb/plugin-vue-query'
-
-pluginVueQuery({
-  hooks: true,
-  infinite: {
-    queryParam: 'page',
-    initialPageParam: 0,
-    nextParam: 'pagination.next.cursor',
-  },
-})
-```
-
-```typescript [usage.ts]
-import { useInfiniteQuery } from '@tanstack/vue-query'
-import { findPetsByTagsInfiniteQueryOptions } from './gen/hooks/useFindPetsByTagsInfinite'
-
-const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(
-  findPetsByTagsInfiniteQueryOptions({ query: () => ({ tags: ['dog'] }) }),
-)
-```
-
-:::
 
 ::
 
@@ -199,7 +149,7 @@ pluginReactQuery({
 })
 ```
 
-Place the function where the generated import resolves. Each hook passes `{ hookName, operationId }`. The generated barrel re-exports `HookOptions`.
+Create the function at `importPath`, resolved from the generated hooks folder (here `src/gen/hooks/useCustomHookOptions.ts`). Each hook passes `{ hookName, operationId }`. The generated barrel re-exports `HookOptions`.
 
 ```typescript [src/gen/hooks/useCustomHookOptions.ts]
 import type { HookOptions } from './HookOptions'

@@ -15,7 +15,7 @@ Generates a Faker.js mock-data factory for every schema in your OpenAPI spec. Us
 - `locale` sets the Faker locale. The default is `en`.
 - `dateParser` formats date and time strings with `faker` (default), `dayjs`, or `moment`. Install the library you pick.
 - `regexGenerator` turns a `pattern` into a string with `faker` (default) or `randexp`.
-- `typeMode` sets the factory types: `inferred` (default) derives them from the generated values, `schema` uses the declared model type.
+- `typeMode` sets the factory types: `inferred` (default) derives them from the generated values. `schema` uses the declared model type.
 
 ## Example
 

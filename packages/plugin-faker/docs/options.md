@@ -1,32 +1,24 @@
 # Options
 
-Pass these options to `pluginFaker()`, all of them optional. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options), which documents their behavior once.
+Pass these options to `pluginFaker()`, all of them optional. Shared options link to [Shared plugin options](https://kubb.dev/docs/5.x/reference/plugin-options).
 
 ## Options overview
 
-| Option                                                                                | Purpose                                                                             | Default                                        |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------- |
-| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)                 | Where the generated files are written and exported.                                 | `{ path: 'mocks', barrel: { type: 'named' } }` |
-| ↳ [`output.path`](https://kubb.dev/docs/5.x/reference/plugin-options#output-path)     | Choose the output folder or file.                                                   | `'mocks'`                                      |
-| ↳ [`output.mode`](https://kubb.dev/docs/5.x/reference/plugin-options#output-mode)     | Write a single file or a directory of files.                                        | Inferred from `output.path`                    |
-| ↳ [`output.barrel`](https://kubb.dev/docs/5.x/reference/plugin-options#output-barrel) | Configure barrel exports.                                                           | `{ type: 'named' }`                            |
-| ↳ [`output.banner`](https://kubb.dev/docs/5.x/reference/plugin-options#output-banner) | Add content before generated code.                                                  | None                                           |
-| ↳ [`output.footer`](https://kubb.dev/docs/5.x/reference/plugin-options#output-footer) | Add content after generated code.                                                   | None                                           |
-| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)                   | Split output into per-tag or per-path folders.                                      | None                                           |
-| ↳ [`group.type`](https://kubb.dev/docs/5.x/reference/plugin-options#group-type)       | Group operations by tag or URL path.                                                | Required with `group`                          |
-| ↳ [`group.name`](https://kubb.dev/docs/5.x/reference/plugin-options#group-name)       | Customize output group names.                                                       | camelCased tag or raw path segment             |
-| [`typeMode`](#typemode)                                                               | Type object and intersection factories from generated values or the declared model. | `'inferred'`                                   |
-| [`dateParser`](#dateparser)                                                           | Library that formats string date and time fields.                                   | `'faker'`                                      |
-| [`regexGenerator`](#regexgenerator)                                                   | Library that turns a regex `pattern` into a string.                                 | `'faker'`                                      |
-| [`locale`](#locale)                                                                   | Faker locale code for the generated values.                                         | `'en'`                                         |
-| [`seed`](#seed)                                                                       | Value passed to `faker.seed(...)` for deterministic output.                         | None                                           |
-| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)               | Keep only operations and schemas that match.                                        | None                                           |
-| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)               | Skip operations and schemas that match.                                             | `[]`                                           |
-| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override)             | Apply different options per pattern.                                                | `[]`                                           |
-| [`resolver`](#resolver)                                                               | Customize generated names and file paths.                                           | `resolverFaker`                                |
-| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)                 | Rewrite AST nodes before printing.                                                  | `[]`                                           |
-| [`printer`](#printer)                                                                 | Replace the handler for a schema type.                                              | None                                           |
-| ↳ [`printer.nodes`](#printer)                                                         | Customize handlers for schema node types.                                           | None                                           |
+| Option                                                                    | Purpose                                                                     | Default                                        |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------- |
+| [`output`](https://kubb.dev/docs/5.x/reference/plugin-options#output)     | Where files are written: `path`, `mode`, `barrel`, `banner`, `footer`.      | `{ path: 'mocks', barrel: { type: 'named' } }` |
+| [`group`](https://kubb.dev/docs/5.x/reference/plugin-options#group)       | Split output by tag or path: `type`, `name`.                                | None                                           |
+| [`typeMode`](#typemode)                                                   | Whether factory types come from the generated values or the declared model. | `'inferred'`                                   |
+| [`dateParser`](#dateparser)                                               | Library that formats string date and time fields.                           | `'faker'`                                      |
+| [`regexGenerator`](#regexgenerator)                                       | Library that turns a regex `pattern` into a string.                         | `'faker'`                                      |
+| [`locale`](#locale)                                                       | Faker locale code for the generated values.                                 | `'en'`                                         |
+| [`seed`](#seed)                                                           | Value passed to `faker.seed(...)` for deterministic output.                 | None                                           |
+| [`include`](https://kubb.dev/docs/5.x/reference/plugin-options#include)   | Keep only operations and schemas that match.                                | None                                           |
+| [`exclude`](https://kubb.dev/docs/5.x/reference/plugin-options#exclude)   | Skip operations and schemas that match.                                     | `[]`                                           |
+| [`override`](https://kubb.dev/docs/5.x/reference/plugin-options#override) | Apply different options per pattern.                                        | `[]`                                           |
+| [`resolver`](#resolver)                                                   | Customize generated names and file paths.                                   | `resolverFaker`                                |
+| [`macros`](https://kubb.dev/docs/5.x/reference/plugin-options#macros)     | Rewrite AST nodes before printing.                                          | `[]`                                           |
+| [`printer`](#printer)                                                     | Replace the handler for a schema type.                                      | None                                           |
 
 ## Option details
 
@@ -146,7 +138,7 @@ Faker locale code. It switches the named import to `fakerXX` from `@faker-js/fak
 
 ### seed
 
-Value passed to `faker.seed(...)` and emitted at the top of each generated factory, giving deterministic output across runs for snapshot tests and reproducible local data. Pass a single number or an array of numbers. Factories still accept overrides, such as `createPet({ name: 'Rex' })`.
+Kubb passes this value to `faker.seed(...)` at the top of each factory, so every run returns the same data. Use it for snapshot tests. Pass a single number or an array of numbers. Factories still accept overrides, such as `createPet({ name: 'Rex' })`.
 
 |          |                      |
 | -------- | -------------------- |

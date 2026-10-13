@@ -2,7 +2,7 @@
 
 Generates Zod v4 schemas from your OpenAPI spec. Use them to validate API responses, form input, and query params at runtime.
 
-The schemas can stand on their own. With `inferred: true`, the plugin also exports a `z.infer` type next to each schema, so you can skip `@kubb/plugin-ts`. Client plugins such as `@kubb/plugin-fetch` and `@kubb/plugin-axios` use these schemas when you set their `validator` option.
+The schemas need no other plugin. With `inferred: true`, the plugin also exports a `z.infer` type next to each schema, so you can skip `@kubb/plugin-ts`. Client plugins such as `@kubb/plugin-fetch` and `@kubb/plugin-axios` use these schemas when you set their `validator` option.
 
 ## Setup
 

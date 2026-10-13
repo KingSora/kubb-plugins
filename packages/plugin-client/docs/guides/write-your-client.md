@@ -1,6 +1,6 @@
 # Write your client
 
-The generated functions import your module through [`importPath`](https://kubb.dev/extensions/kubb-labs/plugin-client/options#importpath). It is the only runtime code in the picture, and you own all of it.
+The generated functions import your module through [`importPath`](https://kubb.dev/extensions/kubb-labs/plugin-client/options#importpath). That module is the only runtime code the generated functions call, and you own it.
 
 ## Required exports
 
@@ -85,7 +85,7 @@ export async function client(config: RequestConfig) {
 }
 ```
 
-The [example project](https://github.com/kubb-labs/plugins/tree/main/examples/client) has a fuller version with a base URL setter, query handling, and an async auth hook. Type the response map with the status-aware helpers you need. This sketch keeps them simple on purpose.
+The [example project](https://github.com/kubb-labs/plugins/tree/main/examples/client) has a fuller version with a base URL setter, query handling, and an async auth hook. The types in this sketch are minimal. Add status-aware response types when you need them.
 
 > [!TIP]
-> Start small. Add retries, interceptors, or request signing to `client` when you need them. Kubb does not depend on any of it.
+> Kubb does not depend on retries, interceptors, or request signing. Add them to `client` when you need them.
