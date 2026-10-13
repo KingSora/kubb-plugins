@@ -12,7 +12,7 @@
   "tags": ["api-client", "http-client", "codegen", "openapi"],
   "docs": "https://kubb.dev/plugins/plugin-client",
   "compatibility": {
-    "kubb": ">=5.9.0",
+    "kubb": ">=5.8.2",
     "node": ">=22"
   },
   "options": [

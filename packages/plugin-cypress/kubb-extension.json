@@ -12,7 +12,7 @@
   "tags": ["cypress", "e2e-testing", "api-testing", "test-generation", "codegen", "openapi"],
   "docs": "https://kubb.dev/plugins/plugin-cypress",
   "compatibility": {
-    "kubb": ">=5.9.0",
+    "kubb": ">=5.8.2",
     "node": ">=22"
   },
   "options": [

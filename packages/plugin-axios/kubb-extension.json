@@ -12,7 +12,7 @@
   "tags": ["api-client", "axios", "http-client", "codegen", "openapi", "validator"],
   "docs": "https://kubb.dev/plugins/plugin-axios",
   "compatibility": {
-    "kubb": ">=5.9.0",
+    "kubb": ">=5.8.2",
     "node": ">=22"
   },
   "role": "client",

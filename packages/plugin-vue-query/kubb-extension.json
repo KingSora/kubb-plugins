@@ -12,7 +12,7 @@
   "tags": ["vue-query", "tanstack-query", "vue", "composables", "data-fetching", "codegen", "openapi"],
   "docs": "https://kubb.dev/plugins/plugin-vue-query",
   "compatibility": {
-    "kubb": ">=5.9.0",
+    "kubb": ">=5.8.2",
     "node": ">=22"
   },
   "role": "consumer",
