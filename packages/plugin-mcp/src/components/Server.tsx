@@ -1,7 +1,7 @@
 import { getOperationParameters } from '@internals/shared'
 import type { ast } from 'kubb/kit'
 import { createFunctionParameter, createFunctionParameters, createObjectBindingPattern, functionPrinter } from '@kubb/plugin-ts'
-import { File, Function } from 'kubb/jsx'
+import { Const, File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import type { ZodParam } from '../utils.ts'
 import { zodExprFromSchemaNode, zodGroupExpr } from '../utils.ts'
@@ -135,6 +135,12 @@ server.registerTool(${JSON.stringify(tool.name)}, {
 ${registrations}
 return server`}
         </Function>
+      </File.Source>
+
+      <File.Source name="server" isExportable isIndexable>
+        <Const name={'server'} export>
+          {'getServer()'}
+        </Const>
       </File.Source>
 
       <File.Source name="startServer" isExportable isIndexable>
