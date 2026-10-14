@@ -1,5 +1,11 @@
 # @kubb/plugin-swr
 
+## 5.3.0
+
+### Minor Changes
+
+- [#1113](https://github.com/kubb-labs/plugins/pull/1113) [`6d660cc`](https://github.com/kubb-labs/plugins/commit/6d660cce26b29f80d6e86ad846b4252747dfdde2) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Accept `@kubb/plugin-client` as the client plugin. The `client` option now also takes `'client'`, a lone registered `@kubb/plugin-client` is auto-detected, and the generated hooks and handlers call its operations and import `RequestConfig` and `ResponseErrorConfig` from your `importPath` module.
+
 ## 5.2.6
 
 ### Patch Changes
