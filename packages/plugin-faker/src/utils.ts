@@ -174,9 +174,7 @@ export function resolveFakerTypeUsage(
   returnType: string | null
   usesTypeName: boolean
 } {
-  // A nullable scalar inlines its primitive instead of naming the generated type, so the
-  // nullability the type plugin emitted has to be reapplied here. Non-scalars keep `typeName`,
-  // which already carries it.
+  // A nullable scalar inlines its primitive, so reapply the nullability the type plugin emitted.
   const scalarType = SCALAR_TYPES.has(node.type) ? `${getScalarType(node, typeName)}${node.nullable ? ' | null' : ''}` : undefined
 
   // Every overridable factory takes `Partial<T>`, so a `ref` wrapper can forward its own

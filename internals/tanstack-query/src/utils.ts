@@ -435,10 +435,7 @@ export function buildQueryKeyParams(
   return createFunctionParameters({ params: groupedParam ? [groupedParam] : [] })
 }
 
-/**
- * Builds the parameter list of a generated hook: the grouped request param (omitted when
- * `withRequest` is `false`, as for mutations) followed by `options`, typed as `optionsType`.
- */
+/** Builds the hook parameter list: the grouped request param (omitted when `withRequest` is `false`) then `options` typed as `optionsType`. */
 export function buildHookParams(
   node: ast.OperationNode,
   options: { resolver: ResolverTs; optionsType: string; memberTypeWrapper?: (type: string) => string; withRequest?: boolean },
@@ -450,24 +447,12 @@ export function buildHookParams(
   return createFunctionParameters({ params: [groupedParam, optionsParam].filter((param): param is FunctionParameterNode => param !== null) })
 }
 
-/**
- * The `TRequest` type argument of a mutation hook: the options type when the operation takes a
- * request, `undefined` otherwise.
- */
+/** The `TRequest` type argument of a mutation hook: the options type when the operation takes a request, else `undefined`. */
 export function resolveMutationRequestType(node: ast.OperationNode, resolver: ResolverTs): string {
   return buildGroupedRequestParam(node, { resolver }) ? resolver.response.options(node) : 'undefined'
 }
 
-/**
- * Builds the object literal that resolves each request group to a concrete value, unwrapping a getter
- * once before the value reaches the plain `queryKey`/`queryOptions` helpers. A getter must never reach a
- * React Query key, which is hashed structurally. Returns `null` when the operation carries no request group.
- *
- * @example
- * ```ts
- * buildResolvedRequestParams(node) // { path: typeof path === 'function' ? path() : path }
- * ```
- */
+/** Builds the object literal that unwraps each request group's getter before it reaches `queryKey`/`queryOptions`; `null` without a request group. */
 export function buildResolvedRequestParams(node: ast.OperationNode): string | null {
   const groups = getRequestGroups(node)
   const names = requestGroupOrder.filter((key) => groups[key])

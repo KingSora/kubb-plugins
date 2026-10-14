@@ -9,9 +9,7 @@ import { defaultMacros } from './macros.ts'
 import { resolverClient } from './resolver.ts'
 import type { Options, ResolvedOptions, ResolverClient } from './types.ts'
 
-/**
- * Absolute paths of the runtime files a client plugin copies into `<root>/.kubb/`.
- */
+/** Absolute paths of the runtime files a client plugin copies into `<root>/.kubb/`. */
 type ClientTemplates = {
   client: string
   serializers: string
@@ -20,23 +18,15 @@ type ClientTemplates = {
 
 type CreateClientPluginOptions<TName extends string, TOptions extends Options, TResolved extends ResolvedOptions> = {
   meta: ExtensionMeta & { name: TName }
-  /**
-   * Emits one function per operation. A configured `sdk` swaps it for the class-based SDK generator.
-   */
+  /** Emits one function per operation; a configured `sdk` swaps in the class-based SDK generator. */
   generator: Generator<PluginType<TName, TOptions, TResolved, ResolverClient>>
-  /**
-   * The runtime files copied into `.kubb/`. Leave it out when the application owns the client module.
-   */
+  /** The runtime files copied into `.kubb/`. Leave out when the application owns the client module. */
   templates?: ClientTemplates
-  /**
-   * Applies the plugin's defaults to the user options. Use `resolveClientOptions` for the shared ones.
-   */
+  /** Applies the plugin's defaults to the user options. */
   resolveOptions: (options: TOptions) => TResolved
 }
 
-/**
- * Applies the defaults every client plugin shares to the user options.
- */
+/** Applies the defaults every client plugin shares to the user options. */
 export function resolveClientOptions(options: Options): ResolvedOptions {
   const {
     output = { path: 'clients', barrel: { type: 'named' } },
@@ -67,11 +57,7 @@ export function resolveClientOptions(options: Options): ResolvedOptions {
   }
 }
 
-/**
- * Builds a client plugin: registers the resolver, the default macros, and the operation generator,
- * and copies the runtime `templates` into `.kubb/` when the plugin bundles its own client.
- * `@kubb/plugin-zod` is only required when `validator` is set.
- */
+/** Builds a client plugin; copies `templates` into `.kubb/` when it bundles its own client. */
 export function createClientPlugin<TName extends string, TOptions extends Options, TResolved extends ResolvedOptions>({
   meta,
   generator,
@@ -87,8 +73,7 @@ export function createClientPlugin<TName extends string, TOptions extends Option
 
       setResolver(resolved.resolver)
       setMacros([...defaultMacros, ...(options.macros ?? [])])
-      // `sdk` swaps the per-operation functions for the class-based SDK; left unset, the standalone
-      // functions (which query plugins consume) stay.
+      // `sdk` swaps the per-operation functions for the class-based SDK.
       addGenerator(resolved.sdk ? createSdkGenerator<PluginType<TName, TOptions, TResolved, ResolverClient>>() : generator)
 
       if (templates) {

@@ -12,12 +12,7 @@ import { buildValidatorHooks } from '../builders/validator.ts'
 import type { OperationTypeNames } from '../resolveOperationTypes.ts'
 import type { ReturnTypeOption, ValidatorOptions } from '../types.ts'
 
-/**
- * Builds the call config literal forwarded to the contract client, mirroring the shared `Operation`
- * component: `{ method, url, security?, validator?, ...config }`. The `...config` spread carries every
- * per-call field. The plugin's `throwOnError` fallback is applied after the spread so it also wins
- * over a client instance's runtime config when the call omits an override.
- */
+/** Builds the call config literal forwarded to the contract client; the `throwOnError` fallback is applied after the `...config` spread. */
 function buildCallConfig({
   node,
   validator,
@@ -53,13 +48,7 @@ function buildCallConfig({
     .join(', ')} }`
 }
 
-/**
- * Builds a single instance method for a generated SDK class. The body forwards the single grouped
- * `options` object to the instance's own client (`this.client`, built once in the constructor) and
- * returns the `Unwrappable<RequestResult>`. A per-call `options.client` still overrides the
- * instance client, so one operation can be routed to a different environment without a new
- * instance.
- */
+/** Builds one instance method of a generated SDK class; a per-call `options.client` overrides `this.client`. */
 export function buildSdkMethod({
   node,
   name,

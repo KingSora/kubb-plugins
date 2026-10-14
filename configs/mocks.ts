@@ -66,11 +66,7 @@ export const testConfig: Config = {
   storage: memoryStorage(),
 }
 
-/**
- * The generators look plugins up by name (plugin-ts for the request types, the client plugin for the
- * contract). The built-in mock is name-agnostic, so dispatch on the name here. Unknown names fall
- * back to the `plugin-ts` entry.
- */
+/** Dispatches on plugin name (the built-in mock is name-agnostic); unknown names fall back to `plugin-ts`. */
 export function createMultiPluginDriver(name: string, plugins: Record<string, { resolver?: unknown }>) {
   const fallback = plugins['plugin-ts']
   const driver = createMockedPluginDriver({

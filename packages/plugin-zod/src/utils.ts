@@ -13,9 +13,7 @@ export function shouldCoerce(coercion: PluginZod['resolvedOptions']['coercion'] 
   return !!coercion[type]
 }
 
-/**
- * The `propertyNames` key schema of an object node, if any.
- */
+/** The `propertyNames` key schema of an object node, if any. */
 export function propertyNamesOf(node: ast.SchemaNode): ast.SchemaNode | undefined {
   return 'propertyNames' in node ? (node as { propertyNames?: ast.SchemaNode }).propertyNames : undefined
 }
@@ -216,9 +214,7 @@ function regexSource(pattern: string, regexType: PluginZod['resolvedOptions']['r
   return toRegExpString(pattern, regexType === 'constructor' ? 'RegExp' : null)
 }
 
-/**
- * Several patterns combine into one alternation (`(^a)|(^b)`).
- */
+/** Several patterns combine into one alternation (`(^a)|(^b)`). */
 function joinPatterns(patterns: Array<string>): string {
   return patterns.length === 1 ? patterns[0]! : patterns.map((pattern) => `(${pattern})`).join('|')
 }
@@ -357,10 +353,7 @@ export function applyMiniModifiers({ value, schema, nullable, optional, nullish,
   return literal !== null ? `z._default(${withModifier}, ${literal})` : withModifier
 }
 
-/**
- * Calls for string `format`s that map to a dedicated Zod constructor (skipped when strings coerce).
- * A `Map`, so a format such as `constructor` cannot hit an `Object.prototype` member.
- */
+/** Calls for string `format`s with a dedicated Zod constructor; a `Map` so `constructor` cannot hit `Object.prototype`. */
 export const STRING_FORMAT_CALLS = new Map<string | undefined, string>([
   ['byte', 'z.base64()'],
   ['base64', 'z.base64()'],
@@ -371,20 +364,12 @@ export const STRING_FORMAT_CALLS = new Map<string | undefined, string>([
   ['duration', 'z.iso.duration()'],
 ])
 
-/**
- * A `oneOf` member that is an inline object is exhaustive, so it prints as a strict object.
- * Marking the node lets `object()` build `z.strictObject(...)` itself; appending `.strict()` to the
- * printed member instead would read `.shape` eagerly and run a self-reference's deferred getter
- * inside the temporal dead zone.
- */
+/** Marks an inline `oneOf` object strict, so `object()` builds `z.strictObject(...)` and no eager `.shape` read hits a deferred getter. */
 export function strictOneOfNode(node: ast.SchemaNode): ast.SchemaNode {
   return node.type === 'object' && node.additionalProperties === undefined ? { ...node, additionalProperties: false } : node
 }
 
-/**
- * The constraint chain an `allOf` member adds to the preceding schema when it is a bare string, number or array.
- * The std and mini printers differ only in how they render the checks, so they pass their own functions.
- */
+/** The constraint chain an `allOf` member adds to a bare string, number or array; each printer passes its own renderers. */
 export function getMemberConstraint({
   member,
   regexType,
@@ -402,18 +387,13 @@ export function getMemberConstraint({
   if (member.primitive === 'array') return lengths({ ...(ast.narrowSchema(member, 'array') ?? {}), regexType }) || undefined
 }
 
-/**
- * The printer slice the shared builders need: the recursive `transform` and the resolved options.
- */
+/** The printer slice the shared builders need: `transform` and the resolved options. */
 type PrinterContext = {
   transform: (node: ast.SchemaNode) => string | null
   options: { cyclicSchemas?: ReadonlySet<string> }
 }
 
-/**
- * Builds the `{ key: value, … }` shape for an object node, shared by the `z.object(...)` and
- * `.extend(...)` renderings so they stay in lockstep. `modify` applies the dialect's modifiers.
- */
+/** Builds the `{ key: value, … }` shape shared by the `z.object(...)` and `.extend(...)` renderings. */
 export function buildObjectShape(
   ctx: PrinterContext,
   node: ast.SchemaNode,
@@ -426,8 +406,7 @@ export function buildObjectShape(
     ctx.options.cyclicSchemas != null && containsCircularRef(schema, { circularSchemas: ctx.options.cyclicSchemas })
 
   const entries = mapSchemaProperties(objectNode, (schema) => {
-    // Inside a getter the getter itself defers evaluation, so suppress z.lazy() wrapping on
-    // nested refs by temporarily clearing cyclicSchemas.
+    // A getter defers evaluation, so clear cyclicSchemas to skip z.lazy() on nested refs.
     const hasSelfRef = isCyclic(schema)
     const savedCyclicSchemas = ctx.options.cyclicSchemas
     if (hasSelfRef) ctx.options.cyclicSchemas = undefined
@@ -444,10 +423,7 @@ export function buildObjectShape(
   return buildObject(entries)
 }
 
-/**
- * Shared `print` body of both printers: transforms the node, applies `keysToOmit` as `.omit({ … })`
- * (unwrapping a `$ref` first), then lets `modify` add the dialect's nullable/optional/default modifiers.
- */
+/** Shared `print` body: transforms the node, applies `keysToOmit` as `.omit(...)`, then `modify` adds the modifiers. */
 export function printWithOmit(
   ctx: { transform: (node: ast.SchemaNode) => string | null; options: { keysToOmit?: Array<string> | null } },
   node: ast.SchemaNode,
@@ -462,15 +438,11 @@ export function printWithOmit(
 
   const base = (() => {
     if (!keysToOmit?.length || meta.primitive !== 'object' || (meta.type === 'union' && meta.discriminatorPropertyName)) return transformed
-    // Discriminated unions (z.discriminatedUnion) do not support .omit(), so skip them.
 
-    // A nullable/optional ref resolves to a nullable/optional wrapper variable; .omit() lives on
-    // the inner object, so unwrap down to it first (mirrors printerTs `Omit<NonNullable<T>, …>`).
-    // The modifiers re-apply the nullable/optional wrapper after the omit.
+    // A ref resolves to a wrapper variable; unwrap to the inner object before .omit().
     const unwrap = omitUnwrapChain(node)
     const omit = `.omit({ ${keysToOmit.map((k: string) => `"${k}": true`).join(', ')} })`
 
-    // If this is a lazy reference, apply omit inside the lazy function
     const lazyMatch = transformed.match(/^z\.lazy\(\(\)\s*=>\s*(.+)\)$/)
     if (lazyMatch) return `z.lazy(() => ${lazyMatch[1]}${unwrap}${omit})`
     return `${transformed}${unwrap}${omit}`
