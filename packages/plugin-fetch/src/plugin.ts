@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { createClientGenerator, createClientPlugin, resolveClientOptions } from '@internals/client'
+import { createClientGenerator, createClientPlugin, createSdkGenerator, resolveClientOptions } from '@internals/client'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import type { PluginFetch } from './types.ts'
@@ -42,6 +42,7 @@ export const clientGenerator = createClientGenerator<PluginFetch>('fetch')
 export const pluginFetch = createClientPlugin({
   meta: { name: pluginFetchName, version, compatibility },
   generator: clientGenerator,
+  sdkGenerator: createSdkGenerator<PluginFetch>(),
   templates: {
     client: fileURLToPath(new URL('../templates/fetch.ts', import.meta.url)),
     serializers: fileURLToPath(new URL('../templates/serializers.ts', import.meta.url)),

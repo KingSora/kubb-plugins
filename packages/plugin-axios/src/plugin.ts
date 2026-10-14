@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { createClientGenerator, createClientPlugin, resolveClientOptions } from '@internals/client'
+import { createClientGenerator, createClientPlugin, createSdkGenerator, resolveClientOptions } from '@internals/client'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import type { PluginAxios } from './types.ts'
@@ -42,6 +42,7 @@ export const clientGenerator = createClientGenerator<PluginAxios>('axios')
 export const pluginAxios = createClientPlugin({
   meta: { name: pluginAxiosName, version, compatibility },
   generator: clientGenerator,
+  sdkGenerator: createSdkGenerator<PluginAxios>(),
   templates: {
     client: fileURLToPath(new URL('../templates/axios.ts', import.meta.url)),
     serializers: fileURLToPath(new URL('../templates/serializers.ts', import.meta.url)),

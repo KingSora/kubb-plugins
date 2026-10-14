@@ -4,7 +4,6 @@ import { addGenerator, defineExtension, injectFile, Resolver, setMacros, setReso
 import type { ExtensionMeta, Generator, PluginFactory, PluginType } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
-import { createSdkGenerator } from './generators/sdkGenerator.tsx'
 import { defaultMacros } from './macros.ts'
 import { resolverClient } from './resolver.ts'
 import type { Options, ResolvedOptions, ResolverClient } from './types.ts'
@@ -18,8 +17,10 @@ type ClientTemplates = {
 
 type CreateClientPluginOptions<TName extends string, TOptions extends Options, TResolved extends ResolvedOptions> = {
   meta: ExtensionMeta & { name: TName }
-  /** Emits one function per operation; a configured `sdk` swaps in the class-based SDK generator. */
+  /** Emits one function per operation. */
   generator: Generator<PluginType<TName, TOptions, TResolved, ResolverClient>>
+  /** Replaces `generator` when the user configures `sdk`. Passed in so plugins without an SDK do not bundle it. */
+  sdkGenerator?: Generator<PluginType<TName, TOptions, TResolved, ResolverClient>>
   /** The runtime files copied into `.kubb/`. Leave out when the application owns the client module. */
   templates?: ClientTemplates
   /** Applies the plugin's defaults to the user options. */
@@ -61,6 +62,7 @@ export function resolveClientOptions(options: Options): ResolvedOptions {
 export function createClientPlugin<TName extends string, TOptions extends Options, TResolved extends ResolvedOptions>({
   meta,
   generator,
+  sdkGenerator,
   templates,
   resolveOptions,
 }: CreateClientPluginOptions<TName, TOptions, TResolved>): PluginFactory<PluginType<TName, TOptions, TResolved, ResolverClient>> {
@@ -74,7 +76,7 @@ export function createClientPlugin<TName extends string, TOptions extends Option
       setResolver(resolved.resolver)
       setMacros([...defaultMacros, ...(options.macros ?? [])])
       // `sdk` swaps the per-operation functions for the class-based SDK.
-      addGenerator(resolved.sdk ? createSdkGenerator<PluginType<TName, TOptions, TResolved, ResolverClient>>() : generator)
+      addGenerator(resolved.sdk && sdkGenerator ? sdkGenerator : generator)
 
       if (templates) {
         const config = useConfig()
