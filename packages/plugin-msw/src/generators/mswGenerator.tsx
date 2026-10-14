@@ -1,7 +1,7 @@
-import { collectRefNames, getOperationSuccessResponses, resolveDependencyOperationFile, resolveResponseTypes } from '@internals/shared'
+import { getOperationSuccessResponses, resolveDependencyOperationFile, resolveResponseTypes } from '@internals/shared'
 import { ast, defineGenerator } from 'kubb/kit'
 import { pluginFakerName } from '@kubb/plugin-faker'
-import { pluginTsName } from '@kubb/plugin-ts'
+import { enumTypeName, pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
 import { Mock } from '../components/Mock.tsx'
 import { Response } from '../components/Response.tsx'
@@ -63,16 +63,12 @@ export const mswGenerator = defineGenerator<PluginMsw>({
 
     const successResponses = getOperationSuccessResponses(node)
     const referencedNames = node.responses.flatMap((response) =>
-      (response.content ?? []).flatMap((entry) => (entry.schema ? collectRefNames(entry.schema) : [])),
+      (response.content ?? []).flatMap((entry) => (entry.schema ? ast.collectImportedRefNames(entry.schema) : [])),
     )
     const enumOptions = pluginTs.options?.enum
     const enumNames = new Set(ctx.meta.enumNames)
     const hasResponseNameCollision = referencedNames.some((name) => {
-      const importName =
-        enumOptions?.type === 'asConst' && enumOptions.typeSuffix && enumNames.has(name)
-          ? tsResolver.enum.keyName({ name }, enumOptions.typeSuffix)
-          : tsResolver.name(name)
-      return importName === type.responseName
+      return enumTypeName(tsResolver, name, enumOptions, enumNames.has(name)) === type.responseName
     })
     const types = resolveResponseTypes(node, tsResolver).map(([code, typeName]) => {
       const successResponse = successResponses.find((response) => response.statusCode === String(code))

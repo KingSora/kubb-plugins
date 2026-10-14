@@ -1,10 +1,19 @@
-import { operationFileEntry, resolveDependencyOperationFile, resolveOperationTypeNames } from '@internals/shared'
 import { resolveClientOperation } from '@internals/client'
-import { classifyOperation, getDefaultPageParamsWarning, matchesInfinite, resolvePageParamType } from '@internals/tanstack-query'
-import { ast, defineGenerator } from 'kubb/kit'
+import {
+  classifyOperation,
+  getDefaultPageParamsWarning,
+  HookFile,
+  InfiniteQueryOptions,
+  matchesInfinite,
+  QueryKey,
+  resolveHookFile,
+  resolvePageParamType,
+} from '@internals/tanstack-query'
 import { pluginTsName } from '@kubb/plugin-ts'
+import { ast, defineGenerator } from 'kubb/kit'
 import { File, jsxRenderer } from 'kubb/jsx'
-import { InfiniteQuery, InfiniteQueryOptions, QueryKey } from '../components'
+import { Query } from '../components/Query.tsx'
+import { maybeRefOrGetter } from '../utils.ts'
 import type { PluginVueQuery } from '../types'
 
 /**
@@ -29,7 +38,7 @@ export const infiniteQueryGenerator = defineGenerator<PluginVueQuery>({
   },
   operation(node, ctx) {
     if (!ast.isHttpOperationNode(node)) return null
-    const { config, driver, resolver, root } = ctx
+    const { driver, resolver, root } = ctx
     const { output, query, infinite, client, group } = ctx.options
 
     const infiniteOptions = infinite && typeof infinite === 'object' ? infinite : null
@@ -37,9 +46,6 @@ export const infiniteQueryGenerator = defineGenerator<PluginVueQuery>({
 
     const pageParamsWarning = getDefaultPageParamsWarning(node, infiniteOptions)
     if (pageParamsWarning) ctx.warn(pageParamsWarning)
-
-    const pluginTs = ctx.requirePlugin(pluginTsName)
-    const tsResolver = driver.getResolver(pluginTsName)
 
     const importPath = query ? query.importPath : '@tanstack/vue-query'
 
@@ -52,59 +58,32 @@ export const infiniteQueryGenerator = defineGenerator<PluginVueQuery>({
     const queryKeyName = resolver.infiniteQuery.keyName(node)
     const queryKeyTypeName = resolver.infiniteQuery.keyTypeName(node)
 
-    const meta = {
-      file: resolver.file({ ...operationFileEntry(node, queryName), root, output, group: group ?? undefined }),
-      fileTs: resolveDependencyOperationFile({
-        cache: ctx.cache,
-        node,
-        resolver: tsResolver,
-        root,
-        output: pluginTs.options?.output ?? output,
-        group: pluginTs.options?.group,
-      }),
-    }
-
-    const { queryParamsTypeName } = resolvePageParamType(node, {
-      resolver: tsResolver,
-      initialPageParam: infiniteOptions.initialPageParam,
-      queryParam: infiniteOptions.queryParam,
+    const hook = resolveHookFile(node, ctx, {
+      name: queryName,
+      output,
+      group,
+      contractOp,
+      keyTypeName: queryKeyTypeName,
+      extraTypeNames: [
+        resolvePageParamType(node, {
+          resolver: ctx.driver.getResolver(pluginTsName),
+          initialPageParam: infiniteOptions.initialPageParam,
+          queryParam: infiniteOptions.queryParam,
+        }).queryParamsTypeName,
+      ],
     })
-
-    const importedTypeNames = [
-      tsResolver.response.options(node),
-      queryParamsTypeName,
-      ...resolveOperationTypeNames(node, tsResolver, {
-        exclude: [queryKeyTypeName],
-        order: 'body-response-first',
-        includeParams: false,
-      }),
-    ].filter((name): name is string => Boolean(name))
-
-    const calledClientName = contractOp.name
+    const { tsResolver } = hook
 
     return (
-      <File
-        baseName={meta.file.baseName}
-        path={meta.file.path}
-        meta={meta.file.meta}
-        banner={resolver.default.banner(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
-        footer={resolver.default.footer(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
+      <HookFile
+        hook={hook}
+        imports={
+          <>
+            <File.Import name={['toValue']} path="vue" />
+            <File.Import name={['MaybeRefOrGetter']} path="vue" isTypeOnly />
+          </>
+        }
       >
-        <File.Import name={[contractOp.name]} root={meta.file.path} path={contractOp.path} />
-        <File.Import
-          name={['RequestConfig', 'ResponseErrorConfig']}
-          root={contractOp.clientPathIsFile ? meta.file.path : undefined}
-          path={contractOp.clientPath}
-          isTypeOnly
-        />
-
-        <File.Import name={['toValue']} path="vue" />
-        <File.Import name={['MaybeRefOrGetter']} path="vue" isTypeOnly />
-
-        {meta.fileTs && importedTypeNames.length > 0 && (
-          <File.Import name={Array.from(new Set(importedTypeNames))} root={meta.file.path} path={meta.fileTs.path} isTypeOnly />
-        )}
-
         <QueryKey
           name={queryKeyName}
           typeName={queryKeyTypeName}
@@ -112,6 +91,8 @@ export const infiniteQueryGenerator = defineGenerator<PluginVueQuery>({
           tsResolver={tsResolver}
           transformer={ctx.options.queryKey}
           variant="infiniteQuery"
+          memberTypeWrapper={maybeRefOrGetter}
+          exportType
         />
 
         <File.Import name={['InfiniteData']} isTypeOnly path={importPath} />
@@ -119,7 +100,7 @@ export const infiniteQueryGenerator = defineGenerator<PluginVueQuery>({
 
         <InfiniteQueryOptions
           name={queryOptionsName}
-          clientName={calledClientName}
+          clientName={contractOp.name}
           queryKeyName={queryKeyName}
           node={node}
           tsResolver={tsResolver}
@@ -132,22 +113,24 @@ export const infiniteQueryGenerator = defineGenerator<PluginVueQuery>({
           hasExplicitInitialPageParam={infiniteOptions.hasExplicitInitialPageParam}
           queryParam={infiniteOptions.queryParam}
           returnType={contractOp.returnType}
+          queryKeyType="QueryKey"
+          memberTypeWrapper={maybeRefOrGetter}
+          unwrapName={(name) => `toValue(${name})`}
         />
 
         <File.Import name={['useInfiniteQuery']} path={importPath} />
         <File.Import name={['QueryKey', 'QueryClient', 'UseInfiniteQueryOptions', 'UseInfiniteQueryReturnType']} path={importPath} isTypeOnly />
 
-        <InfiniteQuery
+        <Query
           name={queryName}
           queryOptionsName={queryOptionsName}
           queryKeyName={queryKeyName}
           queryKeyTypeName={queryKeyTypeName}
           node={node}
           tsResolver={tsResolver}
-          initialPageParam={infiniteOptions.initialPageParam}
-          queryParam={infiniteOptions.queryParam}
+          infinite
         />
-      </File>
+      </HookFile>
     )
   },
 })

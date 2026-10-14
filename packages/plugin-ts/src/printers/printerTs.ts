@@ -4,7 +4,7 @@ import { parserTs } from '@kubb/parser-ts'
 import type ts from 'typescript'
 import * as factory from '../factory.ts'
 import type { PluginTs, ResolverTs } from '../types.ts'
-import { buildPropertyJSDocComments, isInlineConstEnum } from '../utils.ts'
+import { buildPropertyJSDocComments, enumTypeName, isInlineConstEnum } from '../utils.ts'
 
 const { isNonNullable } = factory
 
@@ -164,13 +164,7 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
 
         // When a Key suffix is configured, enum refs must use the suffixed name (e.g. `StatusKey`)
         // so the reference matches what the enum file actually exports.
-        const isEnumRef = node.ref && this.options.enum.type === 'asConst' && this.options.enum.typeSuffix && this.options.enumSchemaNames?.has(refName)
-
-        const name = isEnumRef
-          ? this.options.resolver.enum.keyName({ name: refName }, this.options.enum.typeSuffix)
-          : node.ref
-            ? this.options.resolver.name(refName)
-            : refName
+        const name = node.ref ? enumTypeName(this.options.resolver, refName, this.options.enum, !!this.options.enumSchemaNames?.has(refName)) : refName
 
         return factory.createTypeReferenceNode(name, undefined)
       },
@@ -188,10 +182,7 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
           return factory.createUnionDeclaration({ withParentheses: true, nodes: literalNodes })
         }
 
-        const resolvedName =
-          this.options.enum.type === 'asConst' && this.options.enum.typeSuffix
-            ? this.options.resolver.enum.keyName(node, this.options.enum.typeSuffix)
-            : this.options.resolver.name(node.name)
+        const resolvedName = enumTypeName(this.options.resolver, node.name, this.options.enum, true)
 
         return factory.createTypeReferenceNode(resolvedName, undefined)
       },

@@ -1,7 +1,7 @@
-import { collectRefNames, getOperationParameters, getPerContentTypeName, resolveContentTypeVariants, resolveDependencyOperationFile } from '@internals/shared'
+import { getOperationParameters, getPerContentTypeName, resolveContentTypeVariants, resolveDependencyOperationFile } from '@internals/shared'
 import { aliasConflictingImports, filterUsedImports, rewriteAliasedImports } from '../utils/imports.ts'
 import { ast, defineGenerator } from 'kubb/kit'
-import { buildParams, pluginTsName } from '@kubb/plugin-ts'
+import { buildParams, enumTypeName, pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
 import { Faker } from '../components/Faker.tsx'
 import { printerFaker } from '../printers/printerFaker.ts'
@@ -30,10 +30,7 @@ export const fakerGenerator = defineGenerator<PluginFaker>({
 
     const schemaName = node.name
     const isEnumSchema = !!ast.narrowSchema(node, ast.schemaTypes.enum)
-    const tsEnumType = pluginTs.options?.enum?.type
-    const tsEnumTypeSuffix = pluginTs.options?.enum?.typeSuffix ?? 'Key'
-    const schemaTypeName =
-      isEnumSchema && tsEnumType === 'asConst' ? tsResolver.enum.keyName({ name: schemaName }, tsEnumTypeSuffix) : tsResolver.name(schemaName)
+    const schemaTypeName = enumTypeName(tsResolver, schemaName, pluginTs.options?.enum, isEnumSchema)
     const meta = {
       name: resolver.name(schemaName),
       file: resolver.file({ name: schemaName, extname: '.ts', root, output, group: group ?? undefined }),
@@ -171,7 +168,7 @@ export const fakerGenerator = defineGenerator<PluginFaker>({
     const responseName = resolver.response.response(node)
     const importedResponseNames = new Set(
       node.responses.flatMap((response) =>
-        (response.content ?? []).flatMap((entry) => (entry.schema ? collectRefNames(entry.schema).map((name) => resolver.name(name)) : [])),
+        (response.content ?? []).flatMap((entry) => (entry.schema ? ast.collectImportedRefNames(entry.schema).map((name) => resolver.name(name)) : [])),
       ),
     )
     const hasResponseNameCollision = importedResponseNames.has(responseName)

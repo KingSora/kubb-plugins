@@ -4,7 +4,7 @@ import { ast, defineGenerator } from 'kubb/kit'
 import { File, jsxRenderer, Type } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import type { PluginReactQuery } from '../types'
-import { classifyOperation, resolveOperationOverrides } from '../utils.ts'
+import { classifyOperation, resolveOperationOverrides } from '@internals/tanstack-query'
 
 type QueryOption = PluginReactQuery['resolvedOptions']['query']
 type MutationOption = PluginReactQuery['resolvedOptions']['mutation']

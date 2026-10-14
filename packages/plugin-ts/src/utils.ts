@@ -4,6 +4,15 @@ import { ast, syncSchemaRef } from 'kubb/kit'
 import type { ResolverTs } from './types.ts'
 
 /**
+ * Resolves the type name an enum schema is referenced by. An enum emitted as a `const` object
+ * with a `typeSuffix` uses its suffixed key alias (e.g. `StatusKey`); every other schema uses its
+ * plain resolved name.
+ */
+export function enumTypeName(resolver: ResolverTs, name: string, enumOptions: { type?: string; typeSuffix?: string } | undefined, isEnum: boolean): string {
+  return isEnum && enumOptions?.type === 'asConst' && enumOptions.typeSuffix ? resolver.enum.keyName({ name }, enumOptions.typeSuffix) : resolver.name(name)
+}
+
+/**
  * Tells whether a `const` (single-value enum) should render as a bare literal type (`'active'`)
  * rather than a named enum reference or a runtime enum declaration.
  *

@@ -4,7 +4,8 @@ import { createFunctionParameter, createFunctionParameters, functionPrinter } fr
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import { buildCallResultBody, buildGroupedRequestParam, buildClientCall } from '@internals/tanstack-query'
-import { buildRequestConfigType, buildResponseTypes } from '../utils.ts'
+import { buildRequestConfigType } from '@internals/shared'
+import { buildResponseTypes } from '@internals/tanstack-query'
 
 type Props = {
   name: string

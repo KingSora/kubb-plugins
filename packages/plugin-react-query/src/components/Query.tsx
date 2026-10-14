@@ -1,11 +1,19 @@
 import type { ast } from 'kubb/kit'
-import type { FunctionParameterNode, FunctionParametersNode, ResolverTs } from '@kubb/plugin-ts'
-import { createFunctionParameter, createFunctionParameters, functionPrinter } from '@kubb/plugin-ts'
+import type { ResolverTs } from '@kubb/plugin-ts'
+import { functionPrinter } from '@kubb/plugin-ts'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
+import { buildClientOptionType, buildOperationComments } from '@internals/shared'
+import {
+  buildHookParams,
+  buildResolvedRequestParams,
+  buildResponseTypes,
+  hasQueryKeyParams,
+  maybeValueOrGetter,
+  resolvePageParamType,
+} from '@internals/tanstack-query'
+import type { Infinite } from '@internals/tanstack-query'
 import type { PluginReactQuery } from '../types.ts'
-import { buildGroupedRequestParam } from '@internals/tanstack-query'
-import { buildClientOptionType, buildResolvedRequestParams, buildResponseTypes, getComments, hasQueryKeyParams, maybeValueOrGetter } from '../utils.ts'
 
 type Props = {
   name: string
@@ -16,60 +24,83 @@ type Props = {
   tsResolver: ResolverTs
   customOptions: PluginReactQuery['resolvedOptions']['customOptions']
   /**
-   * Emits the `useSuspenseQuery` variant of the hook instead of `useQuery`. The suspense observer
-   * options drop the `TQueryData` generic, everything else stays identical.
+   * Emits the suspense variant of the hook (`useSuspenseQuery`, `useSuspenseInfiniteQuery`). The
+   * suspense observer options drop the `TQueryData` generic, everything else stays identical.
    */
   suspense?: boolean
+  /**
+   * Emits the infinite variant of the hook (`useInfiniteQuery`) with the page param type resolved from these.
+   */
+  infinite?: {
+    initialPageParam: Infinite['initialPageParam']
+    queryParam?: Infinite['queryParam']
+  }
 }
 
 const declarationPrinter = functionPrinter({ mode: 'declaration' })
 
-function buildQueryParamsNode(
-  node: ast.OperationNode,
-  options: {
-    resolver: ResolverTs
-    observerOptionsType: string
-  },
-): FunctionParametersNode {
-  const { resolver, observerOptionsType } = options
-
-  const optionsParam = createFunctionParameter({
-    name: 'options',
-    type: `{
-  query?: Partial<${observerOptionsType}> & { client?: QueryClient },
-  client?: ${buildClientOptionType()}
-}`,
-    default: '{}',
-  })
-
-  const groupedParam = buildGroupedRequestParam(node, { resolver, memberTypeWrapper: maybeValueOrGetter })
-
-  return createFunctionParameters({ params: [groupedParam, optionsParam].filter((param): param is FunctionParameterNode => param !== null) })
-}
-
-export function Query({ name, queryKeyTypeName, queryOptionsName, queryKeyName, node, tsResolver, customOptions, suspense }: Props): KubbReactNode {
+export function Query({ name, queryKeyTypeName, queryOptionsName, queryKeyName, node, tsResolver, customOptions, suspense, infinite }: Props): KubbReactNode {
   const { TData, TError } = buildResponseTypes(node, tsResolver)
-  const hookName = suspense ? 'useSuspenseQuery' : 'useQuery'
-  const observerOptionsName = suspense ? 'UseSuspenseQueryOptions' : 'QueryObserverOptions'
-  const observerOptionsType = suspense
-    ? `${observerOptionsName}<${[TData, TError, 'TData', 'TQueryKey'].join(', ')}>`
-    : `${observerOptionsName}<${[TData, TError, 'TData', 'TQueryData', 'TQueryKey'].join(', ')}>`
-  const resultTypeName = suspense ? 'UseSuspenseQueryResult' : 'UseQueryResult'
-  const returnType = `${resultTypeName}<TData, ${TError}> & { queryKey: TQueryKey }`
-  const generics = suspense
-    ? [`TData = ${TData}`, `TQueryKey extends QueryKey = ${queryKeyTypeName}`]
-    : [`TData = ${TData}`, `TQueryData = ${TData}`, `TQueryKey extends QueryKey = ${queryKeyTypeName}`]
+
+  const prefix = suspense ? 'UseSuspense' : 'Use'
+  const hookName = `${suspense ? 'useSuspense' : 'use'}${infinite ? 'InfiniteQuery' : 'Query'}`
+  const observerOptionsName = infinite
+    ? suspense
+      ? 'UseSuspenseInfiniteQueryOptions'
+      : 'InfiniteQueryObserverOptions'
+    : suspense
+      ? 'UseSuspenseQueryOptions'
+      : 'QueryObserverOptions'
+  const resultTypeName = `${prefix}${infinite ? 'Infinite' : ''}QueryResult`
+
+  let generics: Array<string>
+  let observerOptionsType: string
+  let returnType: string
+  if (infinite) {
+    const { pageParamType } = resolvePageParamType(node, { resolver: tsResolver, initialPageParam: infinite.initialPageParam, queryParam: infinite.queryParam })
+    generics = [
+      `TQueryFnData = ${TData}`,
+      `TError = ${TError}`,
+      'TData = InfiniteData<TQueryFnData>',
+      `TQueryKey extends QueryKey = ${queryKeyTypeName}`,
+      `TPageParam = ${pageParamType}`,
+    ]
+    observerOptionsType = `${observerOptionsName}<TQueryFnData, TError, TData, TQueryKey, TPageParam>`
+    returnType = `${resultTypeName}<TData, TError> & { queryKey: TQueryKey }`
+  } else {
+    generics = suspense
+      ? [`TData = ${TData}`, `TQueryKey extends QueryKey = ${queryKeyTypeName}`]
+      : [`TData = ${TData}`, `TQueryData = ${TData}`, `TQueryKey extends QueryKey = ${queryKeyTypeName}`]
+    observerOptionsType = `${observerOptionsName}<${(suspense ? [TData, TError, 'TData', 'TQueryKey'] : [TData, TError, 'TData', 'TQueryData', 'TQueryKey']).join(', ')}>`
+    returnType = `${resultTypeName}<TData, ${TError}> & { queryKey: TQueryKey }`
+  }
+  // The non-infinite hook casts to the bare options type, the infinite one to the fully applied type.
+  const castType = infinite ? observerOptionsType : observerOptionsName
 
   const resolvedParams = buildResolvedRequestParams(node)
   const queryKeyArgs = resolvedParams && hasQueryKeyParams(node) ? 'resolvedParams' : ''
   const queryOptionsArgs = resolvedParams ? 'resolvedParams, config' : 'config'
 
-  const paramsNode = buildQueryParamsNode(node, { resolver: tsResolver, observerOptionsType })
+  const paramsNode = buildHookParams(node, {
+    resolver: tsResolver,
+    memberTypeWrapper: maybeValueOrGetter,
+    optionsType: `{
+  query?: Partial<${observerOptionsType}> & { client?: QueryClient },
+  client?: ${buildClientOptionType()}
+}`,
+  })
   const paramsSignature = declarationPrinter.print(paramsNode) ?? ''
 
   return (
     <File.Source name={name} isExportable isIndexable>
-      <Function name={name} export generics={generics.join(', ')} params={paramsSignature} returnType={undefined} JSDoc={{ comments: getComments(node) }}>
+      <Function
+        name={name}
+        export
+        generics={generics.join(', ')}
+        params={paramsSignature}
+        returnType={undefined}
+        JSDoc={{ comments: buildOperationComments(node) }}
+      >
         {`
        const { query: queryConfig = {}, client: config = {} } = options ?? {}
        const { client: queryClient, ...resolvedOptions } = queryConfig${resolvedParams ? `\n       const resolvedParams = ${resolvedParams}` : ''}
@@ -79,7 +110,7 @@ export function Query({ name, queryKeyTypeName, queryOptionsName, queryKeyName, 
         ...${queryOptionsName}(${queryOptionsArgs}),${customOptions ? '\n        ...customOptions,' : ''}
         ...resolvedOptions,
         queryKey,
-       } as unknown as ${observerOptionsName}, queryClient) as ${returnType}
+       } as unknown as ${castType}, queryClient) as ${returnType}
 
        queryResult.queryKey = queryKey as TQueryKey
 

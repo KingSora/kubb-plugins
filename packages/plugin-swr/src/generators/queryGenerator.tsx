@@ -1,10 +1,9 @@
-import { resolveDependencyOperationFile, resolveOperationTypeNames } from '@internals/shared'
 import { resolveClientOperation } from '@internals/client'
-import { classifyOperation } from '@internals/tanstack-query'
+import { classifyOperation, HookFile, QueryKey, resolveHookFile } from '@internals/tanstack-query'
 import { ast, defineGenerator } from 'kubb/kit'
-import { pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
-import { Query, QueryKey, QueryOptions } from '../components'
+import { Query } from '../components/Query.tsx'
+import { QueryOptions } from '../components/QueryOptions.tsx'
 import type { PluginSwr } from '../types'
 
 /**
@@ -16,11 +15,8 @@ export const queryGenerator = defineGenerator<PluginSwr>({
   renderer: jsxRenderer,
   operation(node, ctx) {
     if (!ast.isHttpOperationNode(node)) return null
-    const { config, driver, resolver, root } = ctx
+    const { driver, resolver, root } = ctx
     const { output, query, mutation, client, group } = ctx.options
-
-    const pluginTs = ctx.requirePlugin(pluginTsName)
-    const tsResolver = driver.getResolver(pluginTsName)
 
     const { isQuery } = classifyOperation(node, { query, mutation })
 
@@ -37,52 +33,14 @@ export const queryGenerator = defineGenerator<PluginSwr>({
     const queryKeyName = resolver.query.keyName(node)
     const queryKeyTypeName = resolver.query.keyTypeName(node)
 
-    const meta = {
-      file: resolver.file({ name: queryName, extname: '.ts', tag: node.tags[0] ?? 'default', path: node.path, root, output, group }),
-      fileTs: resolveDependencyOperationFile({
-        cache: ctx.cache,
-        node,
-        resolver: tsResolver,
-        root,
-        output: pluginTs.options?.output ?? output,
-        group: pluginTs.options?.group,
-      }),
-    }
-
-    const importedTypeNames = [
-      tsResolver.response.options(node),
-      ...resolveOperationTypeNames(node, tsResolver, {
-        exclude: [queryKeyTypeName],
-        order: 'body-response-first',
-        includeParams: false,
-      }),
-    ].filter((name): name is string => Boolean(name))
-
-    const calledClientName = contractOp.name
+    const hook = resolveHookFile(node, ctx, { name: queryName, output, group, contractOp, keyTypeName: queryKeyTypeName })
+    const { tsResolver } = hook
 
     return (
-      <File
-        baseName={meta.file.baseName}
-        path={meta.file.path}
-        meta={meta.file.meta}
-        banner={resolver.default.banner(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
-        footer={resolver.default.footer(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
-      >
-        <File.Import name={[contractOp.name]} root={meta.file.path} path={contractOp.path} />
-        <File.Import
-          name={['RequestConfig', 'ResponseErrorConfig']}
-          root={contractOp.clientPathIsFile ? meta.file.path : undefined}
-          path={contractOp.clientPath}
-          isTypeOnly
-        />
-
-        {meta.fileTs && importedTypeNames.length > 0 && (
-          <File.Import name={Array.from(new Set(importedTypeNames))} root={meta.file.path} path={meta.fileTs.path} isTypeOnly />
-        )}
-
+      <HookFile hook={hook}>
         <QueryKey name={queryKeyName} typeName={queryKeyTypeName} node={node} tsResolver={tsResolver} transformer={ctx.options.queryKey} variant="query" />
 
-        <QueryOptions name={queryOptionsName} clientName={calledClientName} node={node} tsResolver={tsResolver} returnType={contractOp.returnType} />
+        <QueryOptions name={queryOptionsName} clientName={contractOp.name} node={node} tsResolver={tsResolver} returnType={contractOp.returnType} />
 
         {query && (
           <>
@@ -98,7 +56,7 @@ export const queryGenerator = defineGenerator<PluginSwr>({
             />
           </>
         )}
-      </File>
+      </HookFile>
     )
   },
 })

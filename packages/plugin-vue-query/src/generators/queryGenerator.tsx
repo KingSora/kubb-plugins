@@ -1,10 +1,10 @@
-import { operationFileEntry, resolveDependencyOperationFile, resolveOperationTypeNames } from '@internals/shared'
 import { resolveClientOperation } from '@internals/client'
-import { classifyOperation } from '@internals/tanstack-query'
+import { classifyOperation, HookFile, QueryKey, resolveHookFile } from '@internals/tanstack-query'
 import { ast, defineGenerator } from 'kubb/kit'
-import { pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
-import { Query, QueryKey, QueryOptions } from '../components'
+import { Query } from '../components/Query.tsx'
+import { QueryOptions } from '../components/QueryOptions.tsx'
+import { maybeRefOrGetter } from '../utils.ts'
 import type { PluginVueQuery } from '../types'
 
 /**
@@ -17,11 +17,8 @@ export const queryGenerator = defineGenerator<PluginVueQuery>({
   renderer: jsxRenderer,
   operation(node, ctx) {
     if (!ast.isHttpOperationNode(node)) return null
-    const { config, driver, resolver, root } = ctx
+    const { driver, resolver, root } = ctx
     const { output, query, mutation, client, group, hooks } = ctx.options
-
-    const pluginTs = ctx.requirePlugin(pluginTsName)
-    const tsResolver = driver.getResolver(pluginTsName)
 
     const { isQuery, isMutation } = classifyOperation(node, { query, mutation })
 
@@ -38,59 +35,35 @@ export const queryGenerator = defineGenerator<PluginVueQuery>({
     const queryKeyName = resolver.query.keyName(node)
     const queryKeyTypeName = resolver.query.keyTypeName(node)
 
-    const meta = {
-      file: resolver.file({ ...operationFileEntry(node, queryName), root, output, group: group ?? undefined }),
-      fileTs: resolveDependencyOperationFile({
-        cache: ctx.cache,
-        node,
-        resolver: tsResolver,
-        root,
-        output: pluginTs.options?.output ?? output,
-        group: pluginTs.options?.group,
-      }),
-    }
-
-    const importedTypeNames = [
-      tsResolver.response.options(node),
-      ...resolveOperationTypeNames(node, tsResolver, {
-        exclude: [queryKeyTypeName],
-        order: 'body-response-first',
-        includeParams: false,
-      }),
-    ].filter((name): name is string => Boolean(name))
-
-    const calledClientName = contractOp.name
+    const hook = resolveHookFile(node, ctx, { name: queryName, output, group, contractOp, keyTypeName: queryKeyTypeName })
+    const { tsResolver } = hook
 
     return (
-      <File
-        baseName={meta.file.baseName}
-        path={meta.file.path}
-        meta={meta.file.meta}
-        banner={resolver.default.banner(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
-        footer={resolver.default.footer(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
+      <HookFile
+        hook={hook}
+        imports={
+          <>
+            <File.Import name={['toValue']} path="vue" />
+            <File.Import name={['MaybeRefOrGetter']} path="vue" isTypeOnly />
+          </>
+        }
       >
-        <File.Import name={[contractOp.name]} root={meta.file.path} path={contractOp.path} />
-        <File.Import
-          name={['RequestConfig', 'ResponseErrorConfig']}
-          root={contractOp.clientPathIsFile ? meta.file.path : undefined}
-          path={contractOp.clientPath}
-          isTypeOnly
+        <QueryKey
+          name={queryKeyName}
+          typeName={queryKeyTypeName}
+          node={node}
+          tsResolver={tsResolver}
+          transformer={ctx.options.queryKey}
+          variant="query"
+          memberTypeWrapper={maybeRefOrGetter}
+          exportType
         />
-
-        <File.Import name={['toValue']} path="vue" />
-        <File.Import name={['MaybeRefOrGetter']} path="vue" isTypeOnly />
-
-        {meta.fileTs && importedTypeNames.length > 0 && (
-          <File.Import name={Array.from(new Set(importedTypeNames))} root={meta.file.path} path={meta.fileTs.path} isTypeOnly />
-        )}
-
-        <QueryKey name={queryKeyName} typeName={queryKeyTypeName} node={node} tsResolver={tsResolver} transformer={ctx.options.queryKey} variant="query" />
 
         <File.Import name={['queryOptions']} path={importPath} />
 
         <QueryOptions
           name={queryOptionsName}
-          clientName={calledClientName}
+          clientName={contractOp.name}
           queryKeyName={queryKeyName}
           node={node}
           tsResolver={tsResolver}
@@ -111,7 +84,7 @@ export const queryGenerator = defineGenerator<PluginVueQuery>({
             />
           </>
         )}
-      </File>
+      </HookFile>
     )
   },
 })

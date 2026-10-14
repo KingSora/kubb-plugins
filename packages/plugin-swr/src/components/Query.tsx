@@ -1,10 +1,10 @@
 import type { ast } from 'kubb/kit'
-import type { FunctionParameterNode, FunctionParametersNode, ResolverTs } from '@kubb/plugin-ts'
-import { createFunctionParameter, createFunctionParameters, functionPrinter } from '@kubb/plugin-ts'
+import type { ResolverTs } from '@kubb/plugin-ts'
+import { functionPrinter } from '@kubb/plugin-ts'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import { buildGroupedRequestParam, buildQueryOptionsParams } from '@internals/tanstack-query'
-import { buildClientOptionType, buildQueryKeyParams, buildResponseTypes, getComments } from '../utils.ts'
+import { buildHookParams, buildQueryKeyParams, buildQueryOptionsParams, buildResponseTypes } from '@internals/tanstack-query'
+import { buildClientOptionType, buildOperationComments as getComments } from '@internals/shared'
 
 type Props = {
   name: string
@@ -18,31 +18,6 @@ type Props = {
 const declarationPrinter = functionPrinter({ mode: 'declaration' })
 const callPrinter = functionPrinter({ mode: 'call' })
 
-function buildQueryParamsNode(
-  node: ast.OperationNode,
-  options: {
-    resolver: ResolverTs
-  },
-): FunctionParametersNode {
-  const { resolver } = options
-  const { TData, TError } = buildResponseTypes(node, resolver)
-
-  const optionsParam = createFunctionParameter({
-    name: 'options',
-    type: `{
-  query?: SWRConfiguration<${[TData, TError].join(', ')}>,
-  client?: ${buildClientOptionType()},
-  shouldFetch?: boolean,
-  immutable?: boolean
-}`,
-    default: '{}',
-  })
-
-  const groupedParam = buildGroupedRequestParam(node, { resolver })
-
-  return createFunctionParameters({ params: [groupedParam, optionsParam].filter((param): param is FunctionParameterNode => param !== null) })
-}
-
 export function Query({ name, queryKeyTypeName, queryOptionsName, queryKeyName, node, tsResolver }: Props): KubbReactNode {
   const { TData, TError } = buildResponseTypes(node, tsResolver)
   const generics = [TData, TError, `${queryKeyTypeName} | null`]
@@ -53,7 +28,15 @@ export function Query({ name, queryKeyTypeName, queryOptionsName, queryKeyName, 
   const queryOptionsParamsNode = buildQueryOptionsParams(node, { resolver: tsResolver })
   const queryOptionsParamsCall = callPrinter.print(queryOptionsParamsNode) ?? ''
 
-  const paramsNode = buildQueryParamsNode(node, { resolver: tsResolver })
+  const paramsNode = buildHookParams(node, {
+    resolver: tsResolver,
+    optionsType: `{
+  query?: SWRConfiguration<${[TData, TError].join(', ')}>,
+  client?: ${buildClientOptionType()},
+  shouldFetch?: boolean,
+  immutable?: boolean
+}`,
+  })
   const paramsSignature = declarationPrinter.print(paramsNode) ?? ''
 
   return (
