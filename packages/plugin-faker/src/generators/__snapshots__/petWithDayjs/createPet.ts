@@ -13,7 +13,7 @@ export function createPet<TData extends Partial<Pet> = object>(data?: TData) {
   const defaultFakeData = {
     id: faker.number.int(),
     name: faker.string.alpha(),
-    code: faker.helpers.fromRegExp('^[A-Z]{3}$'),
+    code: faker.helpers.fromRegExp(/^[A-Z]{3}$/),
     shipDate: dayjs(faker.date.anytime()).format('YYYY-MM-DD'),
     category: createCategory(),
     status: faker.helpers.arrayElement<NonNullable<Pet>['status']>(['available', 'pending', 'sold']),

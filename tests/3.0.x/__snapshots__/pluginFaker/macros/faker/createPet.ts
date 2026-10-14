@@ -12,7 +12,7 @@ export function createPet<TData extends Partial<Pet> = object>(data?: TData) {
   const defaultFakeData = {
     id: faker.number.bigInt(),
     name: faker.string.alpha(),
-    log: faker.helpers.fromRegExp("^[A-Za-z0-9()\[\]'"][-A-Za-z0-9_. \/()\[\]]{0,40}[A-Za-z0-9()\[\]'"]$"),
+    log: faker.helpers.fromRegExp(/^[A-Za-z0-9()\[\]'"][-A-Za-z0-9_. \/()\[\]]{0,40}[A-Za-z0-9()\[\]'"]$/),
     category: createCategory(),
     photoUrls: faker.helpers.multiple(() => (faker.string.alpha())),
     tags: faker.helpers.multiple(() => (createTag())),
