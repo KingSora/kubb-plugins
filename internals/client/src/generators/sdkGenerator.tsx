@@ -1,18 +1,12 @@
 import path from 'node:path'
-import { getOperationParameters, operationFileEntry } from '@internals/shared'
+import { operationFileEntry } from '@internals/shared'
 import { camelCase } from '@internals/utils'
 import { ast, defineGenerator, Diagnostics } from 'kubb/kit'
 import type { Generator } from 'kubb/kit'
 import type { ResolverZod } from '@kubb/plugin-zod'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { File, jsxRenderer } from 'kubb/jsx'
-import {
-  buildZodErrorParse,
-  isValidatorEnabled,
-  resolveQueryParamsValidator,
-  resolveRequestValidator,
-  resolveResponseValidator,
-} from '../builders/validatorOptions.ts'
+import { isValidatorEnabled, resolveRequestValidator, resolveResponseValidator } from '../builders/validatorOptions.ts'
 import { type Auth, getOperationSecurity, type SecurityDocument } from '../builders/security.ts'
 import { SdkClient } from '../components/SdkClient.tsx'
 import { SdkFacade } from '../components/SdkFacade.tsx'
@@ -43,12 +37,9 @@ function resolveTypeImportNames(node: ast.OperationNode, types: OperationTypeNam
 }
 
 function resolveZodImportNames(node: ast.OperationNode, zodResolver: ResolverZod, validator: ValidatorOptions): Array<string> {
-  const { query: queryParams } = getOperationParameters(node)
   const names: Array<string | null | undefined> = [
     resolveResponseValidator(validator) === 'zod' ? zodResolver.response.response(node) : null,
-    resolveResponseValidator(validator) === 'zod' ? (buildZodErrorParse(node, zodResolver)?.expression ?? null) : null,
     resolveRequestValidator(validator) === 'zod' && node.requestBody?.content?.[0]?.schema ? zodResolver.response.body(node) : null,
-    resolveQueryParamsValidator(validator) === 'zod' && queryParams.length > 0 ? zodResolver.param.query(node, queryParams[0]!) : null,
   ]
   return names.filter((n): n is string => Boolean(n))
 }

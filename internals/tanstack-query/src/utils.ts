@@ -373,10 +373,6 @@ export function getDefaultPageParamsWarning(node: ast.OperationNode, infinite: I
   return `${node.operationId}: the default infinite page params expect an array response and never end for this one. Set \`infinite.getNextPageParam\` (or \`nextParam\`) to read the next page from the response.`
 }
 
-export function transformName(name: string, type: string, transformers?: { name?: (name: string, type?: string) => string }): string {
-  return transformers?.name?.(name, type) || name
-}
-
 type OverrideEntry<TOptions> = {
   type: string
   pattern: string | RegExp
@@ -406,67 +402,6 @@ export function resolveOperationOverrides<TOptions>(node: ast.OperationNode, ove
   if (!override) return {}
   const match = override.find((ov) => matchesPattern(node, ov))
   return match?.options ?? {}
-}
-
-type ZodSchemaNameResolverLike = {
-  response?: {
-    response?: (node: ast.OperationNode) => string | undefined
-    body?: (node: ast.OperationNode) => string | undefined
-  }
-  param?: {
-    query?: (node: ast.OperationNode, param: ast.ParameterNode) => string | undefined
-  }
-}
-
-type ParserOption = false | 'zod' | { request?: 'zod'; response?: 'zod' } | undefined
-
-/**
- * Returns `'zod'` when response-direction parsing is enabled.
- * The string shorthand `'zod'` also enables response parsing.
- */
-export function resolveResponseParser(parser: ParserOption): 'zod' | null {
-  if (!parser) return null
-  if (parser === 'zod') return 'zod'
-  return parser.response ?? null
-}
-
-/**
- * Returns `'zod'` when request body parsing is enabled.
- * The string shorthand `'zod'` also enables request body parsing (existing behavior).
- */
-export function resolveRequestParser(parser: ParserOption): 'zod' | null {
-  if (!parser) return null
-  if (parser === 'zod') return 'zod'
-  return parser.request ?? null
-}
-
-/**
- * Returns `'zod'` when query-params parsing is enabled.
- * Only the object form `{ request: 'zod' }` enables this. `parser: 'zod'` does not.
- */
-export function resolveQueryParamsParser(parser: ParserOption): 'zod' | null {
-  if (!parser || parser === 'zod') return null
-  return parser.request ?? null
-}
-
-/**
- * Collects the Zod schema import names for an operation based on the active parser directions.
- *
- * - `parser: 'zod'`: response and request body names (backward-compatible behavior).
- * - `parser: { request: 'zod' }`: request body and query params names.
- * - `parser: { response: 'zod' }`: response name only.
- * - `parser: { request: 'zod', response: 'zod' }`: all three.
- *
- * Returns an empty array when no resolver is provided or `parser` is falsy.
- */
-export function resolveZodSchemaNames(node: ast.OperationNode, zodResolver: ZodSchemaNameResolverLike | null | undefined, parser: ParserOption): Array<string> {
-  if (!zodResolver || !parser) return []
-  const { query: queryParams } = getOperationParameters(node)
-  return [
-    resolveResponseParser(parser) === 'zod' ? zodResolver.response?.response?.(node) : null,
-    resolveRequestParser(parser) === 'zod' && node.requestBody?.content?.[0]?.schema ? zodResolver.response?.body?.(node) : null,
-    resolveQueryParamsParser(parser) === 'zod' && queryParams.length > 0 ? zodResolver.param?.query?.(node, queryParams[0]!) : null,
-  ].filter((n): n is string => Boolean(n))
 }
 
 /**

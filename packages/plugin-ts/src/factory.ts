@@ -13,16 +13,6 @@ const typescript: typeof ts = createRequire(import.meta.url)('typescript')
 
 const { SyntaxKind, factory } = typescript
 
-/**
- * Compares two strings by UTF-16 code unit, keeping sorted output identical across platforms
- * regardless of locale.
- */
-function compareStrings(a: string, b: string): number {
-  if (a < b) return -1
-  if (a > b) return 1
-  return 0
-}
-
 function isNumber(value: unknown): value is number {
   return typeof value === 'number' && !Number.isNaN(value)
 }
@@ -30,23 +20,13 @@ function isNumber(value: unknown): value is number {
 // https://ts-ast-viewer.com/
 
 /**
- * TypeScript AST modifiers for common keywords (async, export, const, static).
+ * TypeScript AST modifiers for the `export` keyword.
  */
 export const modifiers = {
-  async: factory.createModifier(typescript.SyntaxKind.AsyncKeyword),
   export: factory.createModifier(typescript.SyntaxKind.ExportKeyword),
-  const: factory.createModifier(typescript.SyntaxKind.ConstKeyword),
-  static: factory.createModifier(typescript.SyntaxKind.StaticKeyword),
 } as const
 
-/**
- * TypeScript syntax kind constants for union, literal, and string types.
- */
-export const syntaxKind = {
-  union: SyntaxKind.UnionType as 192,
-  literalType: SyntaxKind.LiteralType,
-  stringLiteral: SyntaxKind.StringLiteral,
-} as const
+export const isUnionTypeNode = typescript.isUnionTypeNode
 
 export function isNonNullable<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined
@@ -88,7 +68,7 @@ const questionToken = factory.createToken(typescript.SyntaxKind.QuestionToken)
  * Creates a question token for optional type annotations.
  * Pass `true` to use the cached token, or provide a pre-created token.
  */
-export function createQuestionToken(token?: boolean | ts.QuestionToken) {
+function createQuestionToken(token?: boolean | ts.QuestionToken) {
   if (!token) {
     return undefined
   }
@@ -206,50 +186,6 @@ export function createPropertySignature({
 }
 
 /**
- * Creates a function parameter declaration with optional markers, rest parameters, and type annotations.
- */
-export function createParameterSignature(
-  name: string | ts.BindingName,
-  {
-    modifiers,
-    dotDotDotToken,
-    questionToken,
-    type,
-    initializer,
-  }: {
-    decorators?: Array<ts.Decorator>
-    modifiers?: Array<ts.Modifier>
-    dotDotDotToken?: ts.DotDotDotToken
-    questionToken?: ts.QuestionToken | boolean
-    type?: ts.TypeNode
-    initializer?: ts.Expression
-  },
-): ts.ParameterDeclaration {
-  return factory.createParameterDeclaration(modifiers, dotDotDotToken, name, createQuestionToken(questionToken), type, initializer)
-}
-
-/**
- * Creates a JSDoc comment node from an array of comment strings.
- * Returns null if no comments are provided.
- */
-export function createJSDoc({ comments }: { comments: Array<string> }) {
-  if (!comments.length) {
-    return null
-  }
-  return factory.createJSDocComment(
-    factory.createNodeArray(
-      comments.map((comment, i) => {
-        if (i === comments.length - 1) {
-          return factory.createJSDocText(comment)
-        }
-
-        return factory.createJSDocText(`${comment}\n`)
-      }),
-    ),
-  )
-}
-
-/**
  * Attaches JSDoc comments to an AST node as synthetic leading comments.
  * Filters out undefined comments before attaching.
  *
@@ -288,7 +224,7 @@ function createIndexSignature(
     modifiers?: Array<ts.Modifier>
   } = {},
 ) {
-  return factory.createIndexSignature(modifiers, [createParameterSignature(indexName, { type: indexType })], type)
+  return factory.createIndexSignature(modifiers, [factory.createParameterDeclaration(undefined, undefined, indexName, undefined, indexType)], type)
 }
 
 /**
@@ -367,117 +303,6 @@ export function createTypeDeclaration({
     node,
     comments,
   })
-}
-
-/**
- * Creates an import declaration with support for default imports, named imports, namespace imports, and type-only imports.
- * Optionally rename imported members with `propertyName` and `name` pairs.
- *
- * @example Default import
- * `import Pet from './Pet'`
- *
- * @example Named imports with rename
- * `import { Pet as Cat } from './Pet'`
- *
- * @example Namespace import
- * `import * as Pet from './Pet'`
- */
-export function createImportDeclaration({
-  name,
-  path,
-  isTypeOnly = false,
-  isNameSpace = false,
-}: {
-  name: string | Array<string | { propertyName: string; name?: string }>
-  path: string
-  isTypeOnly?: boolean
-  isNameSpace?: boolean
-}) {
-  if (!Array.isArray(name)) {
-    const importPropertyName = isNameSpace ? undefined : factory.createIdentifier(name)
-    const importName = isNameSpace ? factory.createNamespaceImport(factory.createIdentifier(name)) : undefined
-
-    return factory.createImportDeclaration(
-      undefined,
-      factory.createImportClause(isTypeOnly, importPropertyName, importName),
-      factory.createStringLiteral(path),
-      undefined,
-    )
-  }
-
-  // Sort the imports alphabetically for consistent output across platforms
-  const sortedName = name.toSorted((a, b) => compareStrings(typeof a === 'object' ? a.propertyName : a, typeof b === 'object' ? b.propertyName : b))
-
-  return factory.createImportDeclaration(
-    undefined,
-    factory.createImportClause(
-      isTypeOnly,
-      undefined,
-      factory.createNamedImports(
-        sortedName.map((item) => {
-          if (typeof item === 'object') {
-            const obj = item as { propertyName: string; name?: string }
-            if (obj.name) {
-              return factory.createImportSpecifier(false, factory.createIdentifier(obj.propertyName), factory.createIdentifier(obj.name))
-            }
-
-            return factory.createImportSpecifier(false, undefined, factory.createIdentifier(obj.propertyName))
-          }
-
-          return factory.createImportSpecifier(false, undefined, factory.createIdentifier(item))
-        }),
-      ),
-    ),
-    factory.createStringLiteral(path),
-    undefined,
-  )
-}
-
-/**
- * Creates an export declaration with support for named exports, namespace exports, and type-only exports.
- * Sorts export names alphabetically for consistent output across platforms.
- */
-export function createExportDeclaration({
-  path,
-  asAlias,
-  isTypeOnly = false,
-  name,
-}: {
-  path: string
-  asAlias?: boolean
-  isTypeOnly?: boolean
-  name?: string | Array<ts.Identifier | string>
-}) {
-  if (name && !Array.isArray(name) && !asAlias) {
-    console.warn(`When using name as string, asAlias should be true ${name}`)
-  }
-
-  if (!Array.isArray(name)) {
-    const parsedName = name?.match(/^\d/) ? `_${name?.slice(1)}` : name
-
-    return factory.createExportDeclaration(
-      undefined,
-      isTypeOnly,
-      asAlias && parsedName ? factory.createNamespaceExport(factory.createIdentifier(parsedName)) : undefined,
-      factory.createStringLiteral(path),
-      undefined,
-    )
-  }
-
-  // Sort the exports alphabetically for consistent output across platforms
-  const sortedName = name.toSorted((a, b) => compareStrings(typeof a === 'string' ? a : a.text, typeof b === 'string' ? b : b.text))
-
-  return factory.createExportDeclaration(
-    undefined,
-    isTypeOnly,
-    factory.createNamedExports(
-      sortedName.map((propertyName) => {
-        return factory.createExportSpecifier(false, undefined, typeof propertyName === 'string' ? factory.createIdentifier(propertyName) : propertyName)
-      }),
-    ),
-    factory.createStringLiteral(path),
-    undefined,
-  )
 }
 
 /**

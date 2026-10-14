@@ -34,7 +34,6 @@ export const mutationGenerator = defineGenerator<PluginVueQuery>({
     if (!contractOp) return null
 
     const mutationHookName = resolver.mutation.name(node)
-    const mutationTypeName = resolver.mutation.typeName(node)
     const mutationKeyName = resolver.mutation.keyName(node)
 
     const meta = {
@@ -92,7 +91,6 @@ export const mutationGenerator = defineGenerator<PluginVueQuery>({
             <Mutation
               name={mutationHookName}
               clientName={calledClientName}
-              typeName={mutationTypeName}
               node={node}
               tsResolver={tsResolver}
               mutationKeyName={mutationKeyName}

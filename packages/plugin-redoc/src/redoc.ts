@@ -48,7 +48,7 @@ const redocBundle = {
  * embeds the spec inline and pulls Redoc's bundle from a CDN at runtime, so
  * the generated file works without further build steps.
  */
-export async function getPageHTML(api: AdapterOas['document']) {
+export function getPageHTML(api: AdapterOas['document']) {
   const pageTitle = escapeHtml(api.info.title || 'ReDoc documentation')
   const googleFont = `<link href='https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700' rel='stylesheet' />`
   const redocHTML = `

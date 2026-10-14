@@ -79,7 +79,6 @@ export const pluginMsw = defineExtension<PluginMsw>({
       include,
       override,
       handlers,
-      resolver,
     }
   },
 })

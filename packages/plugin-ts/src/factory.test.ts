@@ -8,16 +8,10 @@ import {
   appendJSDocToNode,
   createArrayDeclaration,
   createEnumDeclaration,
-  createExportDeclaration,
-  createImportDeclaration,
   createIntersectionDeclaration,
-  createJSDoc,
-  createParameterSignature,
   createPropertySignature,
-  createQuestionToken,
   createUnionDeclaration,
   createUrlTemplateType,
-  modifiers,
 } from './factory.ts'
 
 const { factory } = ts
@@ -34,11 +28,6 @@ describe('Code Generation', () => {
       ts.NodeFlags.Const,
     ),
   )
-
-  it('should create question token', () => {
-    expect(createQuestionToken()).toBeUndefined()
-    expect(createQuestionToken(true)).toBeDefined()
-  })
 
   it('should create array declaration', () => {
     // Default arrayType: 'array' - generates (string | number)[]
@@ -102,45 +91,9 @@ describe('Code Generation', () => {
     expect(
       parserTs().print(
         createPropertySignature({
-          modifiers: [modifiers.const],
+          modifiers: [factory.createModifier(ts.SyntaxKind.ConstKeyword)],
           name: 'hello',
           type: factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-        })!,
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create parameter signature', () => {
-    expect(
-      parserTs().print(
-        createParameterSignature('hello', {
-          type: factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-        })!,
-      ),
-    ).toMatchSnapshot()
-    expect(
-      parserTs().print(
-        createParameterSignature('hello', {
-          questionToken: true,
-          type: factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-        })!,
-      ),
-    ).toMatchSnapshot()
-    expect(
-      parserTs().print(
-        createParameterSignature('hello', {
-          questionToken: true,
-          type: factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
-        })!,
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create JSDoc', async () => {
-    expect(
-      await formatTS(
-        createJSDoc({
-          comments: ['@description description', '@example example'],
         })!,
       ),
     ).toMatchSnapshot()
@@ -161,126 +114,6 @@ describe('Code Generation', () => {
         appendJSDocToNode({
           node: { ...node },
           comments: [],
-        }),
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create import declaration', async () => {
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: 'hello',
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: 'hello',
-          path: './hello.ts',
-          isTypeOnly: true,
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: ['hello'],
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: 'hello',
-          path: './hello.ts',
-          isNameSpace: true,
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: [{ propertyName: 'hello', name: 'helloWorld' }],
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // Test that imports are sorted alphabetically
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: ['zebra', 'apple', 'banana'],
-          path: './fruits.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // Test that imports with mixed objects and strings are sorted
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: ['zoo', { propertyName: 'apple' }, 'banana', { propertyName: 'cat', name: 'dog' }],
-          path: './mixed.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create export declaration', async () => {
-    expect(
-      await formatTS(
-        createExportDeclaration({
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createExportDeclaration({
-          name: ['hello', 'world'],
-          asAlias: true,
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createExportDeclaration({
-          name: 'hello',
-          asAlias: true,
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    try {
-      await formatTS(
-        createExportDeclaration({
-          name: 'hello',
-          path: './hello.ts',
-        }),
-      )
-    } catch (error) {
-      expect(error).toBeDefined()
-    }
-
-    // Test that exports are sorted alphabetically
-    expect(
-      await formatTS(
-        createExportDeclaration({
-          name: ['zebra', 'apple', 'banana'],
-          path: './fruits.ts',
         }),
       ),
     ).toMatchSnapshot()
@@ -361,87 +194,6 @@ describe('Code Generation', () => {
     expect(output).toMatch(/\/\*\*[\s\S]*The resource is active[\s\S]*\*\/\s*active: 'active'/)
     // members without a description stay un-annotated
     expect(output).not.toMatch(/\*\/\s*archived: 'archived'/)
-  })
-})
-
-describe('Import/Export Sorting Consistency', () => {
-  it('should produce identical sorted output for imports with different input order', () => {
-    const import1 = createImportDeclaration({
-      name: ['zebra', 'apple', 'banana', 'cat'],
-      path: './test.ts',
-    })
-
-    const import2 = createImportDeclaration({
-      name: ['cat', 'banana', 'zebra', 'apple'],
-      path: './test.ts',
-    })
-
-    const output1 = parserTs().print(import1)
-    const output2 = parserTs().print(import2)
-
-    // Both should produce the same sorted output
-    expect(output1).toBe(output2)
-    expect(output1).toContain('apple, banana, cat, zebra')
-  })
-
-  it('should produce identical sorted output for exports with different input order', () => {
-    const export1 = createExportDeclaration({
-      name: ['zoo', 'apple', 'monkey'],
-      path: './animals.ts',
-    })
-
-    const export2 = createExportDeclaration({
-      name: ['monkey', 'zoo', 'apple'],
-      path: './animals.ts',
-    })
-
-    const output1 = parserTs().print(export1)
-    const output2 = parserTs().print(export2)
-
-    // Both should produce the same sorted output
-    expect(output1).toBe(output2)
-    expect(output1).toContain('apple, monkey, zoo')
-  })
-
-  it('should sort mixed string and object imports by property name', () => {
-    const import1 = createImportDeclaration({
-      name: ['zoo', { propertyName: 'apple' }, 'monkey', { propertyName: 'banana', name: 'yellow' }],
-      path: './mixed.ts',
-    })
-
-    const output = parserTs().print(import1)
-
-    // Should be sorted alphabetically: apple, banana as yellow, monkey, zoo
-    expect(output).toContain('apple, banana as yellow, monkey, zoo')
-  })
-
-  it('should demonstrate consistency across different orders in real world scenario', () => {
-    // Simulating how imports might be collected on different OS/filesystem orders
-    const linuxOrder = ['UserService', 'AuthService', 'DatabaseService', 'CacheService']
-    const windowsOrder = ['CacheService', 'UserService', 'DatabaseService', 'AuthService']
-    const macOrder = ['DatabaseService', 'AuthService', 'CacheService', 'UserService']
-
-    const import1 = createImportDeclaration({
-      name: linuxOrder,
-      path: './services.ts',
-    })
-    const import2 = createImportDeclaration({
-      name: windowsOrder,
-      path: './services.ts',
-    })
-    const import3 = createImportDeclaration({
-      name: macOrder,
-      path: './services.ts',
-    })
-
-    const output1 = parserTs().print(import1)
-    const output2 = parserTs().print(import2)
-    const output3 = parserTs().print(import3)
-
-    // All three should produce identical output regardless of input order
-    expect(output1).toBe(output2)
-    expect(output2).toBe(output3)
-    expect(output1).toContain('AuthService, CacheService, DatabaseService, UserService')
   })
 })
 

@@ -1,8 +1,6 @@
 import type { ast } from 'kubb/kit'
 
 export type ParamsCasing = 'camelcase' | undefined
-export type PathParamsType = 'object' | 'inline'
-export type ParamsType = 'object' | 'inline'
 
 /**
  * The hook a key is built for. Plain and suspense queries can share a key, but an infinite query

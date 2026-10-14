@@ -32,7 +32,7 @@ export type OperationResponseResolver = {
  * @example
  * `operationParamName.call(resolver, node, param) // → 'DeletePetPathPetId'`
  */
-export function operationParamName(this: Resolver, node: ast.OperationNode, param: ast.ParameterNode): string {
+function operationParamName(this: Resolver, node: ast.OperationNode, param: ast.ParameterNode): string {
   return this.name(`${node.operationId} ${param.in} ${param.name}`)
 }
 

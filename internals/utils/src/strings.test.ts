@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getNestedAccessor, jsStringEscape, stringify, stringifyObject, toRegExpString, trimQuotes } from './strings.ts'
+import { getNestedAccessor, jsStringEscape, stringify, toRegExpString, trimQuotes } from './strings.ts'
 
 describe('trimQuotes', () => {
   it('strips a balanced double-quote pair', () => {
@@ -67,16 +67,6 @@ describe('toRegExpString', () => {
 
   it('strips surrounding quotes before parsing', () => {
     expect(toRegExpString('"foo"')).toBe('new RegExp("foo")')
-  })
-})
-
-describe('stringifyObject', () => {
-  it('renders flat key-value pairs', () => {
-    expect(stringifyObject({ a: 1, b: 'x' })).toBe('a: 1,\nb: x')
-  })
-
-  it('renders nested objects with indentation', () => {
-    expect(stringifyObject({ foo: 'bar', nested: { a: 1 } })).toBe('foo: bar,\nnested: {\n        a: 1\n      }')
   })
 })
 

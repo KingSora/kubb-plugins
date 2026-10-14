@@ -14,13 +14,6 @@ exports[`Code Generation > should append JSDoc to node 2`] = `
 "
 `;
 
-exports[`Code Generation > should create JSDoc 1`] = `
-"/**
- * @description description
- * @example example */
-"
-`;
-
 exports[`Code Generation > should create array declaration 1`] = `
 "(string | number)[]
 "
@@ -41,78 +34,8 @@ exports[`Code Generation > should create array declaration 4`] = `
 "
 `;
 
-exports[`Code Generation > should create export declaration 1`] = `
-"export * from './hello.ts'
-"
-`;
-
-exports[`Code Generation > should create export declaration 2`] = `
-"export { hello, world } from './hello.ts'
-"
-`;
-
-exports[`Code Generation > should create export declaration 3`] = `
-"export * as hello from './hello.ts'
-"
-`;
-
-exports[`Code Generation > should create export declaration 4`] = `
-"export { apple, banana, zebra } from './fruits.ts'
-"
-`;
-
-exports[`Code Generation > should create import declaration 1`] = `
-"import hello from './hello.ts'
-"
-`;
-
-exports[`Code Generation > should create import declaration 2`] = `
-"import type hello from './hello.ts'
-"
-`;
-
-exports[`Code Generation > should create import declaration 3`] = `
-"import { hello } from './hello.ts'
-"
-`;
-
-exports[`Code Generation > should create import declaration 4`] = `
-"import * as hello from './hello.ts'
-"
-`;
-
-exports[`Code Generation > should create import declaration 5`] = `
-"import { hello as helloWorld } from './hello.ts'
-"
-`;
-
-exports[`Code Generation > should create import declaration 6`] = `
-"import { apple, banana, zebra } from './fruits.ts'
-"
-`;
-
-exports[`Code Generation > should create import declaration 7`] = `
-"import { apple, banana, cat as dog, zoo } from './mixed.ts'
-"
-`;
-
 exports[`Code Generation > should create intersection declaration 1`] = `
 "string & number
-"
-`;
-
-exports[`Code Generation > should create parameter signature 1`] = `
-"hello: string
-"
-`;
-
-exports[`Code Generation > should create parameter signature 2`] = `
-"hello?: string
-"
-`;
-
-exports[`Code Generation > should create parameter signature 3`] = `
-"hello?: boolean
 "
 `;
 

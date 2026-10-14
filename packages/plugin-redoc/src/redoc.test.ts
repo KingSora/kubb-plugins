@@ -1,6 +1,6 @@
 import type { AdapterOas } from '@kubb/adapter-oas'
 import { describe, expect, test } from 'vitest'
-import { getPageHTML } from './redoc.tsx'
+import { getPageHTML } from './redoc.ts'
 
 const payload = '</script><script>alert(1)</script>'
 
@@ -26,9 +26,9 @@ function getInlineData(html: string) {
 }
 
 describe('getPageHTML', () => {
-  test('keeps a spec string with `</script>` inside the inline data', async () => {
+  test('keeps a spec string with `</script>` inside the inline data', () => {
     const document = createDocument()
-    const html = await getPageHTML(document)
+    const html = getPageHTML(document)
 
     expect(html).not.toContain(payload)
     expect(html.match(/<script\b/g)).toHaveLength(2)
@@ -39,8 +39,8 @@ describe('getPageHTML', () => {
     expect(JSON.parse(data)).toEqual(document)
   })
 
-  test('loads a pinned Redoc bundle with an integrity hash', async () => {
-    const html = await getPageHTML(createDocument())
+  test('loads a pinned Redoc bundle with an integrity hash', () => {
+    const html = getPageHTML(createDocument())
 
     expect(html).not.toContain('/latest/')
     expect(html).toMatch(

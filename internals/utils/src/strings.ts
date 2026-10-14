@@ -117,29 +117,6 @@ export function toRegExpString(text: string, func: string | null = 'RegExp'): st
 }
 
 /**
- * Renders a plain object as multi-line `key: value` source for embedding in generated code. Nested
- * objects recurse with fixed indentation, so the result drops straight into an object literal
- * without re-parsing.
- *
- * @example
- * ```ts
- * stringifyObject({ foo: 'bar', nested: { a: 1 } })
- * // 'foo: bar,\nnested: {\n        a: 1\n      }'
- * ```
- */
-export function stringifyObject(value: Record<string, unknown>): string {
-  const items = Object.entries(value)
-    .map(([key, val]) => {
-      if (val !== null && typeof val === 'object') {
-        return `${key}: {\n        ${stringifyObject(val as Record<string, unknown>)}\n      }`
-      }
-      return `${key}: ${val}`
-    })
-    .filter(Boolean)
-  return items.join(',\n')
-}
-
-/**
  * Renders a dotted path or string array as an optional-chaining accessor expression rooted at
  * `accessor`. Returns `null` for an empty path.
  *

@@ -22,7 +22,6 @@ const defaultOptions: PluginMsw['resolvedOptions'] = {
   include: undefined,
   override: [],
   handlers: false,
-  resolver: resolverMsw,
 }
 
 const mockedTsPlugin = createMockedPlugin<PluginTs>({

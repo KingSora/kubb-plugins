@@ -82,62 +82,6 @@ export type OperationTypeNameResolver = RequestConfigResolver &
     }
   }
 
-/**
- * Resolver interface for building operation parameters.
- *
- * `ResolverTs` from `@kubb/plugin-ts` satisfies this interface and can be passed directly.
- */
-export type OperationParamsResolver = {
-  /**
-   * Naming for an operation's parameters, grouped by location.
-   */
-  param: {
-    /**
-     * Resolves the type name for an individual parameter.
-     *
-     * @example Individual path parameter name
-     * `resolver.param.name(node, param) // → 'DeletePetPathPetId'`
-     */
-    name(node: ast.OperationNode, param: ast.ParameterNode): string
-    /**
-     * Resolves the grouped path parameters type name.
-     * When the return value equals `resolver.param.name`, no indexed access is emitted.
-     *
-     * @example Grouped path params type name
-     * `resolver.param.path(node, param) // → 'DeletePetPath'`
-     */
-    path(node: ast.OperationNode, param: ast.ParameterNode): string
-    /**
-     * Resolves the grouped query parameters type name.
-     * When the return value equals `resolver.param.name`, an inline struct type is emitted instead.
-     *
-     * @example Grouped query params type name
-     * `resolver.param.query(node, param) // → 'FindPetsByStatusQuery'`
-     */
-    query(node: ast.OperationNode, param: ast.ParameterNode): string
-    /**
-     * Resolves the grouped header parameters type name.
-     * When the return value equals `resolver.param.name`, an inline struct type is emitted instead.
-     *
-     * @example Grouped header params type name
-     * `resolver.param.headers(node, param) // → 'DeletePetHeaders'`
-     */
-    headers(node: ast.OperationNode, param: ast.ParameterNode): string
-  }
-  /**
-   * Naming for an operation's request and response types.
-   */
-  response: {
-    /**
-     * Resolves the request body type name.
-     *
-     * @example Request body type name
-     * `resolver.response.body(node) // → 'CreatePetBody'`
-     */
-    body(node: ast.OperationNode): string
-  }
-}
-
 export type OperationCommentLink = 'pathTemplate' | 'urlPath' | false | ((node: ast.OperationNode) => string | undefined)
 
 export type BuildOperationCommentsOptions = {
@@ -657,14 +601,4 @@ export function resolveResponseTypes(node: ast.OperationNode, resolver: Response
   }
 
   return types
-}
-
-export function findSuccessStatusCode(responses: Array<{ statusCode: ast.StatusCode | number | string }>): ast.StatusCode | null {
-  for (const response of responses) {
-    if (isSuccessStatusCode(response.statusCode)) {
-      return response.statusCode as ast.StatusCode
-    }
-  }
-
-  return null
 }

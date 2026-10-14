@@ -36,7 +36,6 @@ export const mutationGenerator = defineGenerator<PluginReactQuery>({
     if (!contractOp) return null
 
     const mutationHookName = resolver.mutation.name(node)
-    const mutationTypeName = resolver.mutation.typeName(node)
     const mutationOptionsName = resolver.mutation.optionsName(node)
     const mutationKeyName = resolver.mutation.keyName(node)
 
@@ -99,7 +98,6 @@ export const mutationGenerator = defineGenerator<PluginReactQuery>({
             <File.Import name={['UseMutationOptions', 'UseMutationResult', 'QueryClient']} path={importPath} isTypeOnly />
             <Mutation
               name={mutationHookName}
-              typeName={mutationTypeName}
               mutationOptionsName={mutationOptionsName}
               mutationKeyName={mutationKeyName}
               node={node}

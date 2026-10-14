@@ -5,7 +5,7 @@ import { adapterOasName } from '@kubb/adapter-oas'
 import { type Adapter, ast, defineExtension, injectFile, useConfig } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
-import { getPageHTML } from './redoc.tsx'
+import { getPageHTML } from './redoc.ts'
 import type { PluginRedoc } from './types.ts'
 
 /**
@@ -39,8 +39,6 @@ export const pluginRedoc = defineExtension<PluginRedoc>({
   async setup(options) {
     const config = useConfig()
     const { output = { path: 'docs.html' } } = options
-    const extname = path.extname(output.path)
-    const name = extname ? output.path.slice(0, -extname.length) : output.path
 
     const adapter = config.adapter
 
@@ -58,12 +56,11 @@ export const pluginRedoc = defineExtension<PluginRedoc>({
       )
     }
 
-    const root = path.resolve(config.root, config.output.path)
-    const pageHTML = await getPageHTML(document)
+    const pageHTML = getPageHTML(document)
 
     injectFile({
       baseName: 'docs.html',
-      path: path.resolve(root, output.path || './docs.html'),
+      path: path.resolve(config.root, config.output.path, output.path || './docs.html'),
       sources: [
         ast.factory.createSource({
           name: 'docs.html',
@@ -72,7 +69,7 @@ export const pluginRedoc = defineExtension<PluginRedoc>({
       ],
     })
 
-    return { output, name, exclude: [], override: [] }
+    return { output }
   },
 })
 

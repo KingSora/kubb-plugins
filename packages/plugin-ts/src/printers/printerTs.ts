@@ -300,7 +300,7 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
         return meta.nullish || meta.optional ? factory.createUnionDeclaration({ nodes: [withNullable, factory.keywordTypeNodes.undefined] }) : withNullable
       })()
 
-      const useTypeGeneration = syntaxType === 'type' || inner.kind === factory.syntaxKind.union || !!keysToOmit?.length
+      const useTypeGeneration = syntaxType === 'type' || factory.isUnionTypeNode(inner) || !!keysToOmit?.length
 
       const typeNode = factory.createTypeDeclaration({
         name,

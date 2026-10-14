@@ -17,7 +17,6 @@ const defaultOptions: PluginCypress['resolvedOptions'] = {
   override: [],
   baseURL: undefined,
   group: null,
-  resolver: resolverCypress,
 }
 
 const mockedTsPlugin = createMockedPlugin<PluginTs>({

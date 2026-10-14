@@ -5,7 +5,6 @@ import {
   buildOperationComments,
   buildOptionsSchema,
   buildRequestConfigType,
-  findSuccessStatusCode,
   getContentTypeInfo,
   getOperationParameters,
   getOperationSuccessResponses,
@@ -190,10 +189,6 @@ describe('response status helpers', () => {
     expect(getSuccessResponses(node.responses).map((response) => response.statusCode)).toStrictEqual(['201'])
     expect(getOperationSuccessResponses(node).map((response) => response.statusCode)).toStrictEqual(['201'])
     expect(getPrimarySuccessResponse(node)?.statusCode).toBe('201')
-  })
-
-  test('finds the first success status code', () => {
-    expect(findSuccessStatusCode(node.responses)).toBe('201')
   })
 
   test('resolves error, success, and all response status names', () => {

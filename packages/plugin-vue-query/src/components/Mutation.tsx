@@ -8,7 +8,6 @@ import { buildRequestConfigType, getComments } from '../utils.ts'
 
 type Props = {
   name: string
-  typeName: string
   clientName: string
   mutationKeyName: string
   node: ast.OperationNode

@@ -10,7 +10,6 @@ import { buildMutationConfigParamsNode } from './MutationOptions.tsx'
 
 type Props = {
   name: string
-  typeName: string
   mutationOptionsName: string
   mutationKeyName: string
   node: ast.OperationNode
