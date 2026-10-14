@@ -77,7 +77,6 @@ export type ResolvedOptions = {
   parser: NonNullable<Options['parser']>
   baseURL: Options['baseURL'] | undefined
   handlers: boolean
-  resolver: ResolverMsw
 }
 
 export type PluginMsw = PluginType<'plugin-msw', Options, ResolvedOptions, ResolverMsw>

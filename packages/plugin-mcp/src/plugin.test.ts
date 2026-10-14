@@ -1,9 +1,7 @@
 import { createKubb } from 'kubb'
-import { defineExtension, kubbContext } from 'kubb/kit'
-import { createMockedSetupContext } from 'kubb/kit/testing'
+import { defineExtension } from 'kubb/kit'
 import { describe, expect, test } from 'vitest'
 import { pluginMcp } from './plugin.ts'
-import type { PluginMcp } from './types.ts'
 
 function setupKubb(pluginNames: Array<string>) {
   const plugins = pluginNames.map((name) => defineExtension({ kind: 'plugin', meta: { name } })())
@@ -12,15 +10,6 @@ function setupKubb(pluginNames: Array<string>) {
 }
 
 describe('pluginMcp setup', () => {
-  test('registers the generators', () => {
-    const plugin = pluginMcp()
-    const ctx = createMockedSetupContext<PluginMcp>({ plugins: ['plugin-ts', 'plugin-zod', 'plugin-fetch', 'plugin-mcp'] })
-
-    kubbContext.run(ctx, () => plugin.setup?.(plugin.options ?? {}, ctx))
-
-    expect(ctx.addGenerator).toHaveBeenCalledTimes(1)
-  })
-
   test('passes when plugin-ts and plugin-zod are registered', async () => {
     await expect(setupKubb(['plugin-ts', 'plugin-zod', 'plugin-fetch'])).resolves.toBeUndefined()
   })

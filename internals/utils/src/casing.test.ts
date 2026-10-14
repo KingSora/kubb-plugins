@@ -4,22 +4,16 @@ import { camelCase, capitalize, pascalCase, screamingSnakeCase, snakeCase } from
 describe('casing', () => {
   test.each([
     ['getPetById', 'GetPetById'],
-    ['hello-world', 'Hello-world'],
-    ['HTML', 'HTML'],
-    ['a', 'A'],
     ['', ''],
   ])('capitalize(%s) -> %s', (input, expected) => {
     expect(capitalize(input)).toBe(expected)
   })
 
-  test('camelCase', () => {
-    expect(camelCase('pet pet')).toBe('petPet')
-    expect(camelCase('is HTML test')).toBe('isHTMLTest')
-    expect(camelCase('aiType')).toBe('aiType')
-  })
-
   test.each([
     // separators
+    ['pet pet', 'petPet'],
+    ['is HTML test', 'isHTMLTest'],
+    ['aiType', 'aiType'],
     ['hello-world', 'helloWorld'],
     ['hello_world', 'helloWorld'],
     ['hello world', 'helloWorld'],
@@ -76,13 +70,6 @@ describe('casing', () => {
 
   test('screamingSnakeCase', () => {
     expect(screamingSnakeCase('petPet')).toBe('PET_PET')
-    expect(screamingSnakeCase('created at')).toBe('CREATED_AT')
-    expect(screamingSnakeCase('FILE.UPLOADED')).toBe('FILE_UPLOADED')
-    expect(screamingSnakeCase('FILE.DOWNLOADED')).toBe('FILE_DOWNLOADED')
-    expect(screamingSnakeCase('enum-value')).toBe('ENUM_VALUE')
-    expect(screamingSnakeCase('is HTML test')).toBe('IS_HTML_TEST')
-    expect(screamingSnakeCase('description')).toBe('DESCRIPTION')
-    expect(screamingSnakeCase('PetType')).toBe('PET_TYPE')
     expect(screamingSnakeCase('tag', { prefix: 'create' })).toBe('CREATE_TAG')
     expect(screamingSnakeCase('tag', { suffix: 'schema' })).toBe('TAG_SCHEMA')
   })

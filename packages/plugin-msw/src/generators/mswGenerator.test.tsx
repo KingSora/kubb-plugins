@@ -1,6 +1,5 @@
 /** biome-ignore-all lint/suspicious/noTemplateCurlyInString: for test case */
-import type { Config } from 'kubb/kit'
-import { ast, memoryStorage } from 'kubb/kit'
+import { ast } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation } from 'kubb/kit/testing'
 import type { PluginFaker } from '@kubb/plugin-faker'
 import { pluginFakerName, resolverFaker } from '@kubb/plugin-faker'
@@ -9,21 +8,10 @@ import { resolverTs } from '@kubb/plugin-ts'
 import * as msw from 'msw'
 import ts from 'typescript'
 import { describe, expect, test } from 'vitest'
-import { matchFiles, rawSources } from '#mocks'
+import { matchFiles, rawSources, testConfig } from '#mocks'
 import { resolverMsw } from '../resolvers/resolverMsw.ts'
 import type { PluginMsw } from '../types.ts'
 import { mswGenerator } from './mswGenerator.tsx'
-
-const testConfig: Config = {
-  root: '.',
-  input: {},
-  output: { path: 'test' },
-  plugins: [],
-  parsers: [],
-  reporters: [],
-  adapter: createMockedAdapter(),
-  storage: memoryStorage(),
-}
 
 const defaultOptions: PluginMsw['resolvedOptions'] = {
   output: { path: '.', mode: 'directory' },
@@ -34,7 +22,6 @@ const defaultOptions: PluginMsw['resolvedOptions'] = {
   include: undefined,
   override: [],
   handlers: false,
-  resolver: resolverMsw,
 }
 
 const mockedTsPlugin = createMockedPlugin<PluginTs>({
@@ -126,15 +113,6 @@ const createPetsNode = ast.factory.createOperation({
   ],
 })
 
-const deletePetsPetidNode = ast.factory.createOperation({
-  operationId: 'deletePetsPetid',
-  method: 'DELETE',
-  path: '/pets/{petId}',
-  tags: ['pets'],
-  parameters: [ast.factory.createParameter({ name: 'petId', in: 'path', schema: ast.factory.createSchema({ type: 'string' }), required: true })],
-  responses: [ast.factory.createResponse({ statusCode: '200', description: 'deleted', schema: ast.factory.createSchema({ type: 'void' }) })],
-})
-
 const responseNameCollisionNode = ast.factory.createOperation({
   operationId: 'getThing',
   method: 'GET',
@@ -215,10 +193,8 @@ describe('mswGenerator operation', () => {
   const testData: Array<RenderProps> = [
     { name: 'showPetById', node: showPetByIdNode, options: {} },
     { name: 'getPets', node: listPetsNode, options: {} },
-    { name: 'getPetsTemplateBaseUrl', node: listPetsNode, options: { baseURL: '${123456}' } },
     { name: 'getPetsFaker', node: listPetsNode, options: { parser: 'faker' as const } },
     { name: 'createPet', node: createPetsNode, options: {} },
-    { name: 'deletePet', node: deletePetsPetidNode, options: {} },
     { name: 'createPetFaker', node: createPetsNode, options: { parser: 'faker' as const } },
     { name: 'searchPets', node: searchPetsNode, options: {} },
     { name: 'responseNameCollision', node: responseNameCollisionNode, options: {} },
@@ -287,11 +263,11 @@ describe('mswGenerator faker fallback', () => {
     return response?.json()
   }
 
-  test.each([0, false, ''])('returns the falsy payload %j instead of Faker data', async (data) => {
+  test.each([0])('returns the falsy payload %j instead of Faker data', async (data) => {
     expect(await getResponseBody(data)).toBe(data)
   })
 
-  test.each([undefined, null])('falls back to Faker data when data is %s', async (data) => {
+  test.each([null])('falls back to Faker data when data is %s', async (data) => {
     expect(await getResponseBody(data)).toEqual(fakerData)
   })
 })

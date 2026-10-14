@@ -1,5 +1,6 @@
 import { buildRequestParamsSignature } from '@internals/shared'
-import { ast, Url } from 'kubb/kit'
+import { Url } from 'kubb/kit'
+import type { ast } from 'kubb/kit'
 import type { ResolverTs } from '@kubb/plugin-ts'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
@@ -12,7 +13,7 @@ type Props = {
   /**
    * AST operation node
    */
-  node: ast.OperationNode
+  node: ast.HttpOperationNode
   /**
    * TypeScript resolver for resolving param/data/response type names
    */
@@ -21,8 +22,6 @@ type Props = {
 }
 
 export function Request({ baseURL = '', name, resolver, node }: Props): KubbReactNode {
-  if (!ast.isHttpOperationNode(node)) return null
-
   const { signature, groups } = buildRequestParamsSignature(node, resolver, { isConfigurable: false })
   const paramsSignature = [signature, 'options: Partial<Cypress.RequestOptions> = {}'].filter(Boolean).join(', ')
 
@@ -32,21 +31,14 @@ export function Request({ baseURL = '', name, resolver, node }: Props): KubbReac
   // Bracket-access the path object with the raw OpenAPI param names, matching the generated `path` type's keys.
   const urlTemplate = Url.toGroupedTemplateString(node.path, { prefix: baseURL })
 
-  const requestOptions: Array<string> = [`method: '${node.method}'`, `url: ${urlTemplate}`]
-
-  if (groups.query) {
-    requestOptions.push('qs: query')
-  }
-
-  if (groups.headers) {
-    requestOptions.push('headers')
-  }
-
-  if (groups.body) {
-    requestOptions.push('body')
-  }
-
-  requestOptions.push('...options')
+  const requestOptions = [
+    `method: '${node.method}'`,
+    `url: ${urlTemplate}`,
+    groups.query && 'qs: query',
+    groups.headers && 'headers',
+    groups.body && 'body',
+    '...options',
+  ].filter(Boolean)
 
   const requestCall = `return cy.request<${responseType}>({
   ${requestOptions.join(',\n  ')}

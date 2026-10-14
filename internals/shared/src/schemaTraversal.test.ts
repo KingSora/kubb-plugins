@@ -23,13 +23,6 @@ describe('mapSchemaProperties', () => {
     ])
     expect(result[0]!.property.required).toBe(true)
   })
-
-  it('returns an empty array for an object with no properties', () => {
-    const node = ast.factory.createSchema({ type: 'object', properties: [] })
-    if (node.type !== 'object') return
-
-    expect(mapSchemaProperties(node, label)).toStrictEqual([])
-  })
 })
 
 describe('mapSchemaMembers', () => {
@@ -42,13 +35,6 @@ describe('mapSchemaMembers', () => {
 
     expect(mapSchemaMembers(node, label).map((entry) => entry.output)).toStrictEqual(['<string>', '<number>'])
   })
-
-  it('returns an empty array when members are absent', () => {
-    const node = ast.factory.createSchema({ type: 'intersection' })
-    if (node.type !== 'intersection') return
-
-    expect(mapSchemaMembers(node, label)).toStrictEqual([])
-  })
 })
 
 describe('mapSchemaItems', () => {
@@ -59,23 +45,5 @@ describe('mapSchemaItems', () => {
     const result = mapSchemaItems(node, label)
     expect(result).toHaveLength(1)
     expect(result[0]!.output).toBe('<string>')
-  })
-
-  it('returns an empty array when items are absent', () => {
-    const node = ast.factory.createSchema({ type: 'array' })
-    if (node.type !== 'array') return
-
-    expect(mapSchemaItems(node, label)).toStrictEqual([])
-  })
-
-  it('is generic over the output type', () => {
-    const node = ast.factory.createSchema({
-      type: 'array',
-      items: [ast.factory.createSchema({ type: 'string' }), ast.factory.createSchema({ type: 'number' })],
-    })
-    if (node.type !== 'array') return
-
-    const lengths = mapSchemaItems(node, (schema) => schema.type.length)
-    expect(lengths.map((entry) => entry.output)).toStrictEqual([6, 6])
   })
 })

@@ -1,4 +1,4 @@
-import type { Exclude, Include, Output, Override, PluginType } from 'kubb/kit'
+import type { Output, PluginType } from 'kubb/kit'
 
 export type Options = {
   /**
@@ -18,10 +18,6 @@ export type Options = {
 
 export type ResolveOptions = {
   output: Output
-  name: string
-  exclude: Array<Exclude>
-  include?: Array<Include>
-  override: Array<Override<ResolveOptions>>
 }
 
 export type PluginRedoc = PluginType<'plugin-redoc', Options, ResolveOptions>

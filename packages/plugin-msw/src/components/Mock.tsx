@@ -1,9 +1,9 @@
 import { getPrimarySuccessResponse } from '@internals/shared'
-import { ast, Url } from 'kubb/kit'
-import { createFunctionParameter, createFunctionParameters, functionPrinter } from '@kubb/plugin-ts'
+import type { ast } from 'kubb/kit'
+import { Url } from 'kubb/kit'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import { getContentType, getMswMethod, hasResponseSchema, isQueryOperation } from '../utils.ts'
+import { getContentType, getMswMethod, hasResponseSchema, responseLiteral } from '../utils.ts'
 
 type Props = {
   name: string
@@ -11,21 +11,18 @@ type Props = {
   requestTypeName?: string | null
   fakerName?: string
   baseURL: string | null | undefined
-  node: ast.OperationNode
+  node: ast.HttpOperationNode
 }
-
-const declarationPrinter = functionPrinter({ mode: 'declaration' })
 
 export function Mock({ baseURL = '', name, fakerName, typeName, requestTypeName, node }: Props): KubbReactNode {
   const method = getMswMethod(node)
   // `http.all` matches every method on the path, so the QUERY handler lets the others pass through.
-  const methodGuard = isQueryOperation(node) ? `if (info.request.method !== 'QUERY') return\n\n    ` : ''
+  const methodGuard = node.method === 'QUERY' ? `if (info.request.method !== 'QUERY') return\n\n    ` : ''
   const successResponse = getPrimarySuccessResponse(node)
   const statusCode = successResponse ? Number(successResponse.statusCode) : 200
   const contentType = getContentType(successResponse)
-  const url = ast.isHttpOperationNode(node) ? Url.toPath(node.path) : ''
+  const url = Url.toPath(node.path)
 
-  const headers = [contentType ? `'Content-Type': '${contentType}'` : null].filter(Boolean)
   const responseHasSchema = hasResponseSchema(successResponse)
   const dataType = responseHasSchema ? typeName : 'string | number | boolean | null | object'
   const paramType = fakerName ? typeName : dataType
@@ -34,34 +31,21 @@ export function Mock({ baseURL = '', name, fakerName, typeName, requestTypeName,
     ? `HttpResponseResolver<Record<string, string>, ${requestTypeName}>`
     : `((info: Parameters<Parameters<typeof http.${method}>[1]>[0]) => Response | Promise<Response>)`
 
-  const params = declarationPrinter.print(
-    createFunctionParameters({
-      params: [
-        createFunctionParameter({
-          name: 'data',
-          type: `${paramType} | ${callbackType}`,
-          optional: true,
-        }),
-      ],
-    }),
-  )
+  const params = `data?: ${paramType} | ${callbackType}`
 
   const httpCall = requestTypeName ? `http.${method}<Record<string, string>, ${requestTypeName}>` : `http.${method}`
 
   const requestUrl = `${baseURL}${url.replace(/([^/]):/g, '$1\\\\:')}`
   const urlLiteral = fakerName ? `'${requestUrl}'` : `\`${requestUrl}\``
   const responseBody = fakerName ? `JSON.stringify(data ?? ${fakerName}(data))` : 'JSON.stringify(data)'
-  const headersBlock = headers.length ? `\n      headers: {\n        ${headers.join(', \n')}\n      },` : ''
 
   return (
     <File.Source name={name} isIndexable isExportable>
-      <Function name={name} export params={params ?? ''}>
+      <Function name={name} export params={params}>
         {`return ${httpCall}(${urlLiteral}, function handler(info) {
     ${methodGuard}if(typeof data === 'function') return data(info)
 
-    return new Response(${responseBody}, {
-      status: ${statusCode},${headersBlock}
-    })
+    return ${responseLiteral(responseBody, statusCode, contentType)}
   })`}
       </Function>
     </File.Source>

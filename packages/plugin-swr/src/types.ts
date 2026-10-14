@@ -1,4 +1,4 @@
-import type { ClientSelector } from '@internals/client'
+import type { ClientSelector, ResolvedContractClient } from '@internals/client'
 import type { Transformer } from '@internals/tanstack-query'
 import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
@@ -188,12 +188,6 @@ export type Options = OutputOptions & {
   macros?: Array<ast.Macro>
 }
 
-/**
- * The resolved client strategy for the generated hooks, computed once during setup. The hooks always
- * import and call a registered contract client plugin's `<op>`.
- */
-export type ResolvedClient = { kind: 'contract'; pluginName: string }
-
 export type ResolvedOptions = {
   output: Output
   group: Group | undefined
@@ -203,7 +197,7 @@ export type ResolvedOptions = {
   /**
    * The resolved contract client the generators import and call.
    */
-  client: ResolvedClient
+  client: ResolvedContractClient
   queryKey: QueryKey | undefined
   query: NonNullable<Required<Query>> | false
   mutationKey: MutationKey | undefined

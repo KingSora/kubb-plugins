@@ -44,8 +44,6 @@ type Props = {
    * call config's `security` field for the runtime `auth` resolver to consume.
    */
   security?: Array<Auth>
-  isExportable?: boolean
-  isIndexable?: boolean
 }
 
 /**
@@ -54,18 +52,7 @@ type Props = {
  * type, signature, and call config are built with the AST factory, and only the jsx-renderer emits
  * the source.
  */
-export function Operation({
-  name,
-  node,
-  types,
-  zodResolver,
-  validator,
-  returnType,
-  throwOnErrorDefault,
-  security,
-  isExportable = true,
-  isIndexable = true,
-}: Props): KubbReactNode {
+export function Operation({ name, node, types, zodResolver, validator, returnType, throwOnErrorDefault, security }: Props): KubbReactNode {
   if (!ast.isHttpOperationNode(node)) return null
 
   const signature = buildGroupedOptionsSignature({ node, types, returnType, throwOnErrorDefault })
@@ -107,10 +94,10 @@ export function Operation({
     : buildReturnStatement({ node, types, callConfig, returnType, throwOnErrorDefault })
 
   return (
-    <File.Source name={name} isExportable={isExportable} isIndexable={isIndexable}>
+    <File.Source name={name} isExportable isIndexable>
       <Function
         name={name}
-        export={isExportable}
+        export
         generics={signature.generics}
         params={signature.paramsSignature}
         returnType={functionReturnType}

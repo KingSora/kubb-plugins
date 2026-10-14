@@ -373,10 +373,6 @@ export function getDefaultPageParamsWarning(node: ast.OperationNode, infinite: I
   return `${node.operationId}: the default infinite page params expect an array response and never end for this one. Set \`infinite.getNextPageParam\` (or \`nextParam\`) to read the next page from the response.`
 }
 
-export function transformName(name: string, type: string, transformers?: { name?: (name: string, type?: string) => string }): string {
-  return transformers?.name?.(name, type) || name
-}
-
 type OverrideEntry<TOptions> = {
   type: string
   pattern: string | RegExp
@@ -408,67 +404,6 @@ export function resolveOperationOverrides<TOptions>(node: ast.OperationNode, ove
   return match?.options ?? {}
 }
 
-type ZodSchemaNameResolverLike = {
-  response?: {
-    response?: (node: ast.OperationNode) => string | undefined
-    body?: (node: ast.OperationNode) => string | undefined
-  }
-  param?: {
-    query?: (node: ast.OperationNode, param: ast.ParameterNode) => string | undefined
-  }
-}
-
-type ParserOption = false | 'zod' | { request?: 'zod'; response?: 'zod' } | undefined
-
-/**
- * Returns `'zod'` when response-direction parsing is enabled.
- * The string shorthand `'zod'` also enables response parsing.
- */
-export function resolveResponseParser(parser: ParserOption): 'zod' | null {
-  if (!parser) return null
-  if (parser === 'zod') return 'zod'
-  return parser.response ?? null
-}
-
-/**
- * Returns `'zod'` when request body parsing is enabled.
- * The string shorthand `'zod'` also enables request body parsing (existing behavior).
- */
-export function resolveRequestParser(parser: ParserOption): 'zod' | null {
-  if (!parser) return null
-  if (parser === 'zod') return 'zod'
-  return parser.request ?? null
-}
-
-/**
- * Returns `'zod'` when query-params parsing is enabled.
- * Only the object form `{ request: 'zod' }` enables this. `parser: 'zod'` does not.
- */
-export function resolveQueryParamsParser(parser: ParserOption): 'zod' | null {
-  if (!parser || parser === 'zod') return null
-  return parser.request ?? null
-}
-
-/**
- * Collects the Zod schema import names for an operation based on the active parser directions.
- *
- * - `parser: 'zod'`: response and request body names (backward-compatible behavior).
- * - `parser: { request: 'zod' }`: request body and query params names.
- * - `parser: { response: 'zod' }`: response name only.
- * - `parser: { request: 'zod', response: 'zod' }`: all three.
- *
- * Returns an empty array when no resolver is provided or `parser` is falsy.
- */
-export function resolveZodSchemaNames(node: ast.OperationNode, zodResolver: ZodSchemaNameResolverLike | null | undefined, parser: ParserOption): Array<string> {
-  if (!zodResolver || !parser) return []
-  const { query: queryParams } = getOperationParameters(node)
-  return [
-    resolveResponseParser(parser) === 'zod' ? zodResolver.response?.response?.(node) : null,
-    resolveRequestParser(parser) === 'zod' && node.requestBody?.content?.[0]?.schema ? zodResolver.response?.body?.(node) : null,
-    resolveQueryParamsParser(parser) === 'zod' && queryParams.length > 0 ? zodResolver.param?.query?.(node, queryParams[0]!) : null,
-  ].filter((n): n is string => Boolean(n))
-}
-
 /**
  * The request groups a query key is built from, matching `buildQueryKeyParams`. Headers are
  * deliberately absent: they do not identify a cache entry, so the key factory takes no parameter
@@ -490,9 +425,43 @@ export function hasQueryKeyParams(node: ast.OperationNode): boolean {
  * typed from the operation's `Options` minus `url`. The query key transformer reads the
  * grouped `path`/`query`/`body` bindings.
  */
-export function buildQueryKeyParams(node: ast.OperationNode, options: { resolver: PluginTs['resolver'] }): FunctionParametersNode {
-  const { resolver } = options
-  const groupedParam = buildGroupedRequestParam(node, { resolver, keys: queryKeyGroupOrder })
+export function buildQueryKeyParams(
+  node: ast.OperationNode,
+  options: { resolver: PluginTs['resolver']; memberTypeWrapper?: (type: string) => string },
+): FunctionParametersNode {
+  const { resolver, memberTypeWrapper } = options
+  const groupedParam = buildGroupedRequestParam(node, { resolver, keys: queryKeyGroupOrder, memberTypeWrapper })
 
   return createFunctionParameters({ params: groupedParam ? [groupedParam] : [] })
+}
+
+/**
+ * Builds the hook parameter list: the grouped request param (omitted when `withRequest` is `false`) then `options` typed as `optionsType`.
+ */
+export function buildHookParams(
+  node: ast.OperationNode,
+  options: { resolver: ResolverTs; optionsType: string; memberTypeWrapper?: (type: string) => string; withRequest?: boolean },
+): FunctionParametersNode {
+  const { resolver, optionsType, memberTypeWrapper, withRequest = true } = options
+  const optionsParam = createFunctionParameter({ name: 'options', type: optionsType, default: '{}' })
+  const groupedParam = withRequest ? buildGroupedRequestParam(node, { resolver, memberTypeWrapper }) : null
+
+  return createFunctionParameters({ params: [groupedParam, optionsParam].filter((param): param is FunctionParameterNode => param !== null) })
+}
+
+/**
+ * The `TRequest` type argument of a mutation hook: the options type when the operation takes a request, else `undefined`.
+ */
+export function resolveMutationRequestType(node: ast.OperationNode, resolver: ResolverTs): string {
+  return buildGroupedRequestParam(node, { resolver }) ? resolver.response.options(node) : 'undefined'
+}
+
+/**
+ * Builds the object literal that unwraps each request group's getter before it reaches `queryKey`/`queryOptions`; `null` without a request group.
+ */
+export function buildResolvedRequestParams(node: ast.OperationNode): string | null {
+  const groups = getRequestGroups(node)
+  const names = requestGroupOrder.filter((key) => groups[key])
+  if (names.length === 0) return null
+  return `{ ${names.map((name) => `${name}: typeof ${name} === 'function' ? ${name}() : ${name}`).join(', ')} }`
 }

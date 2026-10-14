@@ -1,20 +1,25 @@
-import { mapSchemaItems, mapSchemaMembers, mapSchemaProperties } from '@internals/shared'
-import { buildList, buildObject, lazyGetter, objectKey, stringify } from '@internals/utils'
-import { ast, containsCircularRef, syncSchemaRef } from 'kubb/kit'
+import { mapSchemaItems, mapSchemaMembers } from '@internals/shared'
+import { buildList, stringify } from '@internals/utils'
+import { ast } from 'kubb/kit'
 import type { PluginZod, ResolverZod } from '../types.ts'
 import {
   applyMiniModifiers,
   buildEnum,
-  formatLiteral,
+  buildObjectShape,
+  formatDefault,
+  getMemberConstraint,
   integerFormatPattern,
   isClosedKeySchema,
   isObjectComposableIntersection,
   isObjectSchemaNode,
   lengthChecksMini,
   numberChecksMini,
-  omitUnwrapChain,
   patternKeySchemaMini,
+  printWithOmit,
+  propertyNamesOf,
   shouldCoerce,
+  strictOneOfNode,
+  STRING_FORMAT_CALLS,
 } from '../utils.ts'
 
 /**
@@ -84,63 +89,19 @@ export type PrinterZodMiniOptions = {
 export type PrinterZodMiniFactory = ast.PrinterFactoryOptions<'zod-mini', PrinterZodMiniOptions, string, string>
 
 /**
- * A `oneOf` member that is an inline object is exhaustive, so it prints as a strict object.
- * Marking the node lets `object()` build `z.strictObject(...)` itself, with no rewrite afterwards.
+ * Builds the `{ key: value, … }` shape for an object node with the functional `zod/mini` modifiers.
  */
-function strictOneOfNode(node: ast.SchemaNode): ast.SchemaNode {
-  return node.type === 'object' && node.additionalProperties === undefined ? { ...node, additionalProperties: false } : node
-}
-
-function getMemberConstraintMini({ member, regexType }: { member: ast.SchemaNode; regexType: PrinterZodMiniOptions['regexType'] }): string | undefined {
-  if (member.primitive === 'string') return lengthChecksMini({ ...(ast.narrowSchema(member, 'string') ?? {}), regexType }) || undefined
-  if (member.primitive === 'number' || member.primitive === 'integer')
-    return numberChecksMini(ast.narrowSchema(member, 'number') ?? ast.narrowSchema(member, 'integer') ?? {}) || undefined
-  if (member.primitive === 'array') return lengthChecksMini({ ...(ast.narrowSchema(member, 'array') ?? {}), regexType }) || undefined
-}
-
-/**
- * The Mini printer slice `buildZodMiniObjectShape` needs: the recursive `transform` and the options.
- */
-type ZodMiniPrinterContext = {
-  transform: (node: ast.SchemaNode) => string | null
-  options: PrinterZodMiniOptions
-}
-
-/**
- * Builds the `{ key: value, … }` shape for an object node with the functional `zod/mini` modifiers,
- * shared by the `z.object(...)` and `z.extend(...)` renderings so they stay in lockstep.
- */
-function buildZodMiniObjectShape(ctx: ZodMiniPrinterContext, node: ast.SchemaNode): string {
-  const objectNode = ast.narrowSchema(node, 'object')
-  if (!objectNode) return '{}'
-
-  const isCyclic = (schema: ast.SchemaNode): boolean =>
-    ctx.options.cyclicSchemas != null && containsCircularRef(schema, { circularSchemas: ctx.options.cyclicSchemas })
-
-  const entries = mapSchemaProperties(objectNode, (schema) => {
-    const hasSelfRef = isCyclic(schema)
-    const savedCyclicSchemas = ctx.options.cyclicSchemas
-    if (hasSelfRef) ctx.options.cyclicSchemas = undefined
-    const baseOutput = ctx.transform(schema) ?? ctx.transform(ast.factory.createSchema({ type: 'unknown' }))!
-    if (hasSelfRef) ctx.options.cyclicSchemas = savedCyclicSchemas
-    return baseOutput
-  }).map(({ name: propName, property, output: baseOutput }) => {
-    const { schema } = property
-    const meta = syncSchemaRef(schema)
-
-    const value = applyMiniModifiers({
-      value: baseOutput,
+function buildZodMiniObjectShape(ctx: Parameters<typeof buildObjectShape>[0], node: ast.SchemaNode): string {
+  return buildObjectShape(ctx, node, ({ value, schema, required, meta }) =>
+    applyMiniModifiers({
+      value,
       schema,
       nullable: meta.nullable,
-      optional: schema.optional || property.required === false,
+      optional: schema.optional || required === false,
       nullish: schema.nullish,
       defaultValue: meta.default,
-    })
-
-    return isCyclic(schema) ? lazyGetter({ name: propName, body: value }) : `${objectKey(propName)}: ${value}`
-  })
-
-  return buildObject(entries)
+    }),
+  )
 }
 
 /**
@@ -172,26 +133,8 @@ export const printerZodMini = ast.createPrinter<PrinterZodMiniFactory>((options)
       string(node) {
         const coerce = shouldCoerce(this.options.coercion, 'strings')
 
-        if (!coerce) {
-          if (node.format === 'byte' || node.format === 'base64') {
-            return `z.base64()${lengthChecksMini({ ...node, regexType: this.options.regexType })}`
-          }
-          if (node.format === 'base64url') {
-            return `z.base64url()${lengthChecksMini({ ...node, regexType: this.options.regexType })}`
-          }
-          if (node.format === 'jwt') {
-            return `z.jwt()${lengthChecksMini({ ...node, regexType: this.options.regexType })}`
-          }
-          if (node.format === 'ulid') {
-            return `z.ulid()${lengthChecksMini({ ...node, regexType: this.options.regexType })}`
-          }
-          if (node.format === 'iban') {
-            return `z.iban()${lengthChecksMini({ ...node, regexType: this.options.regexType })}`
-          }
-          if (node.format === 'duration') {
-            return `z.iso.duration()${lengthChecksMini({ ...node, regexType: this.options.regexType })}`
-          }
-        }
+        const call = coerce ? undefined : STRING_FORMAT_CALLS.get(node.format)
+        if (call) return `${call}${lengthChecksMini({ ...node, regexType: this.options.regexType })}`
 
         const base = coerce ? 'z.coerce.string()' : 'z.string()'
         const pattern = node.pattern ?? integerFormatPattern(node.format)
@@ -257,7 +200,7 @@ export const printerZodMini = ast.createPrinter<PrinterZodMiniFactory>((options)
 
         // asConst-style enum: use z.union([z.literal(…), …])
         if (node.namedEnumValues?.length) {
-          const literals = nonNullValues.map((v) => `z.literal(${formatLiteral(v)})`)
+          const literals = nonNullValues.map((v) => `z.literal(${formatDefault(v)})`)
           if (literals.length === 1) return literals[0]!
           return `z.union([${literals.join(', ')}])`
         }
@@ -282,7 +225,7 @@ export const printerZodMini = ast.createPrinter<PrinterZodMiniFactory>((options)
         const entries = node.properties ?? []
         // zod/mini has no chainable `.catchall()`/`.strict()`, so route through the functional forms.
         const patterns = node.patternProperties ? Object.entries(node.patternProperties) : []
-        const propertyNamesNode = 'propertyNames' in node ? (node as { propertyNames?: ast.SchemaNode }).propertyNames : undefined
+        const propertyNamesNode = propertyNamesOf(node)
         const propertyNamesKeySchema = propertyNamesNode ? this.transform(propertyNamesNode) : null
 
         // `additionalProperties: false` still permits patternProperties keys, so only a pattern-free object is strict.
@@ -373,7 +316,7 @@ export const printerZodMini = ast.createPrinter<PrinterZodMiniFactory>((options)
         }
 
         return rest.reduce((acc, member) => {
-          const constraint = getMemberConstraintMini({ member, regexType: this.options.regexType })
+          const constraint = getMemberConstraint({ member, regexType: this.options.regexType, lengths: lengthChecksMini, numbers: numberChecksMini })
           if (constraint) return acc + constraint
           const transformed = this.transform(member)
           return transformed ? `z.intersection(${acc}, ${transformed})` : acc
@@ -382,37 +325,9 @@ export const printerZodMini = ast.createPrinter<PrinterZodMiniFactory>((options)
     },
     overrides: options.nodes,
     print(node) {
-      const { keysToOmit } = this.options
-
-      const transformed = this.transform(node)
-      if (!transformed) return null
-
-      const meta = syncSchemaRef(node)
-
-      const base = (() => {
-        if (!keysToOmit?.length || meta.primitive !== 'object' || (meta.type === 'union' && meta.discriminatorPropertyName)) return transformed
-        // Discriminated unions (z.discriminatedUnion) do not support .omit(), so skip them.
-
-        // A nullable/optional ref resolves to a ZodMiniNullable/ZodMiniOptional variable; .omit() lives
-        // on the inner object, so unwrap down to it first (mirrors printerTs `Omit<NonNullable<T>, …>`).
-        // applyMiniModifiers re-applies the nullable/optional wrapper after the omit.
-        const unwrap = omitUnwrapChain(node)
-        const omit = `.omit({ ${keysToOmit.map((k: string) => `"${k}": true`).join(', ')} })`
-
-        // If this is a lazy reference, apply omit inside the lazy function
-        const lazyMatch = transformed.match(/^z\.lazy\(\(\)\s*=>\s*(.+)\)$/)
-        if (lazyMatch) return `z.lazy(() => ${lazyMatch[1]}${unwrap}${omit})`
-        return `${transformed}${unwrap}${omit}`
-      })()
-
-      return applyMiniModifiers({
-        value: base,
-        schema: node,
-        nullable: meta.nullable,
-        optional: meta.optional,
-        nullish: meta.nullish,
-        defaultValue: meta.default,
-      })
+      return printWithOmit(this, node, (value, meta) =>
+        applyMiniModifiers({ value, schema: node, nullable: meta.nullable, optional: meta.optional, nullish: meta.nullish, defaultValue: meta.default }),
+      )
     },
   }
 })

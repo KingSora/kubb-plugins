@@ -1,10 +1,16 @@
-import { getOperationParameters } from '@internals/shared'
 import type { ast } from 'kubb/kit'
-import { createFunctionParameter, createFunctionParameters, createObjectBindingPattern, functionPrinter } from '@kubb/plugin-ts'
 import { Const, File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import type { ZodParam } from '../utils.ts'
-import { zodExprFromSchemaNode, zodGroupExpr } from '../utils.ts'
+
+type ZodParam = {
+  name: string
+  schemaName: string
+}
+
+/**
+ * Composes individual param schemas into `z.object({ ... })`.
+ */
+const zodObject = (params: Array<ZodParam>) => `z.object({ ${params.map((p) => `${JSON.stringify(p.name)}: ${p.schemaName}`).join(', ')} })`
 
 type Props = {
   /**
@@ -34,63 +40,41 @@ type Props = {
       /**
        * Query params — individual schemas to compose into `z.object({ ... })`.
        */
-      queryParams?: string | Array<ZodParam> | null
+      queryParams?: Array<ZodParam> | null
       /**
        * Header params — individual schemas to compose into `z.object({ ... })`.
        */
-      headerParams?: string | Array<ZodParam> | null
+      headerParams?: Array<ZodParam> | null
       requestName?: string | null
       responseName?: string | null
     }
-    node: ast.OperationNode
   }>
 }
 
-const keysPrinter = functionPrinter({ mode: 'call' })
-
 export function Server({ serverName, serverVersion, operations }: Props): KubbReactNode {
   const registrations = operations
-    .map(({ tool, mcp, zod, node }) => {
-      const { path: pathParams } = getOperationParameters(node)
-
+    .map(({ tool, mcp, zod }) => {
       // Group params into the same `{ path, query, headers, body }` shape the contract `<op>`
       // expects, so the MCP tool input mirrors every other client consumer.
       const entries: Array<{ key: string; value: string }> = []
 
-      if (pathParams.length) {
-        const pathFields = pathParams
-          .map((p) => {
-            const zodParam = zod.pathParams.find((zp) => zp.name === p.name)
-            return `${JSON.stringify(p.name)}: ${zodParam ? zodParam.schemaName : zodExprFromSchemaNode(p.schema)}`
-          })
-          .join(', ')
-        entries.push({ key: 'path', value: `z.object({ ${pathFields} })` })
+      if (zod.pathParams.length) {
+        entries.push({ key: 'path', value: zodObject(zod.pathParams) })
       }
 
       if (zod.queryParams) {
-        entries.push({ key: 'query', value: zodGroupExpr(zod.queryParams) })
+        entries.push({ key: 'query', value: zodObject(zod.queryParams) })
       }
 
       if (zod.headerParams) {
-        entries.push({ key: 'headers', value: zodGroupExpr(zod.headerParams) })
+        entries.push({ key: 'headers', value: zodObject(zod.headerParams) })
       }
 
       if (zod.requestName) {
         entries.push({ key: 'body', value: zod.requestName })
       }
 
-      const paramsNode = entries.length
-        ? createFunctionParameters({
-            params: [
-              createFunctionParameter({
-                name: createObjectBindingPattern({ elements: entries.map((e) => ({ name: e.key })) }),
-                optional: false,
-              }),
-            ],
-          })
-        : null
-
-      const destructured = paramsNode ? (keysPrinter.print(paramsNode) ?? '') : ''
+      const destructured = `{ ${entries.map((e) => e.key).join(', ')} }`
       const inputSchema = entries.length ? `z.object({ ${entries.map((e) => `${e.key}: ${e.value}`).join(', ')} })` : null
       const outputSchema = zod.responseName
 

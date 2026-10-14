@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { findSuccessStatusCode, getOperationParameters } from '@internals/shared'
+import { getOperationParameters, getPrimarySuccessResponse, operationFileEntry } from '@internals/shared'
 import { getRelativePath } from '@internals/utils'
 import { ast, defineGenerator } from 'kubb/kit'
 import { pluginZodName } from '@kubb/plugin-zod'
@@ -25,27 +25,14 @@ export const serverGenerator = defineGenerator<PluginMcp>({
 
     const zodResolver = driver.getResolver(pluginZodName)
 
-    const name = 'server'
-    const serverFilePath = path.resolve(root, output.path, 'server.ts')
-    const serverFile = {
-      baseName: 'server.ts' as const,
-      path: serverFilePath,
+    const fileAt = <TName extends `${string}.${string}`>(baseName: TName) => ({
+      baseName,
+      path: path.resolve(root, output.path, baseName),
       meta: { pluginName: plugin.name },
-    }
-
-    const startFilePath = path.resolve(root, output.path, 'start.ts')
-    const startFile = {
-      baseName: 'start.ts' as const,
-      path: startFilePath,
-      meta: { pluginName: plugin.name },
-    }
-
-    const jsonFilePath = path.resolve(root, output.path, '.mcp.json')
-    const jsonFile = {
-      baseName: '.mcp.json' as const,
-      path: jsonFilePath,
-      meta: { pluginName: plugin.name },
-    }
+    })
+    const serverFile = fileAt('server.ts')
+    const startFile = fileAt('start.ts')
+    const jsonFile = fileAt('.mcp.json')
 
     // MCP clients spawn the command from their own working directory, usually the project root,
     // so `args` points at `start.ts` relative to `config.root` instead of the `.mcp.json` folder.
@@ -62,28 +49,17 @@ export const serverGenerator = defineGenerator<PluginMcp>({
     const operationsMapped = nodes.filter(ast.isHttpOperationNode).map((node) => {
       const { path: pathParams, query: queryParams, header: headerParams } = getOperationParameters(node)
 
-      const mcpFile = resolver.file({
-        name: node.operationId,
-        extname: '.ts',
-        tag: node.tags[0] ?? 'default',
-        path: node.path,
-        root,
-        output,
-        group: group ?? undefined,
-      })
-
+      const fileEntry = operationFileEntry(node, node.operationId)
+      const mcpFile = resolver.file({ ...fileEntry, root, output, group: group ?? undefined })
       const zodFile = zodResolver.file({
-        name: node.operationId,
-        extname: '.ts',
-        tag: node.tags[0] ?? 'default',
-        path: node.path,
+        ...fileEntry,
         root,
         output: pluginZod.options?.output ?? output,
         group: pluginZod.options?.group ?? undefined,
       })
 
       const requestName = node.requestBody?.content?.[0]?.schema ? zodResolver.response.body(node) : null
-      const successStatus = findSuccessStatusCode(node.responses)
+      const successStatus = getPrimarySuccessResponse(node)?.statusCode
       const responseName = successStatus ? zodResolver.response.status(node, successStatus) : null
 
       const resolveParams = (params: typeof pathParams) => params.map((p) => ({ name: p.name, schemaName: zodResolver.param.name(node, p) }))
@@ -106,7 +82,6 @@ export const serverGenerator = defineGenerator<PluginMcp>({
           responseName,
           file: zodFile,
         },
-        node: node,
       }
     })
 
@@ -157,7 +132,7 @@ export const serverGenerator = defineGenerator<PluginMcp>({
         </File>
 
         <File baseName={jsonFile.baseName} path={jsonFile.path} meta={jsonFile.meta}>
-          <File.Source name={name}>{`${JSON.stringify(mcpConfig, null, 2)}\n`}</File.Source>
+          <File.Source name="server">{`${JSON.stringify(mcpConfig, null, 2)}\n`}</File.Source>
         </File>
       </>
     )

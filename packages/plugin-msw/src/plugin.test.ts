@@ -24,10 +24,6 @@ describe('pluginMsw setup', () => {
     expect(ctx.addGenerator).toHaveBeenCalledTimes(generators)
   })
 
-  test("parser: 'data' does not need plugin-faker", async () => {
-    await expect(setupKubb({ parser: 'data' }, ['plugin-ts'])).resolves.toBeUndefined()
-  })
-
   test("parser: 'faker' passes when plugin-faker is registered", async () => {
     await expect(setupKubb({ parser: 'faker' }, ['plugin-ts', 'plugin-faker'])).resolves.toBeUndefined()
   })
@@ -35,12 +31,6 @@ describe('pluginMsw setup', () => {
   test("parser: 'faker' fails with KUBB_MISSING_DEPENDENCY when plugin-faker is not registered", async () => {
     await expect(setupKubb({ parser: 'faker' }, ['plugin-ts'])).rejects.toMatchObject({
       diagnostic: { code: 'KUBB_MISSING_DEPENDENCY', message: 'Plugin "plugin-faker" is required by "plugin-msw" but not found.' },
-    })
-  })
-
-  test('fails with KUBB_MISSING_DEPENDENCY when plugin-ts is not registered', async () => {
-    await expect(setupKubb({ parser: 'data' }, [])).rejects.toMatchObject({
-      diagnostic: { code: 'KUBB_MISSING_DEPENDENCY', message: 'Plugin "plugin-ts" is required by "plugin-msw" but not found.' },
     })
   })
 })

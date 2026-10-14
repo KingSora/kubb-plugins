@@ -1,25 +1,14 @@
 import path from 'node:path'
 import { camelCase } from '@internals/utils'
 
-import type { Config, Group } from 'kubb/kit'
-import { ast, memoryStorage, Resolver } from 'kubb/kit'
+import type { Group } from 'kubb/kit'
+import { ast, Resolver } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation, renderGeneratorSchema } from 'kubb/kit/testing'
 import { describe, expect, test } from 'vitest'
-import { matchFiles, rawSources } from '#mocks'
+import { matchFiles, rawSources, testConfig } from '#mocks'
 import { resolverTs } from '../resolvers/resolverTs.ts'
 import type { PluginTs } from '../types.ts'
 import { typeGenerator } from './typeGenerator.tsx'
-
-const testConfig: Config = {
-  root: '.',
-  input: {},
-  output: { path: 'test' },
-  plugins: [],
-  parsers: [],
-  reporters: [],
-  adapter: createMockedAdapter(),
-  storage: memoryStorage(),
-}
 
 const defaultOptions: PluginTs['resolvedOptions'] = {
   enum: { type: 'asConst', constCasing: 'camelCase', typeSuffix: 'Key', keyCasing: 'none' },

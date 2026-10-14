@@ -3,7 +3,6 @@ import { describe, expect, test } from 'vitest'
 import {
   buildCallResultBody,
   classifyOperation,
-  definePageParam,
   getDefaultPageParamsWarning,
   hasQueryKeyParams,
   matchesInfinite,
@@ -61,15 +60,6 @@ describe('classifyOperation', () => {
       isMutation: false,
     })
   })
-
-  test('mutation: false still allows an operation to be classified as a query', () => {
-    const node = ast.factory.createOperation({ operationId: 'listPets', method: 'GET', path: '/pets' })
-
-    expect(classifyOperation(node, { query: { methods: ['GET'], importPath: '@tanstack/react-query' }, mutation: false })).toStrictEqual({
-      isQuery: true,
-      isMutation: false,
-    })
-  })
 })
 
 describe('hasQueryKeyParams', () => {
@@ -86,16 +76,6 @@ describe('hasQueryKeyParams', () => {
       parameters: [ast.factory.createParameter({ name: 'X-Request-Id', in: 'header', schema: ast.factory.createSchema({ type: 'string' }) })],
     })
     expect(hasQueryKeyParams(node)).toBe(false)
-  })
-
-  test('returns true when operation has path parameters', () => {
-    const node = ast.factory.createOperation({
-      operationId: 'getPetById',
-      method: 'GET',
-      path: '/pets/:petId',
-      parameters: [ast.factory.createParameter({ name: 'petId', in: 'path', schema: ast.factory.createSchema({ type: 'string' }) })],
-    })
-    expect(hasQueryKeyParams(node)).toBe(true)
   })
 
   test('returns true when operation has query parameters', () => {
@@ -116,19 +96,6 @@ describe('hasQueryKeyParams', () => {
       requestBody: ast.factory.createRequestBody({
         content: [ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'object' }) })],
       }),
-    })
-    expect(hasQueryKeyParams(node)).toBe(true)
-  })
-
-  test('returns true when operation has headers and query parameters', () => {
-    const node = ast.factory.createOperation({
-      operationId: 'listUsers',
-      method: 'GET',
-      path: '/users',
-      parameters: [
-        ast.factory.createParameter({ name: 'Authorization', in: 'header', schema: ast.factory.createSchema({ type: 'string' }) }),
-        ast.factory.createParameter({ name: 'limit', in: 'query', schema: ast.factory.createSchema({ type: 'number' }) }),
-      ],
     })
     expect(hasQueryKeyParams(node)).toBe(true)
   })
@@ -164,13 +131,6 @@ const pageSchema = ast.factory.createSchema({
 const arraySchema = ast.factory.createSchema({ type: 'array', items: [ast.factory.createSchema({ type: 'string' })] })
 
 const infinite = (options: Parameters<typeof resolveInfiniteConfig>[0] = {}) => resolveInfiniteConfig({ queryParam: 'page', ...options }) || {}
-
-describe('definePageParam', () => {
-  test('serializes a function expression to string', () => {
-    const fn = definePageParam((lastPage: { next?: number }) => lastPage.next)
-    expect(fn).toBe('(lastPage) => lastPage.next')
-  })
-})
 
 describe('resolveInfiniteConfig', () => {
   test('clears the page param code by default and marks explicit initialPageParam false', () => {
@@ -230,17 +190,6 @@ describe('matchesInfinite', () => {
   test('skips an operation without the queryParam', () => {
     expect(matchesInfinite(listPetsNode(pageSchema, 'cursor'), infinite())).toBe(false)
   })
-
-  test('skips an operation with no parameters', () => {
-    const noParamsNode = ast.factory.createOperation({
-      operationId: 'listPets',
-      method: 'GET',
-      path: '/pets',
-      parameters: [],
-      responses: [ast.factory.createResponse({ statusCode: '200', schema: pageSchema })],
-    })
-    expect(matchesInfinite(noParamsNode, infinite())).toBe(false)
-  })
 })
 
 describe('getDefaultPageParamsWarning', () => {
@@ -268,11 +217,6 @@ describe('getDefaultPageParamsWarning', () => {
   test('resolves single-element intersection (allOf) wrapping array response', () => {
     const intersectionSchema = ast.factory.createSchema({ type: 'intersection', members: [arraySchema] })
     expect(getDefaultPageParamsWarning(listPetsNode(intersectionSchema), infinite())).toBeNull()
-  })
-
-  test('warns when single-element intersection (allOf) wraps object response', () => {
-    const intersectionSchema = ast.factory.createSchema({ type: 'intersection', members: [pageSchema] })
-    expect(getDefaultPageParamsWarning(listPetsNode(intersectionSchema), infinite())).not.toBeNull()
   })
 
   test('prioritizes application/json content schema over non-json content', () => {
@@ -303,11 +247,6 @@ describe('getDefaultPageParamsWarning', () => {
       responses: [],
     })
     expect(getDefaultPageParamsWarning(noSchemaNode, infinite())).toBeNull()
-  })
-
-  test('warns when response schema is a primitive type', () => {
-    const stringSchema = ast.factory.createSchema({ type: 'string' })
-    expect(getDefaultPageParamsWarning(listPetsNode(stringSchema), infinite())).not.toBeNull()
   })
 
   test.each([

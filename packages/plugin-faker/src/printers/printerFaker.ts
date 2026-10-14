@@ -68,142 +68,41 @@ const integerFormats: ReadonlySet<string> = new Set(['int32', 'int64', 'uint64']
 
 const maxInt32 = 2_147_483_647
 
-const fakerKeywordMapper = {
-  any: () => 'undefined',
-  unknown: () => 'undefined',
-  void: () => 'undefined',
-  number: (min?: number, max?: number) => {
-    if (max !== undefined && min !== undefined) {
-      return `faker.number.float({ min: ${min}, max: ${max} })`
-    }
+/**
+ * `faker.number.float()` or `faker.number.int()`, with `min` and `max` passed only when set.
+ */
+function numberCall(kind: 'float' | 'int', min?: number, max?: number): string {
+  const args = [min !== undefined && `min: ${min}`, max !== undefined && `max: ${max}`].filter(Boolean).join(', ')
 
-    if (max !== undefined) {
-      return `faker.number.float({ max: ${max} })`
-    }
+  return `faker.number.${kind}(${args ? `{ ${args} }` : ''})`
+}
 
-    if (min !== undefined) {
-      return `faker.number.float({ min: ${min} })`
-    }
+/**
+ * A `date` or `time` value: an ISO substring, a `dateParser` call, or a `Date` when `representation` is `'date'`.
+ */
+function dateTimeCall(
+  representation: 'date' | 'string',
+  { format, substring }: { format: string; substring: string },
+  parser: PluginFaker['resolvedOptions']['dateParser'] = 'faker',
+): string {
+  if (representation === 'string') {
+    return parser !== 'faker' ? `${parser}(faker.date.anytime()).format("${format}")` : `faker.date.anytime().toISOString().substring(${substring})`
+  }
 
-    return 'faker.number.float()'
-  },
-  integer: (min?: number, max?: number) => {
-    if (max !== undefined && min !== undefined) {
-      return `faker.number.int({ min: ${min}, max: ${max} })`
-    }
+  if (parser !== 'faker') {
+    throw new Error(`type '${representation}' and parser '${parser}' can not work together`)
+  }
 
-    if (max !== undefined) {
-      return `faker.number.int({ max: ${max} })`
-    }
+  return 'faker.date.anytime()'
+}
 
-    if (min !== undefined) {
-      return `faker.number.int({ min: ${min} })`
-    }
+function matches(value: string, regexGenerator: 'faker' | 'randexp' = 'faker'): string {
+  if (regexGenerator === 'randexp') {
+    return `${toRegExpString(value, 'RandExp')}.gen()`
+  }
 
-    return 'faker.number.int()'
-  },
-  bigint: () => 'faker.number.bigInt()',
-  integerString: (format?: string) => {
-    if (format === 'int32') return `faker.number.int({ max: ${maxInt32} }).toString()`
-
-    return 'faker.number.bigInt().toString()'
-  },
-  string: (min?: number, max?: number) => {
-    if (max !== undefined && min !== undefined) {
-      return `faker.string.alpha({ length: { min: ${min}, max: ${max} } })`
-    }
-
-    if (max !== undefined) {
-      return `faker.string.alpha({ length: ${max} })`
-    }
-
-    if (min !== undefined) {
-      return `faker.string.alpha({ length: ${min} })`
-    }
-
-    return 'faker.string.alpha()'
-  },
-  boolean: () => 'faker.datatype.boolean()',
-  null: () => 'null',
-  array: (items: Array<string> = [], min?: number, max?: number) => {
-    if (items.length > 1) {
-      return `faker.helpers.arrayElements([${items.join(', ')}])`
-    }
-
-    const item = items.at(0)
-
-    if (min !== undefined && max !== undefined) {
-      return `faker.helpers.multiple(() => (${item}), { count: { min: ${min}, max: ${max} }})`
-    }
-
-    if (min !== undefined) {
-      return `faker.helpers.multiple(() => (${item}), { count: ${min} })`
-    }
-
-    if (max !== undefined) {
-      return `faker.helpers.multiple(() => (${item}), { count: { min: 0, max: ${max} }})`
-    }
-
-    return `faker.helpers.multiple(() => (${item}))`
-  },
-  tuple: (items: Array<string> = []) => `[${items.join(', ')}]`,
-  enum: (items: Array<string | number | boolean | null | undefined> = [], type?: string) =>
-    `faker.helpers.arrayElement${type ? `<${type}>` : ''}([${items.join(', ')}])`,
-  union: (items: Array<string> = []) => `faker.helpers.arrayElement([${items.join(', ')}])`,
-  datetime: () => 'faker.date.anytime().toISOString()',
-  date: (representation: 'date' | 'string' = 'string', parser: PluginFaker['resolvedOptions']['dateParser'] = 'faker') => {
-    if (representation === 'string') {
-      if (parser !== 'faker') {
-        return `${parser}(faker.date.anytime()).format("YYYY-MM-DD")`
-      }
-
-      return 'faker.date.anytime().toISOString().substring(0, 10)'
-    }
-
-    if (parser !== 'faker') {
-      throw new Error(`type '${representation}' and parser '${parser}' can not work together`)
-    }
-
-    return 'faker.date.anytime()'
-  },
-  time: (representation: 'date' | 'string' = 'string', parser: PluginFaker['resolvedOptions']['dateParser'] = 'faker') => {
-    if (representation === 'string') {
-      if (parser !== 'faker') {
-        return `${parser}(faker.date.anytime()).format("HH:mm:ss")`
-      }
-
-      return 'faker.date.anytime().toISOString().substring(11, 19)'
-    }
-
-    if (parser !== 'faker') {
-      throw new Error(`type '${representation}' and parser '${parser}' can not work together`)
-    }
-
-    return 'faker.date.anytime()'
-  },
-  uuid: () => 'faker.string.uuid()',
-  url: () => 'faker.internet.url()',
-  and: (items: Array<string> = []) => {
-    if (items.length === 0) {
-      return '{}'
-    }
-
-    if (items.length === 1) {
-      return items[0] ?? '{}'
-    }
-
-    return `{...${items.join(', ...')}}`
-  },
-  matches: (value = '', regexGenerator: 'faker' | 'randexp' = 'faker') => {
-    if (regexGenerator === 'randexp') {
-      return `${toRegExpString(value, 'RandExp')}.gen()`
-    }
-
-    return `faker.helpers.fromRegExp(${toRegExpString(value, null)})`
-  },
-  email: () => 'faker.internet.email()',
-  blob: () => 'faker.image.url() as unknown as Blob',
-} as const
+  return `faker.helpers.fromRegExp(${toRegExpString(value, null)})`
+}
 
 function parseEnumValue(value: string | number | boolean | null | undefined) {
   if (typeof value === 'string') {
@@ -267,39 +166,39 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
     name: 'faker',
     options,
     nodes: {
-      any: () => fakerKeywordMapper.any(),
-      unknown: () => fakerKeywordMapper.unknown(),
-      void: () => fakerKeywordMapper.void(),
-      boolean: () => fakerKeywordMapper.boolean(),
-      null: () => fakerKeywordMapper.null(),
+      any: () => 'undefined',
+      unknown: () => 'undefined',
+      void: () => 'undefined',
+      boolean: () => 'faker.datatype.boolean()',
+      null: () => 'null',
       string(node) {
         if (node.pattern) {
-          return fakerKeywordMapper.matches(node.pattern, this.options.regexGenerator)
+          return matches(node.pattern, this.options.regexGenerator)
         }
 
         if (node.format && integerFormats.has(node.format)) {
-          return fakerKeywordMapper.integerString(node.format)
+          return node.format === 'int32' ? `faker.number.int({ max: ${maxInt32} }).toString()` : 'faker.number.bigInt().toString()'
         }
 
-        return fakerKeywordMapper.string(node.min, node.max)
+        const { min, max } = node
+        if (min !== undefined && max !== undefined) return `faker.string.alpha({ length: { min: ${min}, max: ${max} } })`
+        if (max !== undefined || min !== undefined) return `faker.string.alpha({ length: ${max ?? min} })`
+
+        return 'faker.string.alpha()'
       },
-      email: () => fakerKeywordMapper.email(),
-      url: () => fakerKeywordMapper.url(),
-      uuid: () => fakerKeywordMapper.uuid(),
-      number(node) {
-        return fakerKeywordMapper.number(node.min, node.max)
-      },
-      integer(node) {
-        return fakerKeywordMapper.integer(node.min, node.max)
-      },
-      bigint: () => fakerKeywordMapper.bigint(),
-      blob: () => fakerKeywordMapper.blob(),
-      datetime: () => fakerKeywordMapper.datetime(),
+      email: () => 'faker.internet.email()',
+      url: () => 'faker.internet.url()',
+      uuid: () => 'faker.string.uuid()',
+      number: (node) => numberCall('float', node.min, node.max),
+      integer: (node) => numberCall('int', node.min, node.max),
+      bigint: () => 'faker.number.bigInt()',
+      blob: () => 'faker.image.url() as unknown as Blob',
+      datetime: () => 'faker.date.anytime().toISOString()',
       date(node) {
-        return fakerKeywordMapper.date(node.representation ?? 'string', this.options.dateParser)
+        return dateTimeCall(node.representation ?? 'string', { format: 'YYYY-MM-DD', substring: '0, 10' }, this.options.dateParser)
       },
       time(node) {
-        return fakerKeywordMapper.time(node.representation ?? 'string', this.options.dateParser)
+        return dateTimeCall(node.representation ?? 'string', { format: 'HH:mm:ss', substring: '11, 19' }, this.options.dateParser)
       },
       ref(node) {
         // `resolveRefName` prefers the node's `targetName` (set for collision or macro renames),
@@ -327,7 +226,9 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
         return `${resolvedName}()`
       },
       enum(node) {
-        return fakerKeywordMapper.enum(ast.getSchemaLiteralValues(node).map(parseEnumValue), this.options.typeName)
+        const { typeName } = this.options
+
+        return `faker.helpers.arrayElement${typeName ? `<${typeName}>` : ''}([${ast.getSchemaLiteralValues(node).map(parseEnumValue).join(', ')}])`
       },
       union(node): string {
         const { discriminatorPropertyName } = node
@@ -352,7 +253,7 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
           .map(({ output }) => output)
           .filter((item): item is string => Boolean(item))
 
-        return fakerKeywordMapper.union(items)
+        return `faker.helpers.arrayElement([${items.join(', ')}])`
       },
       intersection(node): string {
         const items: Array<string> = mapSchemaMembers(node, (member) =>
@@ -365,7 +266,9 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
           // constraint. Keeping it would spread `...undefined` into the merged object.
           .filter((item): item is string => Boolean(item) && item !== 'undefined')
 
-        return fakerKeywordMapper.and(items)
+        if (items.length === 0) return '{}'
+
+        return items.length === 1 ? items[0]! : `{...${items.join(', ...')}}`
       },
       array(node): string {
         const items: Array<string> = mapSchemaItems(node, (member) =>
@@ -377,7 +280,17 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
           .map(({ output }) => output)
           .filter((item): item is string => Boolean(item))
 
-        return fakerKeywordMapper.array(items, node.min, node.max)
+        if (items.length > 1) {
+          return `faker.helpers.arrayElements([${items.join(', ')}])`
+        }
+
+        const { min, max } = node
+        const item = items[0]
+        if (min !== undefined && max !== undefined) return `faker.helpers.multiple(() => (${item}), { count: { min: ${min}, max: ${max} }})`
+        if (min !== undefined) return `faker.helpers.multiple(() => (${item}), { count: ${min} })`
+        if (max !== undefined) return `faker.helpers.multiple(() => (${item}), { count: { min: 0, max: ${max} }})`
+
+        return `faker.helpers.multiple(() => (${item}))`
       },
       tuple(node): string {
         const items: Array<string> = (node.items ?? [])
@@ -389,7 +302,7 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
           )
           .filter((item): item is string => Boolean(item))
 
-        return fakerKeywordMapper.tuple(items)
+        return `[${items.join(', ')}]`
       },
       object(node): string {
         const cyclicSchemas = this.options.cyclicSchemas
@@ -416,8 +329,5 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
       },
     },
     overrides: options.nodes,
-    print(node) {
-      return this.transform(node) ?? null
-    },
   }
 })

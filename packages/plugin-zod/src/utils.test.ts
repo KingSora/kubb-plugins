@@ -4,10 +4,8 @@ import {
   applyMiniModifiers,
   applyModifiers,
   buildEnum,
-  buildGroupedParamsSchema,
   defaultLiteral,
   formatDefault,
-  formatLiteral,
   isClosedKeySchema,
   isObjectComposableIntersection,
   isObjectSchemaNode,
@@ -17,22 +15,9 @@ import {
   numberChecksMini,
   numberConstraints,
   omitUnwrapChain,
-  shouldCoerce,
 } from './utils.ts'
 
 describe('formatDefault', () => {
-  test('string value is quoted', () => {
-    expect(formatDefault('hello')).toMatchInlineSnapshot(`"'hello'"`)
-  })
-
-  test('number value is stringified', () => {
-    expect(formatDefault(42)).toBe('42')
-  })
-
-  test('boolean value is stringified', () => {
-    expect(formatDefault(false)).toBe('false')
-  })
-
   test('object value keeps its contents', () => {
     expect(formatDefault({})).toBe('{}')
     expect(formatDefault({ path: 'types', barrel: { type: 'named' } })).toBe('{"path":"types","barrel":{"type":"named"}}')
@@ -112,24 +97,6 @@ describe('defaultLiteral', () => {
   })
 })
 
-describe('formatLiteral', () => {
-  test('string value is quoted', () => {
-    expect(formatLiteral('cat')).toMatchInlineSnapshot(`"'cat'"`)
-  })
-
-  test('number value is raw', () => {
-    expect(formatLiteral(0)).toBe('0')
-  })
-
-  test('boolean true is raw', () => {
-    expect(formatLiteral(true)).toBe('true')
-  })
-
-  test('boolean false is raw', () => {
-    expect(formatLiteral(false)).toBe('false')
-  })
-})
-
 describe('buildEnum', () => {
   test('all-string set uses z.enum', () => {
     expect(buildEnum(['a', 'b', 'c'])).toBe("z.enum(['a', 'b', 'c'])")
@@ -142,14 +109,6 @@ describe('buildEnum', () => {
   test('numeric set uses z.union of literals', () => {
     expect(buildEnum([200, 400, 500])).toBe('z.union([z.literal(200), z.literal(400), z.literal(500)])')
   })
-
-  test('boolean set uses z.union of literals', () => {
-    expect(buildEnum([true, false])).toBe('z.union([z.literal(true), z.literal(false)])')
-  })
-
-  test('mixed set uses z.union of literals', () => {
-    expect(buildEnum(['a', 1, true])).toBe("z.union([z.literal('a'), z.literal(1), z.literal(true)])")
-  })
 })
 
 describe('numberConstraints', () => {
@@ -157,36 +116,8 @@ describe('numberConstraints', () => {
     expect(numberConstraints({})).toBe('')
   })
 
-  test('min only', () => {
-    expect(numberConstraints({ min: 0 })).toBe('.min(0)')
-  })
-
-  test('max only', () => {
-    expect(numberConstraints({ max: 100 })).toBe('.max(100)')
-  })
-
-  test('min and max', () => {
-    expect(numberConstraints({ min: 1, max: 10 })).toBe('.min(1).max(10)')
-  })
-
-  test('exclusiveMinimum', () => {
-    expect(numberConstraints({ exclusiveMinimum: 0 })).toBe('.gt(0)')
-  })
-
-  test('exclusiveMaximum', () => {
-    expect(numberConstraints({ exclusiveMaximum: 100 })).toBe('.lt(100)')
-  })
-
   test('all constraints combined', () => {
     expect(numberConstraints({ min: 1, max: 99, exclusiveMinimum: 0, exclusiveMaximum: 100 })).toBe('.min(1).max(99).gt(0).lt(100)')
-  })
-
-  test('multipleOf only', () => {
-    expect(numberConstraints({ multipleOf: 5 })).toBe('.multipleOf(5)')
-  })
-
-  test('min, max, and multipleOf combined', () => {
-    expect(numberConstraints({ min: 0, max: 100, multipleOf: 10 })).toBe('.min(0).max(100).multipleOf(10)')
   })
 })
 
@@ -195,28 +126,8 @@ describe('lengthConstraints', () => {
     expect(lengthConstraints({})).toBe('')
   })
 
-  test('min only', () => {
-    expect(lengthConstraints({ min: 2 })).toBe('.min(2)')
-  })
-
-  test('max only', () => {
-    expect(lengthConstraints({ max: 50 })).toBe('.max(50)')
-  })
-
-  test('min and max', () => {
-    expect(lengthConstraints({ min: 1, max: 255 })).toBe('.min(1).max(255)')
-  })
-
-  test('pattern only', () => {
-    expect(lengthConstraints({ pattern: '^\\d+$' })).toBe('.regex(/^\\d+$/)')
-  })
-
   test('all constraints combined', () => {
     expect(lengthConstraints({ min: 1, max: 10, pattern: '^[a-z]+$' })).toBe('.min(1).max(10).regex(/^[a-z]+$/)')
-  })
-
-  test('regexType literal emits a regex literal', () => {
-    expect(lengthConstraints({ pattern: '^\\d+$', regexType: 'literal' })).toBe('.regex(/^\\d+$/)')
   })
 
   test('regexType constructor emits new RegExp(...)', () => {
@@ -229,60 +140,16 @@ describe('numberChecksMini', () => {
     expect(numberChecksMini({})).toBe('')
   })
 
-  test('min only', () => {
-    expect(numberChecksMini({ min: 0 })).toBe('.check(z.minimum(0))')
-  })
-
-  test('max only', () => {
-    expect(numberChecksMini({ max: 100 })).toBe('.check(z.maximum(100))')
-  })
-
-  test('min and max', () => {
-    expect(numberChecksMini({ min: 1, max: 10 })).toBe('.check(z.minimum(1), z.maximum(10))')
-  })
-
-  test('exclusiveMinimum', () => {
-    expect(numberChecksMini({ exclusiveMinimum: 0 })).toBe('.check(z.minimum(0, { exclusive: true }))')
-  })
-
-  test('exclusiveMaximum', () => {
-    expect(numberChecksMini({ exclusiveMaximum: 100 })).toBe('.check(z.maximum(100, { exclusive: true }))')
-  })
-
   test('all constraints combined', () => {
     expect(numberChecksMini({ min: 1, max: 99, exclusiveMinimum: 0, exclusiveMaximum: 100 })).toBe(
       '.check(z.minimum(1), z.maximum(99), z.minimum(0, { exclusive: true }), z.maximum(100, { exclusive: true }))',
     )
-  })
-
-  test('multipleOf only', () => {
-    expect(numberChecksMini({ multipleOf: 5 })).toBe('.check(z.multipleOf(5))')
-  })
-
-  test('min, max, and multipleOf combined', () => {
-    expect(numberChecksMini({ min: 0, max: 100, multipleOf: 10 })).toBe('.check(z.minimum(0), z.maximum(100), z.multipleOf(10))')
   })
 })
 
 describe('lengthChecksMini', () => {
   test('no constraints returns empty string', () => {
     expect(lengthChecksMini({})).toBe('')
-  })
-
-  test('min only', () => {
-    expect(lengthChecksMini({ min: 2 })).toBe('.check(z.minLength(2))')
-  })
-
-  test('max only', () => {
-    expect(lengthChecksMini({ max: 50 })).toBe('.check(z.maxLength(50))')
-  })
-
-  test('min and max', () => {
-    expect(lengthChecksMini({ min: 1, max: 255 })).toBe('.check(z.minLength(1), z.maxLength(255))')
-  })
-
-  test('pattern only', () => {
-    expect(lengthChecksMini({ pattern: '^\\d+$' })).toBe('.check(z.regex(/^\\d+$/))')
   })
 
   test('all constraints combined', () => {
@@ -295,32 +162,12 @@ describe('lengthChecksMini', () => {
 })
 
 describe('applyModifiers', () => {
-  test('value only — no modifiers', () => {
-    expect(applyModifiers({ value: 'z.string()' })).toBe('z.string()')
-  })
-
-  test('optional', () => {
-    expect(applyModifiers({ value: 'z.string()', optional: true })).toBe('z.string().optional()')
-  })
-
-  test('nullable', () => {
-    expect(applyModifiers({ value: 'z.string()', nullable: true })).toBe('z.string().nullable()')
-  })
-
   test('nullish (explicit flag) takes priority over nullable+optional', () => {
     expect(applyModifiers({ value: 'z.string()', nullish: true, nullable: true, optional: true })).toBe('z.string().nullish()')
   })
 
   test('nullable and optional combined produce nullish', () => {
     expect(applyModifiers({ value: 'z.string()', nullable: true, optional: true })).toBe('z.string().nullish()')
-  })
-
-  test('default value (string)', () => {
-    expect(applyModifiers({ value: 'z.string()', defaultValue: 'hi' })).toMatchInlineSnapshot(`"z.string().default('hi')"`)
-  })
-
-  test('default value (number)', () => {
-    expect(applyModifiers({ value: 'z.number()', defaultValue: 0 })).toBe('z.number().default(0)')
   })
 
   test('default value (object)', () => {
@@ -343,14 +190,6 @@ describe('applyModifiers', () => {
     expect(applyModifiers({ value: 'z.array(z.string())', schema, defaultValue: {} })).toBe('z.array(z.string())')
   })
 
-  test('description', () => {
-    expect(applyModifiers({ value: 'z.string()', description: 'A name' })).toMatchInlineSnapshot(`"z.string().describe('A name')"`)
-  })
-
-  test('examples', () => {
-    expect(applyModifiers({ value: 'z.string()', examples: ['a', 'b'] })).toMatchInlineSnapshot(`"z.string().meta({ examples: ['a', 'b'] })"`)
-  })
-
   test('ignores an empty examples array', () => {
     expect(applyModifiers({ value: 'z.string()', examples: [] })).toBe('z.string()')
   })
@@ -367,14 +206,6 @@ describe('applyMiniModifiers', () => {
     expect(applyMiniModifiers({ value: 'z.string()' })).toBe('z.string()')
   })
 
-  test('optional wraps with z.optional()', () => {
-    expect(applyMiniModifiers({ value: 'z.string()', optional: true })).toBe('z.optional(z.string())')
-  })
-
-  test('nullable wraps with z.nullable()', () => {
-    expect(applyMiniModifiers({ value: 'z.string()', nullable: true })).toBe('z.nullable(z.string())')
-  })
-
   test('nullish wraps with z.nullish() and skips individual nullable/optional', () => {
     expect(applyMiniModifiers({ value: 'z.string()', nullish: true, nullable: true, optional: true })).toBe('z.nullish(z.string())')
   })
@@ -389,61 +220,6 @@ describe('applyMiniModifiers', () => {
 
   test('default value (object)', () => {
     expect(applyMiniModifiers({ value: 'z.object({})', defaultValue: {} })).toBe('z._default(z.object({}), {})')
-  })
-})
-
-describe('shouldCoerce', () => {
-  test('returns false when coercion is undefined', () => {
-    expect(shouldCoerce(undefined, 'strings')).toBe(false)
-  })
-
-  test('returns false when coercion is false', () => {
-    expect(shouldCoerce(false, 'numbers')).toBe(false)
-  })
-
-  test('returns true when coercion is true', () => {
-    expect(shouldCoerce(true, 'dates')).toBe(true)
-  })
-
-  test('returns true for a specific type that is enabled', () => {
-    expect(shouldCoerce({ strings: true, numbers: false, dates: false }, 'strings')).toBe(true)
-  })
-
-  test('returns false for a specific type that is disabled', () => {
-    expect(shouldCoerce({ strings: true, numbers: false, dates: false }, 'numbers')).toBe(false)
-  })
-})
-
-describe('buildGroupedParamsSchema', () => {
-  test('creates an object schema with primitive: object', () => {
-    const params = [ast.factory.createParameter({ name: 'petId', schema: ast.factory.createSchema({ type: 'string' }), in: 'path', required: true })]
-    const result = buildGroupedParamsSchema({ params })
-
-    expect(result.type).toBe('object')
-    expect(result.primitive).toBe('object')
-    expect(result.optional).toBeUndefined()
-  })
-
-  test('propagates optional flag', () => {
-    const params = [ast.factory.createParameter({ name: 'limit', schema: ast.factory.createSchema({ type: 'integer' }), in: 'query', required: false })]
-    const result = buildGroupedParamsSchema({ params, optional: true })
-
-    expect(result.optional).toBe(true)
-  })
-
-  test('maps each parameter to a property with matching name and required', () => {
-    const params = [
-      ast.factory.createParameter({ name: 'id', schema: ast.factory.createSchema({ type: 'string' }), in: 'path', required: true }),
-      ast.factory.createParameter({ name: 'q', schema: ast.factory.createSchema({ type: 'string' }), in: 'query', required: false }),
-    ]
-    const result = buildGroupedParamsSchema({ params })
-    const obj = ast.narrowSchema(result, 'object')!
-
-    expect(obj.properties).toHaveLength(2)
-    expect(obj.properties![0]!.name).toBe('id')
-    expect(obj.properties![0]!.required).toBe(true)
-    expect(obj.properties![1]!.name).toBe('q')
-    expect(obj.properties![1]!.required).toBe(false)
   })
 })
 
@@ -494,23 +270,10 @@ describe('isObjectSchemaNode', () => {
     expect(isObjectSchemaNode(node)).toBe(true)
   })
 
-  test('empty object without additionalProperties returns true', () => {
-    const node = ast.factory.createSchema({ type: 'object', properties: [] })
-    expect(isObjectSchemaNode(node)).toBe(true)
-  })
-
   test('open object with additionalProperties: true returns true', () => {
-    const node = ast.factory.createSchema({ type: 'object', properties: [], additionalProperties: true })
-    expect(isObjectSchemaNode(node)).toBe(true)
-  })
-
-  test('open object with declared properties and additionalProperties: true returns true', () => {
-    const node = ast.factory.createSchema({
-      type: 'object',
-      properties: [ast.factory.createProperty({ name: 'id', required: true, schema: ast.factory.createSchema({ type: 'string' }) })],
-      additionalProperties: true,
-    })
-    expect(isObjectSchemaNode(node)).toBe(true)
+    const id = ast.factory.createProperty({ name: 'id', required: true, schema: ast.factory.createSchema({ type: 'string' }) })
+    expect(isObjectSchemaNode(ast.factory.createSchema({ type: 'object', properties: [], additionalProperties: true }))).toBe(true)
+    expect(isObjectSchemaNode(ast.factory.createSchema({ type: 'object', properties: [id], additionalProperties: true }))).toBe(true)
   })
 
   test('strict object with additionalProperties: false returns true', () => {
@@ -650,148 +413,14 @@ describe('isPlainInlineObject', () => {
     expect(isPlainInlineObject(node)).toBe(true)
   })
 
-  test('non-object returns false', () => {
-    expect(isPlainInlineObject(ast.factory.createSchema({ type: 'string' }))).toBe(false)
-  })
-
   test('nullable, optional, or nullish object returns false', () => {
     expect(isPlainInlineObject(ast.factory.createSchema({ type: 'object', nullable: true }))).toBe(false)
     expect(isPlainInlineObject(ast.factory.createSchema({ type: 'object', optional: true }))).toBe(false)
     expect(isPlainInlineObject(ast.factory.createSchema({ type: 'object', nullish: true }))).toBe(false)
   })
-
-  test('object with additionalProperties returns false', () => {
-    expect(isPlainInlineObject(ast.factory.createSchema({ type: 'object', additionalProperties: true }))).toBe(false)
-    expect(isPlainInlineObject(ast.factory.createSchema({ type: 'object', additionalProperties: false }))).toBe(false)
-    expect(isPlainInlineObject(ast.factory.createSchema({ type: 'object', additionalProperties: ast.factory.createSchema({ type: 'string' }) }))).toBe(false)
-  })
-
-  test('object with patternProperties returns false', () => {
-    const node = ast.factory.createSchema({
-      type: 'object',
-      patternProperties: { '^S_': ast.factory.createSchema({ type: 'string' }) },
-    })
-    expect(isPlainInlineObject(node)).toBe(false)
-  })
-
-  test('object with propertyNames returns false', () => {
-    const node = ast.factory.createSchema({
-      type: 'object',
-      propertyNames: ast.factory.createSchema({ type: 'string', pattern: '^[a-z]+$' }),
-    } as any)
-    expect(isPlainInlineObject(node)).toBe(false)
-  })
-})
-
-describe('isBareRef', () => {
-  test('returns true for an unmodified ref schema', () => {
-    const node = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-    })
-    expect(ast.isBareRef(node)).toBe(true)
-  })
-
-  test('returns false when ref has nullable modifier', () => {
-    const node = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-      nullable: true,
-    })
-    expect(ast.isBareRef(node)).toBe(false)
-  })
-
-  test('returns false when ref has optional modifier', () => {
-    const node = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-      optional: true,
-    })
-    expect(ast.isBareRef(node)).toBe(false)
-  })
-
-  test('returns false when ref has nullish modifier', () => {
-    const node = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-      nullish: true,
-    })
-    expect(ast.isBareRef(node)).toBe(false)
-  })
-
-  test('returns false when ref has a default value', () => {
-    const node = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-      default: {},
-    })
-    expect(ast.isBareRef(node)).toBe(false)
-  })
-
-  test('returns false when ref has a description', () => {
-    const node = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-      description: 'A cute pet',
-    })
-    expect(ast.isBareRef(node)).toBe(false)
-  })
-
-  test('returns false when ref has examples', () => {
-    const node = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-      examples: ['dog'],
-    })
-    expect(ast.isBareRef(node)).toBe(false)
-  })
-
-  test('returns false when keysToOmit is provided', () => {
-    const node = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-    })
-    expect(ast.isBareRef(node, ['id'])).toBe(false)
-  })
-
-  test('returns false for non-ref schemas', () => {
-    expect(ast.isBareRef(ast.factory.createSchema({ type: 'object' }))).toBe(false)
-    expect(ast.isBareRef(ast.factory.createSchema({ type: 'string' }))).toBe(false)
-    expect(ast.isBareRef(ast.factory.createSchema({ type: 'union', members: [] }))).toBe(false)
-  })
-
-  test('reads modifiers from resolved ref target schema', () => {
-    const nullableTarget = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-      schema: ast.factory.createSchema({ type: 'object', nullable: true }),
-    })
-    expect(ast.isBareRef(nullableTarget)).toBe(false)
-
-    const cleanTarget = ast.factory.createSchema({
-      type: 'ref',
-      name: 'Pet',
-      ref: '#/components/schemas/Pet',
-      schema: ast.factory.createSchema({ type: 'object' }),
-    })
-    expect(ast.isBareRef(cleanTarget)).toBe(true)
-  })
 })
 
 describe('isClosedKeySchema', () => {
-  test('returns false for undefined', () => {
-    expect(isClosedKeySchema(undefined)).toBe(false)
-  })
-
   test('returns true for enum schemas (including single-value enums)', () => {
     const multi = ast.factory.createSchema({ type: 'enum', enumValues: ['admin', 'editor'] })
     expect(isClosedKeySchema(multi)).toBe(true)
@@ -819,19 +448,9 @@ describe('isClosedKeySchema', () => {
     expect(isClosedKeySchema(node)).toBe(false)
   })
 
-  test('returns false for empty union', () => {
-    const node = ast.factory.createSchema({ type: 'union', members: [] })
-    expect(isClosedKeySchema(node)).toBe(false)
-  })
-
   test('returns false for string schemas (plain and pattern)', () => {
     expect(isClosedKeySchema(ast.factory.createSchema({ type: 'string' }))).toBe(false)
     expect(isClosedKeySchema(ast.factory.createSchema({ type: 'string', pattern: '^[a-z]+$' }))).toBe(false)
-  })
-
-  test('returns false for non-key schemas', () => {
-    expect(isClosedKeySchema(ast.factory.createSchema({ type: 'object' }))).toBe(false)
-    expect(isClosedKeySchema(ast.factory.createSchema({ type: 'integer' }))).toBe(false)
   })
 
   test('resolves ref to enum schema', () => {

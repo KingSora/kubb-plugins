@@ -46,7 +46,6 @@ export type ResolvedOptions = {
   override: Array<Override<ResolvedOptions>>
   group: Group | null
   baseURL: Options['baseURL'] | undefined
-  resolver: ResolverCypress
 }
 
 export type PluginCypress = PluginType<'plugin-cypress', Options, ResolvedOptions, ResolverCypress>

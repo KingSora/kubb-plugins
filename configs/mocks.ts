@@ -1,5 +1,6 @@
-import type { ast } from 'kubb/kit'
-import { matchFiles as matchFilesBase } from 'kubb/kit/testing'
+import type { Config, ast } from 'kubb/kit'
+import { memoryStorage } from 'kubb/kit'
+import { createMockedAdapter, createMockedPluginDriver, matchFiles as matchFilesBase } from 'kubb/kit/testing'
 import { parserTs } from '@kubb/parser-ts'
 import type { Options } from 'prettier'
 import { format as prettierFormat } from 'prettier'
@@ -52,4 +53,28 @@ function assertCleanRawOutput(files: Array<ast.FileNode> | undefined): void {
 export function matchFiles(files: Array<ast.FileNode> | undefined, pre?: string) {
   assertCleanRawOutput(files)
   return matchFilesBase(files, { parsers, format, pre })
+}
+
+export const testConfig: Config = {
+  root: '.',
+  input: {},
+  output: { path: 'test' },
+  plugins: [],
+  parsers: [],
+  reporters: [],
+  adapter: createMockedAdapter(),
+  storage: memoryStorage(),
+}
+
+/**
+ * Dispatches on plugin name (the built-in mock is name-agnostic); unknown names fall back to `plugin-ts`.
+ */
+export function createMultiPluginDriver(name: string, plugins: Record<string, { resolver?: unknown }>) {
+  const fallback = plugins['plugin-ts']
+  const driver = createMockedPluginDriver({ name })
+  return {
+    ...driver,
+    getPlugin: (pluginName: string) => plugins[pluginName] ?? fallback,
+    getResolver: (pluginName: string) => plugins[pluginName]?.resolver ?? fallback?.resolver,
+  } as typeof driver
 }

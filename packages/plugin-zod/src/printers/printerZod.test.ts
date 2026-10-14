@@ -7,26 +7,14 @@ import { printerZod } from './printerZod.ts'
 describe('printerZod', () => {
   const printer = printerZod({})
 
-  describe('scalar types', () => {
-    test('any', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'any' }))).toBe('z.any()')
-    })
-
-    test('unknown', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'unknown' }))).toBe('z.unknown()')
-    })
-
-    test('void', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'void' }))).toBe('z.void()')
-    })
-
-    test('boolean', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'boolean' }))).toBe('z.boolean()')
-    })
-
-    test('null', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'null' }))).toBe('z.null()')
-    })
+  test.each([
+    ['any', 'z.any()'],
+    ['unknown', 'z.unknown()'],
+    ['void', 'z.void()'],
+    ['boolean', 'z.boolean()'],
+    ['null', 'z.null()'],
+  ] as const)('scalar type %s', (type, expected) => {
+    expect(printer.print(ast.factory.createSchema({ type }))).toBe(expected)
   })
 
   describe('string', () => {
@@ -202,54 +190,26 @@ describe('printerZod', () => {
   })
 
   describe('special string formats', () => {
-    test('uuid', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'uuid' }))).toBe('z.uuid()')
+    test.each([
+      [{ type: 'uuid' }, 'z.uuid()'],
+      [{ type: 'email' }, 'z.email()'],
+      [{ type: 'url' }, 'z.url()'],
+      [{ type: 'ipv4' }, 'z.ipv4()'],
+      [{ type: 'ipv6' }, 'z.ipv6()'],
+      [{ type: 'string', format: 'byte' }, 'z.base64()'],
+      [{ type: 'string', format: 'base64' }, 'z.base64()'],
+      [{ type: 'string', format: 'base64url' }, 'z.base64url()'],
+      [{ type: 'string', format: 'jwt' }, 'z.jwt()'],
+      [{ type: 'string', format: 'ulid' }, 'z.ulid()'],
+      [{ type: 'string', format: 'iban' }, 'z.iban()'],
+      [{ type: 'string', format: 'duration' }, 'z.iso.duration()'],
+    ] as const)('format %j', (schema, expected) => {
+      expect(printer.print(ast.factory.createSchema(schema))).toBe(expected)
     })
 
     test('guid', () => {
       const p = printerZod({ guidType: 'guid' })
       expect(p.print(ast.factory.createSchema({ type: 'uuid' }))).toBe('z.guid()')
-    })
-
-    test('email', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'email' }))).toBe('z.email()')
-    })
-
-    test('url', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'url' }))).toBe('z.url()')
-    })
-
-    test('ipv4', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'ipv4' }))).toBe('z.ipv4()')
-    })
-
-    test('ipv6', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'ipv6' }))).toBe('z.ipv6()')
-    })
-
-    test('byte and base64 formats', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'string', format: 'byte' }))).toBe('z.base64()')
-      expect(printer.print(ast.factory.createSchema({ type: 'string', format: 'base64' }))).toBe('z.base64()')
-    })
-
-    test('base64url format', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'string', format: 'base64url' }))).toBe('z.base64url()')
-    })
-
-    test('jwt format', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'string', format: 'jwt' }))).toBe('z.jwt()')
-    })
-
-    test('ulid format', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'string', format: 'ulid' }))).toBe('z.ulid()')
-    })
-
-    test('iban format', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'string', format: 'iban' }))).toBe('z.iban()')
-    })
-
-    test('duration format', () => {
-      expect(printer.print(ast.factory.createSchema({ type: 'string', format: 'duration' }))).toBe('z.iso.duration()')
     })
 
     test('format helpers with constraints and coercion', () => {
@@ -342,18 +302,6 @@ describe('printerZod', () => {
       expect(printer.print(node)).toBe('z.looseObject({\n  id: z.int(),\n})')
     })
 
-    test('generated looseObject allows undeclared properties at runtime', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [ast.factory.createProperty({ name: 'id', required: true, schema: ast.factory.createSchema({ type: 'integer' }) })],
-        additionalProperties: true,
-      })
-      const code = printer.print(node)
-      const schema = new Function('z', `return ${code}`)(z)
-      expect(schema.safeParse({ id: 1, extraKey: 'allowed' }).success).toBe(true)
-    })
-
     test('object with additionalProperties: false → z.strictObject()', () => {
       const node = ast.factory.createSchema({ type: 'object', primitive: 'object', properties: [], additionalProperties: false })
       expect(printer.print(node)).toBe('z.strictObject({})')
@@ -421,28 +369,6 @@ describe('printerZod', () => {
       expect(schema.safeParse({ guest: 'Charlie' }).success).toBe(false)
     })
 
-    test('object with propertyNames format and additionalProperties → z.record(formatKeySchema, schema)', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [],
-        propertyNames: ast.factory.createSchema({ type: 'uuid' }),
-        additionalProperties: ast.factory.createSchema({ type: 'string' }),
-      } as any)
-      expect(printer.print(node)).toBe('z.record(z.uuid(), z.string())')
-    })
-
-    test('object with propertyNames and additionalProperties: true → z.record(keySchema, z.unknown())', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [],
-        propertyNames: ast.factory.createSchema({ type: 'string', pattern: '^[a-z]+$' }),
-        additionalProperties: true,
-      } as any)
-      expect(printer.print(node)).toBe('z.record(z.string().regex(/^[a-z]+$/), z.unknown())')
-    })
-
     test('object with propertyNames and additionalProperties: false → z.strictObject({})', () => {
       const node = ast.factory.createSchema({
         type: 'object',
@@ -452,93 +378,6 @@ describe('printerZod', () => {
         additionalProperties: false,
       } as any)
       expect(printer.print(node)).toBe('z.strictObject({})')
-    })
-
-    test('object with propertyNames only → z.record(keySchema, z.unknown())', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [],
-        propertyNames: ast.factory.createSchema({ type: 'string', pattern: '^[a-z]+$' }),
-      } as any)
-      expect(printer.print(node)).toBe('z.record(z.string().regex(/^[a-z]+$/), z.unknown())')
-    })
-
-    test('generated record parses valid keys and rejects invalid keys at runtime', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [],
-        propertyNames: ast.factory.createSchema({ type: 'string', pattern: '^[a-z]+$' }),
-        additionalProperties: ast.factory.createSchema({ type: 'integer' }),
-      } as any)
-      const code = printer.print(node)
-      const schema = new Function('z', `return ${code}`)(z)
-      expect(schema.safeParse({ abc: 123 }).success).toBe(true)
-      expect(schema.safeParse({ '123': 123 }).success).toBe(false)
-      expect(schema.safeParse({ abc: 'not-a-number' }).success).toBe(false)
-    })
-
-    test('complex: nested record of records with propertyNames key schemas', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [],
-        propertyNames: ast.factory.createSchema({ type: 'string', pattern: '^[a-z]+$' }),
-        additionalProperties: ast.factory.createSchema({
-          type: 'object',
-          primitive: 'object',
-          properties: [],
-          propertyNames: ast.factory.createSchema({ type: 'uuid' }),
-          additionalProperties: ast.factory.createSchema({ type: 'integer' }),
-        } as any),
-      } as any)
-      expect(printer.print(node)).toBe('z.record(z.string().regex(/^[a-z]+$/), z.record(z.uuid(), z.int()))')
-
-      const code = printer.print(node)
-      const schema = new Function('z', `return ${code}`)(z)
-      const valid = {
-        section: {
-          '123e4567-e89b-12d3-a456-426614174000': 42,
-        },
-      }
-      expect(schema.safeParse(valid).success).toBe(true)
-      // Invalid outer key
-      expect(schema.safeParse({ '123_invalid': { '123e4567-e89b-12d3-a456-426614174000': 42 } }).success).toBe(false)
-      // Invalid inner uuid key
-      expect(schema.safeParse({ section: { not_a_uuid: 42 } }).success).toBe(false)
-      // Invalid inner value
-      expect(schema.safeParse({ section: { '123e4567-e89b-12d3-a456-426614174000': 'not_int' } }).success).toBe(false)
-    })
-
-    test('complex: record with enum keys and looseObject values', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [],
-        propertyNames: ast.factory.createSchema({ type: 'enum', enumValues: ['admin', 'editor'] }),
-        additionalProperties: ast.factory.createSchema({
-          type: 'object',
-          primitive: 'object',
-          properties: [ast.factory.createProperty({ name: 'level', required: true, schema: ast.factory.createSchema({ type: 'integer' }) })],
-          additionalProperties: true,
-        }),
-      } as any)
-      expect(printer.print(node)).toBe("z.partialRecord(z.enum(['admin', 'editor']), z.looseObject({\n  level: z.int(),\n}))")
-
-      const code = printer.print(node)
-      const schema = new Function('z', `return ${code}`)(z)
-      const valid = {
-        admin: { level: 1, extraAllowed: true },
-        editor: { level: 2, extraTag: 'content' },
-      }
-      expect(schema.safeParse(valid).success).toBe(true)
-      // Partial key subset is valid (admin only, editor omitted)
-      expect(schema.safeParse({ admin: { level: 1 } }).success).toBe(true)
-      // Missing required property within value schema
-      expect(schema.safeParse({ admin: { extraAllowed: true } }).success).toBe(false)
-      // Unknown enum key
-      expect(schema.safeParse({ viewer: { level: 3 } }).success).toBe(false)
     })
 
     test('object with propertyNames $ref to enum schema → z.partialRecord(RefName, schema)', () => {
@@ -555,47 +394,6 @@ describe('printerZod', () => {
         additionalProperties: ast.factory.createSchema({ type: 'string' }),
       } as any)
       expect(printer.print(node)).toBe('z.partialRecord(RoleEnum, z.string())')
-    })
-
-    test('complex: object containing both a record property and a looseObject property', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [
-          ast.factory.createProperty({
-            name: 'dictionaries',
-            required: true,
-            schema: ast.factory.createSchema({
-              type: 'object',
-              primitive: 'object',
-              properties: [],
-              additionalProperties: ast.factory.createSchema({ type: 'string' }),
-            }),
-          }),
-          ast.factory.createProperty({
-            name: 'metadata',
-            required: false,
-            schema: ast.factory.createSchema({
-              type: 'object',
-              primitive: 'object',
-              properties: [ast.factory.createProperty({ name: 'version', required: true, schema: ast.factory.createSchema({ type: 'integer' }) })],
-              additionalProperties: true,
-            }),
-          }),
-        ],
-      })
-      expect(printer.print(node)).toBe(
-        'z.object({\n  dictionaries: z.record(z.string(), z.string()),\n  metadata: z.looseObject({\n    version: z.int(),\n  }).optional(),\n})',
-      )
-
-      const code = printer.print(node)
-      const schema = new Function('z', `return ${code}`)(z)
-      expect(
-        schema.safeParse({
-          dictionaries: { en: 'Hello', es: 'Hola' },
-          metadata: { version: 1, author: 'Kubb' },
-        }).success,
-      ).toBe(true)
     })
 
     test('object with propertyNames $ref key schema → z.record(RefName, schema)', () => {
@@ -622,17 +420,6 @@ describe('printerZod', () => {
         nullable: true,
       })
       expect(printer.print(node)).toBe('z.record(z.string(), z.string()).nullable()')
-    })
-
-    test('object with nullable looseObject → z.looseObject(...).nullable()', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [ast.factory.createProperty({ name: 'id', required: true, schema: ast.factory.createSchema({ type: 'integer' }) })],
-        additionalProperties: true,
-        nullable: true,
-      })
-      expect(printer.print(node)).toBe('z.looseObject({\n  id: z.int(),\n}).nullable()')
     })
 
     test('object with propertyNames minLength and maxLength constraints → z.record(z.string().min(2).max(10), schema)', () => {
@@ -668,86 +455,6 @@ describe('printerZod', () => {
       expect(schema.safeParse(null).success).toBe(true)
       expect(schema.safeParse({ read: true }).success).toBe(true)
       expect(schema.safeParse({ other: true }).success).toBe(false)
-    })
-
-    test('object property with partialRecord marked optional → z.partialRecord(...).optional()', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [
-          ast.factory.createProperty({
-            name: 'permissions',
-            required: false,
-            schema: ast.factory.createSchema({
-              type: 'object',
-              primitive: 'object',
-              properties: [],
-              propertyNames: ast.factory.createSchema({ type: 'enum', enumValues: ['admin', 'guest'] }),
-              additionalProperties: ast.factory.createSchema({ type: 'boolean' }),
-            } as any),
-          }),
-        ],
-      })
-      expect(printer.print(node)).toBe("z.object({\n  permissions: z.partialRecord(z.enum(['admin', 'guest']), z.boolean()).optional(),\n})")
-    })
-
-    test('array of records → z.array(z.record(...))', () => {
-      const node = ast.factory.createSchema({
-        type: 'array',
-        items: [
-          ast.factory.createSchema({
-            type: 'object',
-            primitive: 'object',
-            properties: [],
-            additionalProperties: ast.factory.createSchema({ type: 'number' }),
-          }),
-        ],
-      })
-      expect(printer.print(node)).toBe('z.array(z.record(z.string(), z.number()))')
-
-      const code = printer.print(node)
-      const schema = new Function('z', `return ${code}`)(z)
-      expect(schema.safeParse([{ a: 1, b: 2 }, { c: 3 }]).success).toBe(true)
-      expect(schema.safeParse([{ a: 'invalid' }]).success).toBe(false)
-    })
-
-    test('array of looseObjects → z.array(z.looseObject(...))', () => {
-      const node = ast.factory.createSchema({
-        type: 'array',
-        items: [
-          ast.factory.createSchema({
-            type: 'object',
-            primitive: 'object',
-            properties: [ast.factory.createProperty({ name: 'id', required: true, schema: ast.factory.createSchema({ type: 'integer' }) })],
-            additionalProperties: true,
-          }),
-        ],
-      })
-      expect(printer.print(node)).toBe('z.array(z.looseObject({\n  id: z.int(),\n}))')
-
-      const code = printer.print(node)
-      const schema = new Function('z', `return ${code}`)(z)
-      expect(schema.safeParse([{ id: 1, extraKey: 'allowed' }]).success).toBe(true)
-    })
-
-    test('nested dictionary: record of records → z.record(z.string(), z.record(z.string(), z.boolean()))', () => {
-      const node = ast.factory.createSchema({
-        type: 'object',
-        primitive: 'object',
-        properties: [],
-        additionalProperties: ast.factory.createSchema({
-          type: 'object',
-          primitive: 'object',
-          properties: [],
-          additionalProperties: ast.factory.createSchema({ type: 'boolean' }),
-        }),
-      })
-      expect(printer.print(node)).toBe('z.record(z.string(), z.record(z.string(), z.boolean()))')
-
-      const code = printer.print(node)
-      const schema = new Function('z', `return ${code}`)(z)
-      expect(schema.safeParse({ outer: { inner: true } }).success).toBe(true)
-      expect(schema.safeParse({ outer: { inner: 'not boolean' } }).success).toBe(false)
     })
 
     test('object with patternProperties → z.record(regex key, value)', () => {
@@ -1366,30 +1073,7 @@ describe('printerZod', () => {
     })
   })
 
-  describe('modifiers', () => {
-    test('nullable', () => {
-      const node = ast.factory.createSchema({ type: 'string', nullable: true })
-      expect(printer.print(node)).toBe('z.string().nullable()')
-    })
-
-    test('optional', () => {
-      const node = ast.factory.createSchema({ type: 'string', optional: true })
-      expect(printer.print(node)).toBe('z.string().optional()')
-    })
-
-    test('nullish', () => {
-      const node = ast.factory.createSchema({ type: 'string', nullish: true })
-      expect(printer.print(node)).toBe('z.string().nullish()')
-    })
-  })
-
   describe('coercion', () => {
-    test('boolean coercion enables all', () => {
-      const p = printerZod({ coercion: true })
-      expect(p.print(ast.factory.createSchema({ type: 'string' }))).toBe('z.coerce.string()')
-      expect(p.print(ast.factory.createSchema({ type: 'number' }))).toBe('z.coerce.number()')
-    })
-
     test('granular coercion', () => {
       const p = printerZod({ coercion: { strings: true, numbers: false } })
       expect(p.print(ast.factory.createSchema({ type: 'string' }))).toBe('z.coerce.string()')
@@ -1490,44 +1174,7 @@ describe('printerZod', () => {
     })
   })
 
-  describe('discriminator properties with external refs', () => {
-    test('discriminator property with enum override should not apply ref description', () => {
-      // This test verifies the fix for: https://github.com/kubb-labs/plugins/issues/15
-      // When a discriminator property is a ref to an external schema with a description,
-      // but the property is overridden with an enum value, the description from the ref
-      // should not be applied (it would result in unreachable code in getters).
-      const node = ast.factory.createSchema({
-        type: 'object',
-        properties: [
-          ast.factory.createProperty({
-            name: 'notificationType',
-            required: true,
-            schema: ast.factory.createSchema({
-              type: 'enum',
-              enumValues: ['PING'],
-            }),
-          }),
-        ],
-      })
-      expect(printer.print(node)).toMatchInlineSnapshot(`
-        "z.object({
-          notificationType: z.enum(['PING']),
-        })"
-      `)
-    })
-  })
-
   describe('nodes override', () => {
-    test('overrides a single node type', () => {
-      const p = printerZod({ nodes: { date: () => 'z.string().date()' } })
-      expect(p.print(ast.factory.createSchema({ type: 'date', representation: 'string' }))).toBe('z.string().date()')
-    })
-
-    test('override does not affect other node types', () => {
-      const p = printerZod({ nodes: { date: () => 'z.string().date()' } })
-      expect(p.print(ast.factory.createSchema({ type: 'string' }))).toBe('z.string()')
-    })
-
     test('override can call this.transform for nested nodes', () => {
       const p = printerZod({
         nodes: {

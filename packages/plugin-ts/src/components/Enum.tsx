@@ -3,18 +3,10 @@ import type { ast } from 'kubb/kit'
 import { parserTs } from '@kubb/parser-ts'
 import { File } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import { ENUM_TYPES_WITH_KEY_SUFFIX, ENUM_TYPES_WITH_RUNTIME_VALUE, ENUM_TYPES_WITH_TYPE_ONLY } from '../constants.ts'
 import * as factory from '../factory.ts'
 import type { PluginTs, ResolverTs } from '../types.ts'
 
 type EnumOptions = PluginTs['resolvedOptions']['enum']
-
-/**
- * Widens a `namedEnumValues` entry with the optional per-member `description` that the
- * `x-enumDescriptions` / `x-enum-descriptions` vendor extensions provide. The intersection
- * keeps the field readable against published `@kubb/ast` versions that predate it.
- */
-type NamedEnumValue = NonNullable<ast.EnumSchemaNode['namedEnumValues']>[number] & { description?: string }
 
 type Props = {
   node: ast.EnumSchemaNode
@@ -39,7 +31,7 @@ export function getEnumNames({ node, enum: enumOptions, resolver }: { node: ast.
 } {
   const resolved = resolver.name(node.name!)
   const enumName = enumOptions.constCasing === 'pascalCase' ? resolved : camelCase(node.name!)
-  const typeName = ENUM_TYPES_WITH_KEY_SUFFIX.has(enumOptions.type) ? resolver.enum.keyName(node, enumOptions.typeSuffix) : resolved
+  const typeName = enumOptions.type === 'asConst' ? resolver.enum.keyName(node, enumOptions.typeSuffix) : resolved
 
   return { enumName, typeName }
 }
@@ -61,7 +53,7 @@ export function Enum({ node, enum: enumOptions, resolver }: Props): KubbReactNod
   const [nameNode, typeNode] = factory.createEnumDeclaration({
     name: enumName,
     typeName,
-    enums: ((node.namedEnumValues as Array<NamedEnumValue> | undefined)?.map((v) => [trimQuotes(v.name.toString()), v.value, v.description]) ??
+    enums: (node.namedEnumValues?.map((v) => [trimQuotes(v.name.toString()), v.value, v.description]) ??
       node.enumValues?.filter((v): v is NonNullable<typeof v> => v !== null && v !== undefined).map((v) => [trimQuotes(v.toString()), v]) ??
       []) as Array<[string | number, string | number | boolean, string?]>,
     type: enumOptions.type,
@@ -83,8 +75,8 @@ export function Enum({ node, enum: enumOptions, resolver }: Props): KubbReactNod
       <File.Source
         name={typeName}
         isIndexable={!namesMerge}
-        isExportable={!namesMerge && ENUM_TYPES_WITH_RUNTIME_VALUE.has(enumOptions.type)}
-        isTypeOnly={ENUM_TYPES_WITH_TYPE_ONLY.has(enumOptions.type)}
+        isExportable={!namesMerge && enumOptions.type !== 'inlineLiteral'}
+        isTypeOnly={['asConst', 'literal', undefined].includes(enumOptions.type)}
       >
         {parserTs().print(typeNode)}
       </File.Source>

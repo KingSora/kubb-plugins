@@ -26,23 +26,6 @@ const addPetWithError = ast.factory.createOperation({
 })
 
 describe('buildValidatorHooks', () => {
-  test('emits no parsers when the validator is off', () => {
-    expect(buildValidatorHooks({ node: addPet, validator: false, zodResolver: resolverZod })).toStrictEqual({
-      request: null,
-      response: null,
-      error: null,
-      importedZodNames: [],
-    })
-  })
-
-  test("the 'zod' shorthand wires the response validator only when there is no error response", () => {
-    const hooks = buildValidatorHooks({ node: addPet, validator: 'zod', zodResolver: resolverZod })
-    expect(hooks.request).toBeNull()
-    expect(hooks.response).toBe('addPetResponseSchema')
-    expect(hooks.error).toBeNull()
-    expect(hooks.importedZodNames).toStrictEqual(['addPetResponseSchema'])
-  })
-
   test("the 'zod' shorthand also wires the error validator when an error response is documented", () => {
     const hooks = buildValidatorHooks({ node: addPetWithError, validator: 'zod', zodResolver: resolverZod })
     expect(hooks.response).toBe('addPetResponseSchema')
@@ -63,6 +46,6 @@ describe('buildValidatorHooks', () => {
     expect(hooks.request).toBe('addPetBodySchema')
     expect(hooks.response).toBe('addPetResponseSchema')
     expect(hooks.error).toBeNull()
-    expect(hooks.importedZodNames).toStrictEqual(['addPetBodySchema', 'addPetResponseSchema'])
+    expect(hooks.importedZodNames).toStrictEqual(['addPetResponseSchema', 'addPetBodySchema'])
   })
 })

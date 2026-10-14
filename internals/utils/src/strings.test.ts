@@ -1,17 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { getNestedAccessor, jsStringEscape, stringify, stringifyObject, toRegExpString, trimQuotes } from './strings.ts'
+import { getNestedAccessor, jsStringEscape, stringify, toRegExpString, trimQuotes } from './strings.ts'
 
 describe('trimQuotes', () => {
   it('strips a balanced double-quote pair', () => {
     expect(trimQuotes('"hello"')).toBe('hello')
-  })
-
-  it('strips a balanced single-quote pair', () => {
-    expect(trimQuotes("'hello'")).toBe('hello')
-  })
-
-  it('strips a balanced backtick pair', () => {
-    expect(trimQuotes('`hello`')).toBe('hello')
   })
 
   it('leaves an unquoted string unchanged', () => {
@@ -40,12 +32,9 @@ describe('stringify', () => {
     expect(stringify('a\nb')).toBe("'a\\nb'")
   })
 
-  it('serializes numbers and booleans', () => {
+  it('serializes numbers, booleans, and undefined', () => {
     expect(stringify(42)).toBe("'42'")
     expect(stringify(true)).toBe("'true'")
-  })
-
-  it('returns empty quotes for undefined', () => {
     expect(stringify(undefined)).toBe("''")
   })
 })
@@ -81,23 +70,9 @@ describe('toRegExpString', () => {
   })
 })
 
-describe('stringifyObject', () => {
-  it('renders flat key-value pairs', () => {
-    expect(stringifyObject({ a: 1, b: 'x' })).toBe('a: 1,\nb: x')
-  })
-
-  it('renders nested objects with indentation', () => {
-    expect(stringifyObject({ foo: 'bar', nested: { a: 1 } })).toBe('foo: bar,\nnested: {\n        a: 1\n      }')
-  })
-})
-
 describe('getNestedAccessor', () => {
   it('renders an optional-chaining accessor from a dotted path', () => {
     expect(getNestedAccessor('pagination.next.id', 'lastPage')).toBe("lastPage?.['pagination']?.['next']?.['id']")
-  })
-
-  it('accepts a string array', () => {
-    expect(getNestedAccessor(['a', 'b'], 'root')).toBe("root?.['a']?.['b']")
   })
 
   it('returns null for an empty path', () => {

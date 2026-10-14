@@ -1,6 +1,6 @@
 import { type ast, Url } from 'kubb/kit'
 import { createFunctionParameters, functionPrinter } from '@kubb/plugin-ts'
-import { File, Function } from 'kubb/jsx'
+import { File, Function, Type } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import type { Transformer } from '../types.ts'
 
@@ -8,6 +8,10 @@ type Props = {
   name: string
   node: ast.OperationNode
   transformer: Transformer | null | undefined
+  /**
+   * Also emits `ReturnType<typeof name>` as an exported type alias of this name.
+   */
+  typeName?: string
 }
 
 const declarationPrinter = functionPrinter({ mode: 'declaration' })
@@ -17,17 +21,24 @@ export const mutationKeyTransformer: Transformer = ({ node }) => {
   return [`{ url: '${Url.toPath(node.path)}' }`]
 }
 
-export function MutationKey({ name, node, transformer }: Props): KubbReactNode {
+export function MutationKey({ name, node, transformer, typeName }: Props): KubbReactNode {
   const paramsNode = createFunctionParameters({ params: [] })
   const paramsSignature = declarationPrinter.print(paramsNode) ?? ''
   // Mutations always use 'mutation' as they do not have suspense or infinite variants.
   const keys = (transformer ?? mutationKeyTransformer)({ node, casing: 'camelcase', variant: 'mutation' })
 
   return (
-    <File.Source name={name} isExportable isIndexable>
-      <Function.Arrow name={name} export params={paramsSignature} singleLine>
-        {`[${keys.join(', ')}] as const`}
-      </Function.Arrow>
-    </File.Source>
+    <>
+      <File.Source name={name} isExportable isIndexable>
+        <Function.Arrow name={name} export params={paramsSignature} singleLine>
+          {`[${keys.join(', ')}] as const`}
+        </Function.Arrow>
+      </File.Source>
+      {typeName && (
+        <File.Source name={typeName} isExportable isIndexable isTypeOnly>
+          <Type export name={typeName}>{`ReturnType<typeof ${name}>`}</Type>
+        </File.Source>
+      )}
+    </>
   )
 }

@@ -1,11 +1,92 @@
-import type { ast } from 'kubb/kit'
+import { buildOperationComments } from '@internals/shared'
+import { buildJSDoc } from '@internals/utils'
+import { ast } from 'kubb/kit'
 import type { ResolverZod } from '@kubb/plugin-zod'
 import { File } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import { buildSdkMethod } from '../builders/sdkMethod.ts'
-import type { Auth } from '../builders/security.ts'
+import { buildContentType } from '../builders/contentType.ts'
+import { buildReturnStatement } from '../builders/returnStatement.ts'
+import { type Auth, buildSecurityMetadata } from '../builders/security.ts'
+import { buildGroupedOptionsSignature } from '../builders/signature.ts'
+import { buildValidatorHooks } from '../builders/validator.ts'
 import type { OperationTypeNames } from '../resolveOperationTypes.ts'
 import type { ReturnTypeOption, ValidatorOptions } from '../types.ts'
+
+/**
+ * Builds the call config literal forwarded to the contract client; the `throwOnError` fallback is applied after the `...config` spread.
+ */
+function buildCallConfig({
+  node,
+  validator,
+  zodResolver,
+  security,
+  throwOnErrorDefault,
+}: {
+  node: ast.HttpOperationNode
+  validator: ValidatorOptions | undefined
+  zodResolver?: ResolverZod | null
+  security?: Array<Auth>
+  throwOnErrorDefault: boolean
+}): string {
+  const validators = buildValidatorHooks({ node, validator, zodResolver })
+  const validatorEntries = [
+    validators.request ? `request: ${validators.request}` : null,
+    validators.response ? `response: ${validators.response}` : null,
+  ].filter(Boolean)
+  const validatorLiteral = validatorEntries.length ? `validator: { ${validatorEntries.join(', ')} }` : null
+  const securityLiteral = buildSecurityMetadata({ security })
+  const { literal: contentTypeLiteral } = buildContentType({ node })
+
+  return `{ ${[
+    `method: '${node.method.toUpperCase()}'`,
+    `url: '${node.path}'`,
+    securityLiteral ? `security: ${securityLiteral}` : null,
+    validatorLiteral,
+    contentTypeLiteral,
+    '...config',
+    `throwOnError: config.throwOnError ?? ${throwOnErrorDefault}`,
+  ]
+    .filter(Boolean)
+    .join(', ')} }`
+}
+
+/**
+ * Builds one instance method of a generated SDK class; a per-call `options.client` overrides `this.client`.
+ */
+export function buildSdkMethod({
+  node,
+  name,
+  types,
+  zodResolver,
+  validator,
+  security,
+  returnType,
+  throwOnErrorDefault,
+}: {
+  node: ast.OperationNode
+  name: string
+  types: OperationTypeNames
+  zodResolver?: ResolverZod | null
+  validator: ValidatorOptions | undefined
+  security?: Array<Auth>
+  returnType: ReturnTypeOption
+  throwOnErrorDefault: boolean
+}): string {
+  if (!ast.isHttpOperationNode(node)) return ''
+
+  const signature = buildGroupedOptionsSignature({ node, types, returnType, throwOnErrorDefault })
+  const callConfig = buildCallConfig({ node, validator, zodResolver, security, throwOnErrorDefault })
+  const returnStatement = buildReturnStatement({ node, types, callConfig, returnType, throwOnErrorDefault })
+  const generics = signature.generics.length ? `<${signature.generics.join(', ')}>` : ''
+  const jsdoc = buildJSDoc(buildOperationComments(node, { link: 'urlPath', linkPosition: 'beforeDeprecated', splitLines: true }))
+
+  const destructure = buildContentType({ node }).merge
+    ? 'const { client: request = this.client, contentType, ...config } = options'
+    : 'const { client: request = this.client, ...config } = options'
+  const methodBody = [destructure, '', returnStatement].map((line) => (line ? `    ${line}` : '')).join('\n')
+
+  return `${jsdoc}  public ${name}${generics}(${signature.paramsSignature}): ${signature.returnType} {\n${methodBody}\n  }`
+}
 
 type OperationData = {
   node: ast.OperationNode
@@ -17,13 +98,10 @@ type OperationData = {
 
 type Props = {
   name: string
-  isExportable?: boolean
-  isIndexable?: boolean
   operations: Array<OperationData>
   validator: ValidatorOptions | undefined
   returnType: ReturnTypeOption
   throwOnErrorDefault: boolean
-  children?: KubbReactNode
 }
 
 /**
@@ -32,16 +110,7 @@ type Props = {
  * instance: `const api = new PetClient({ baseURL }); api.getPetById(...)`. A per-call `client` option
  * still overrides the instance client for a one-off call.
  */
-export function SdkClient({
-  name,
-  isExportable = true,
-  isIndexable = true,
-  operations,
-  validator,
-  returnType,
-  throwOnErrorDefault,
-  children,
-}: Props): KubbReactNode {
+export function SdkClient({ name, operations, validator, returnType, throwOnErrorDefault }: Props): KubbReactNode {
   const methods = operations.map(({ node, name: methodName, types, zodResolver, security }) =>
     buildSdkMethod({
       node,
@@ -66,9 +135,8 @@ export function SdkClient({
   const classCode = `export class ${name} {\n${constructor}\n\n${methods.join('\n\n')}\n}`
 
   return (
-    <File.Source name={name} isExportable={isExportable} isIndexable={isIndexable}>
+    <File.Source name={name} isExportable isIndexable>
       {classCode}
-      {children}
     </File.Source>
   )
 }

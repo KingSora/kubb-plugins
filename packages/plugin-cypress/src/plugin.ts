@@ -67,7 +67,6 @@ export const pluginCypress = defineExtension<PluginCypress>({
       override,
       group: createGroupConfig(group),
       baseURL,
-      resolver,
     }
   },
 })
