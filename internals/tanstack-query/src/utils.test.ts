@@ -12,9 +12,6 @@ import {
   resolveQueryConfig,
 } from './utils.ts'
 
-// `HttpMethod` lists 'QUERY' from a later @kubb/ast release than this repo builds against.
-const queryMethod = 'QUERY' as string as ast.HttpMethod
-
 describe('classifyOperation', () => {
   test('classifies a GET as a query when methods include it', () => {
     const node = ast.factory.createOperation({ operationId: 'listPets', method: 'GET', path: '/pets' })
@@ -56,7 +53,7 @@ describe('classifyOperation', () => {
   })
 
   test('classifies a QUERY as a query with the default methods', () => {
-    const node = ast.factory.createOperation({ operationId: 'searchPets', method: queryMethod, path: '/pets/search' })
+    const node = ast.factory.createOperation({ operationId: 'searchPets', method: 'QUERY', path: '/pets/search' })
     const options = { importPath: '@tanstack/react-query' }
 
     expect(classifyOperation(node, { query: resolveQueryConfig({}, options), mutation: resolveMutationConfig({}, options) })).toStrictEqual({

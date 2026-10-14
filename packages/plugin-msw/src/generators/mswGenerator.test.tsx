@@ -14,9 +14,6 @@ import { resolverMsw } from '../resolvers/resolverMsw.ts'
 import type { PluginMsw } from '../types.ts'
 import { mswGenerator } from './mswGenerator.tsx'
 
-// `HttpMethod` lists 'QUERY' from a later @kubb/ast release than this repo builds against.
-const queryMethod = 'QUERY' as string as ast.HttpMethod
-
 const testConfig: Config = {
   root: '.',
   input: {},
@@ -54,7 +51,7 @@ const mockedFakerPlugin = createMockedPlugin<PluginFaker>({
 
 const searchPetsNode = ast.factory.createOperation({
   operationId: 'searchPets',
-  method: queryMethod,
+  method: 'QUERY',
   path: '/pets/search',
   tags: ['pets'],
   responses: [

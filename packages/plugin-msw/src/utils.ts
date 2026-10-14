@@ -36,11 +36,10 @@ function getResponseContentType(response: ast.ResponseNode | null | undefined): 
 }
 
 /**
- * Whether the operation uses the HTTP QUERY method (RFC 10008). Compared as a string because
- * `HttpMethod` only lists `'QUERY'` from a later `@kubb/ast` release than this repo builds against.
+ * Whether the operation uses the HTTP QUERY method (RFC 10008).
  */
 export function isQueryOperation(node: ast.OperationNode): boolean {
-  return ast.isHttpOperationNode(node) && (node.method as string) === 'QUERY'
+  return ast.isHttpOperationNode(node) && node.method === 'QUERY'
 }
 
 /**
