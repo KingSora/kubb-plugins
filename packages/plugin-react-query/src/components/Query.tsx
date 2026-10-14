@@ -39,41 +39,64 @@ type Props = {
 
 const declarationPrinter = functionPrinter({ mode: 'declaration' })
 
+const OBSERVER_OPTIONS_NAMES = {
+  infinite: { suspense: 'UseSuspenseInfiniteQueryOptions', standard: 'InfiniteQueryObserverOptions' },
+  plain: { suspense: 'UseSuspenseQueryOptions', standard: 'QueryObserverOptions' },
+}
+
+type HookTypesProps = Pick<Props, 'node' | 'suspense' | 'queryKeyTypeName' | 'infinite'> & {
+  tsResolver: ResolverTs
+  TData: string
+  TError: string
+  observerOptionsName: string
+  resultTypeName: string
+}
+
+/** Type parameters, observer options type, and return type of the generated hook. */
+function buildHookTypes({ node, tsResolver, infinite, suspense, TData, TError, queryKeyTypeName, observerOptionsName, resultTypeName }: HookTypesProps) {
+  if (infinite) {
+    const { pageParamType } = resolvePageParamType(node, { resolver: tsResolver, initialPageParam: infinite.initialPageParam, queryParam: infinite.queryParam })
+    return {
+      generics: [
+        `TQueryFnData = ${TData}`,
+        `TError = ${TError}`,
+        'TData = InfiniteData<TQueryFnData>',
+        `TQueryKey extends QueryKey = ${queryKeyTypeName}`,
+        `TPageParam = ${pageParamType}`,
+      ],
+      observerOptionsType: `${observerOptionsName}<TQueryFnData, TError, TData, TQueryKey, TPageParam>`,
+      returnType: `${resultTypeName}<TData, TError> & { queryKey: TQueryKey }`,
+    }
+  }
+
+  return {
+    generics: suspense
+      ? [`TData = ${TData}`, `TQueryKey extends QueryKey = ${queryKeyTypeName}`]
+      : [`TData = ${TData}`, `TQueryData = ${TData}`, `TQueryKey extends QueryKey = ${queryKeyTypeName}`],
+    observerOptionsType: `${observerOptionsName}<${(suspense ? [TData, TError, 'TData', 'TQueryKey'] : [TData, TError, 'TData', 'TQueryData', 'TQueryKey']).join(', ')}>`,
+    returnType: `${resultTypeName}<TData, ${TError}> & { queryKey: TQueryKey }`,
+  }
+}
+
 export function Query({ name, queryKeyTypeName, queryOptionsName, queryKeyName, node, tsResolver, customOptions, suspense, infinite }: Props): KubbReactNode {
   const { TData, TError } = buildResponseTypes(node, tsResolver)
 
   const prefix = suspense ? 'UseSuspense' : 'Use'
   const hookName = `${suspense ? 'useSuspense' : 'use'}${infinite ? 'InfiniteQuery' : 'Query'}`
-  const observerOptionsName = infinite
-    ? suspense
-      ? 'UseSuspenseInfiniteQueryOptions'
-      : 'InfiniteQueryObserverOptions'
-    : suspense
-      ? 'UseSuspenseQueryOptions'
-      : 'QueryObserverOptions'
+  const observerOptionsName = OBSERVER_OPTIONS_NAMES[infinite ? 'infinite' : 'plain'][suspense ? 'suspense' : 'standard']
   const resultTypeName = `${prefix}${infinite ? 'Infinite' : ''}QueryResult`
 
-  let generics: Array<string>
-  let observerOptionsType: string
-  let returnType: string
-  if (infinite) {
-    const { pageParamType } = resolvePageParamType(node, { resolver: tsResolver, initialPageParam: infinite.initialPageParam, queryParam: infinite.queryParam })
-    generics = [
-      `TQueryFnData = ${TData}`,
-      `TError = ${TError}`,
-      'TData = InfiniteData<TQueryFnData>',
-      `TQueryKey extends QueryKey = ${queryKeyTypeName}`,
-      `TPageParam = ${pageParamType}`,
-    ]
-    observerOptionsType = `${observerOptionsName}<TQueryFnData, TError, TData, TQueryKey, TPageParam>`
-    returnType = `${resultTypeName}<TData, TError> & { queryKey: TQueryKey }`
-  } else {
-    generics = suspense
-      ? [`TData = ${TData}`, `TQueryKey extends QueryKey = ${queryKeyTypeName}`]
-      : [`TData = ${TData}`, `TQueryData = ${TData}`, `TQueryKey extends QueryKey = ${queryKeyTypeName}`]
-    observerOptionsType = `${observerOptionsName}<${(suspense ? [TData, TError, 'TData', 'TQueryKey'] : [TData, TError, 'TData', 'TQueryData', 'TQueryKey']).join(', ')}>`
-    returnType = `${resultTypeName}<TData, ${TError}> & { queryKey: TQueryKey }`
-  }
+  const { generics, observerOptionsType, returnType } = buildHookTypes({
+    node,
+    tsResolver,
+    infinite,
+    suspense,
+    TData,
+    TError,
+    queryKeyTypeName,
+    observerOptionsName,
+    resultTypeName,
+  })
   // The non-infinite hook casts to the bare options type, the infinite one to the fully applied type.
   const castType = infinite ? observerOptionsType : observerOptionsName
 

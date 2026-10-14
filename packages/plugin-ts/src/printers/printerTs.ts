@@ -164,7 +164,14 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
 
         // When a Key suffix is configured, enum refs must use the suffixed name (e.g. `StatusKey`)
         // so the reference matches what the enum file actually exports.
-        const name = node.ref ? enumTypeName(this.options.resolver, refName, this.options.enum, !!this.options.enumSchemaNames?.has(refName)) : refName
+        const name = node.ref
+          ? enumTypeName({
+              resolver: this.options.resolver,
+              name: refName,
+              enumOptions: this.options.enum,
+              isEnum: !!this.options.enumSchemaNames?.has(refName),
+            })
+          : refName
 
         return factory.createTypeReferenceNode(name, undefined)
       },
@@ -182,7 +189,7 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
           return factory.createUnionDeclaration({ withParentheses: true, nodes: literalNodes })
         }
 
-        const resolvedName = enumTypeName(this.options.resolver, node.name, this.options.enum, true)
+        const resolvedName = enumTypeName({ resolver: this.options.resolver, name: node.name, enumOptions: this.options.enum, isEnum: true })
 
         return factory.createTypeReferenceNode(resolvedName, undefined)
       },

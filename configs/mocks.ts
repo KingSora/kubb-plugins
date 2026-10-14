@@ -69,10 +69,7 @@ export const testConfig: Config = {
 /** Dispatches on plugin name (the built-in mock is name-agnostic); unknown names fall back to `plugin-ts`. */
 export function createMultiPluginDriver(name: string, plugins: Record<string, { resolver?: unknown }>) {
   const fallback = plugins['plugin-ts']
-  const driver = createMockedPluginDriver({
-    name,
-    plugin: fallback as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
-  })
+  const driver = createMockedPluginDriver({ name })
   return {
     ...driver,
     getPlugin: (pluginName: string) => plugins[pluginName] ?? fallback,

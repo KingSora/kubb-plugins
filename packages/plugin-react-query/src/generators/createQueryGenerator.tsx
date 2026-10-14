@@ -18,6 +18,13 @@ import type { PluginReactQuery } from '../types'
 
 type Variant = 'query' | 'suspenseQuery' | 'infiniteQuery' | 'suspenseInfiniteQuery'
 
+const OBSERVER_IMPORTS: Record<Variant, Array<string>> = {
+  query: ['QueryObserverOptions', 'UseQueryResult'],
+  suspenseQuery: ['UseSuspenseQueryOptions', 'UseSuspenseQueryResult'],
+  infiniteQuery: ['InfiniteQueryObserverOptions', 'UseInfiniteQueryResult'],
+  suspenseInfiniteQuery: ['UseSuspenseInfiniteQueryOptions', 'UseSuspenseInfiniteQueryResult'],
+}
+
 /**
  * Builds the generator for one `useQuery` flavor. `variant` picks the resolver namespace
  * (`resolver.query`, `resolver.suspenseQuery`, ...), the TanStack hook, and the options it needs.
@@ -26,13 +33,7 @@ export function createQueryGenerator({ name, variant }: { name: string; variant:
   const suspense = variant === 'suspenseQuery' || variant === 'suspenseInfiniteQuery'
   const infinite = variant === 'infiniteQuery' || variant === 'suspenseInfiniteQuery'
   const hookImport = `use${suspense ? 'Suspense' : ''}${infinite ? 'InfiniteQuery' : 'Query'}`
-  const observerImports = infinite
-    ? suspense
-      ? ['UseSuspenseInfiniteQueryOptions', 'UseSuspenseInfiniteQueryResult']
-      : ['InfiniteQueryObserverOptions', 'UseInfiniteQueryResult']
-    : suspense
-      ? ['UseSuspenseQueryOptions', 'UseSuspenseQueryResult']
-      : ['QueryObserverOptions', 'UseQueryResult']
+  const observerImports = OBSERVER_IMPORTS[variant]
 
   return defineGenerator<PluginReactQuery>({
     name,

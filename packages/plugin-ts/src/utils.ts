@@ -8,7 +8,14 @@ import type { ResolverTs } from './types.ts'
  * with a `typeSuffix` uses its suffixed key alias (e.g. `StatusKey`); every other schema uses its
  * plain resolved name.
  */
-export function enumTypeName(resolver: ResolverTs, name: string, enumOptions: { type?: string; typeSuffix?: string } | undefined, isEnum: boolean): string {
+type EnumTypeNameProps = {
+  resolver: ResolverTs
+  name: string
+  enumOptions: { type?: string; typeSuffix?: string } | undefined
+  isEnum: boolean
+}
+
+export function enumTypeName({ resolver, name, enumOptions, isEnum }: EnumTypeNameProps): string {
   return isEnum && enumOptions?.type === 'asConst' && enumOptions.typeSuffix ? resolver.enum.keyName({ name }, enumOptions.typeSuffix) : resolver.name(name)
 }
 
