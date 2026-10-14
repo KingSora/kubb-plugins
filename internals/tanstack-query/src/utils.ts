@@ -247,11 +247,12 @@ export function resolvePageParamType(node: ast.OperationNode, { resolver, initia
 
 /**
  * Applies the shared query defaults during plugin setup: `false` disables query generation, and an
- * object merges over `methods: ['GET']` and the plugin's runtime `importPath`.
+ * object merges over `methods: ['GET', 'QUERY']` and the plugin's runtime `importPath`. QUERY
+ * (RFC 10008) is a safe, idempotent read that carries its input in the body, so it is a query too.
  */
 export function resolveQueryConfig(query: Partial<Query> | false, options: { importPath: string }): Required<Query> | false {
   if (query === false) return false
-  return { importPath: options.importPath, methods: ['GET'], ...query }
+  return { importPath: options.importPath, methods: ['GET', 'QUERY'], ...query }
 }
 
 /**

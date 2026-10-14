@@ -11,7 +11,7 @@ import { createUsersWithListInput } from './clients/createUsersWithListInput'
 import { queryOptions, useQuery } from '@tanstack/react-query'
 
 export const createUsersWithListInputQueryKey = ({ body }: Omit<CreateUsersWithListInputOptions, 'headers'>) =>
-  [{ url: '/user/createWithList' }, ...(body ? [body] : [])] as const
+  [{ url: '/user/createWithList' }, ...(body !== undefined ? [body] : [])] as const
 
 type CreateUsersWithListInputQueryKey = ReturnType<typeof createUsersWithListInputQueryKey>
 

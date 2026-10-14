@@ -11,7 +11,7 @@ Pass these options to `pluginReactQuery()`. Shared options link to [Shared plugi
 | [`client`](#client)                                                       | Which registered client plugin the hooks call.                         | Auto-detected                                                                          |
 | [`infinite`](#infinite)                                                   | Generate `useInfiniteQuery` hooks for pagination.                      | `false`                                                                                |
 | [`suspense`](#suspense)                                                   | Generate `useSuspenseQuery` hooks.                                     | `false`                                                                                |
-| [`query`](#query)                                                         | Configure the query hooks.                                             | `{ methods: ['GET'], importPath: '@tanstack/react-query' }`                            |
+| [`query`](#query)                                                         | Configure the query hooks.                                             | `{ methods: ['GET', 'QUERY'], importPath: '@tanstack/react-query' }`                   |
 | [`queryKey`](#querykey)                                                   | Build the `queryKey` for each query hook.                              | Built-in `queryKeyTransformer`                                                         |
 | [`mutation`](#mutation)                                                   | Configure the mutation hooks.                                          | `{ methods: ['POST', 'PUT', 'PATCH', 'DELETE'], importPath: '@tanstack/react-query' }` |
 | [`mutationKey`](#mutationkey)                                             | Build the `mutationKey` for each mutation hook.                        | Built-in `mutationKeyTransformer`                                                      |
@@ -154,21 +154,23 @@ Adds `useSuspenseQuery` hooks next to the regular query hooks. Pass `{}` to turn
 
 Which operations become queries, emitting a `queryOptions` factory by default. Pass `false` to skip, or set [`hooks`](#hooks) to also emit `useQuery`.
 
-|          |                                                             |
-| -------- | ----------------------------------------------------------- |
-| Type     | `Partial<Query> \| false`                                   |
-| Required | `false`                                                     |
-| Default  | `{ methods: ['GET'], importPath: '@tanstack/react-query' }` |
+|          |                                                                      |
+| -------- | -------------------------------------------------------------------- |
+| Type     | `Partial<Query> \| false`                                            |
+| Required | `false`                                                              |
+| Default  | `{ methods: ['GET', 'QUERY'], importPath: '@tanstack/react-query' }` |
 
 #### query.methods
 
 HTTP methods treated as queries.
 
-|          |                 |
-| -------- | --------------- |
-| Type     | `Array<string>` |
-| Required | `false`         |
-| Default  | `['GET']`       |
+|          |                    |
+| -------- | ------------------ |
+| Type     | `Array<string>`    |
+| Required | `false`            |
+| Default  | `['GET', 'QUERY']` |
+
+Operations whose method is in neither `query.methods` nor `mutation.methods` get no hook. Keep `'QUERY'` here when overriding the list, or QUERY operations are skipped.
 
 #### query.importPath
 

@@ -8,6 +8,8 @@ import {
   hasQueryKeyParams,
   matchesInfinite,
   resolveInfiniteConfig,
+  resolveMutationConfig,
+  resolveQueryConfig,
 } from './utils.ts'
 
 describe('classifyOperation', () => {
@@ -48,6 +50,16 @@ describe('classifyOperation', () => {
     expect(
       classifyOperation(node, { query: false, mutation: { methods: ['POST', 'PUT', 'PATCH', 'DELETE'], importPath: '@tanstack/react-query' } }),
     ).toStrictEqual({ isQuery: false, isMutation: true })
+  })
+
+  test('classifies a QUERY as a query with the default methods', () => {
+    const node = ast.factory.createOperation({ operationId: 'searchPets', method: 'QUERY', path: '/pets/search' })
+    const options = { importPath: '@tanstack/react-query' }
+
+    expect(classifyOperation(node, { query: resolveQueryConfig({}, options), mutation: resolveMutationConfig({}, options) })).toStrictEqual({
+      isQuery: true,
+      isMutation: false,
+    })
   })
 
   test('mutation: false still allows an operation to be classified as a query', () => {

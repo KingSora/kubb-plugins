@@ -20,7 +20,7 @@ export const updatePetWithFormQueryKey = ({
   path: MaybeRefOrGetter<Omit<UpdatePetWithFormOptions, 'headers'>['path']>
   body: MaybeRefOrGetter<Omit<UpdatePetWithFormOptions, 'headers'>['body']>
   query?: MaybeRefOrGetter<Omit<UpdatePetWithFormOptions, 'headers'>['query']>
-}) => [{ url: '/pet/:petId', params: path }, ...(query ? [query] : []), ...(body ? [body] : [])] as const
+}) => [{ url: '/pet/:petId', params: path }, ...(query ? [query] : []), ...(body !== undefined ? [body] : [])] as const
 
 export type UpdatePetWithFormQueryKey = ReturnType<typeof updatePetWithFormQueryKey>
 
