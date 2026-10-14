@@ -4,6 +4,7 @@ import { addGenerator, defineExtension, injectFile, Resolver, setMacros, setReso
 import type { ExtensionMeta, Generator, PluginFactory, PluginType } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
+import { isValidatorEnabled } from './builders/validatorOptions.ts'
 import { defaultMacros } from './macros.ts'
 import { resolverClient } from './resolver.ts'
 import type { Options, ResolvedOptions, ResolverClient } from './types.ts'
@@ -69,7 +70,7 @@ export function createClientPlugin<TName extends string, TOptions extends Option
   return defineExtension<PluginType<TName, TOptions, TResolved, ResolverClient>>({
     kind: 'plugin',
     meta,
-    dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !options.validator } }),
+    dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !isValidatorEnabled(options.validator) } }),
     setup(options) {
       const resolved = resolveOptions(options)
 
