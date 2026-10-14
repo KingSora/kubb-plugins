@@ -4,7 +4,6 @@ import {
   applyMiniModifiers,
   applyModifiers,
   buildEnum,
-  buildGroupedParamsSchema,
   defaultLiteral,
   formatDefault,
   isClosedKeySchema,
@@ -221,39 +220,6 @@ describe('applyMiniModifiers', () => {
 
   test('default value (object)', () => {
     expect(applyMiniModifiers({ value: 'z.object({})', defaultValue: {} })).toBe('z._default(z.object({}), {})')
-  })
-})
-
-describe('buildGroupedParamsSchema', () => {
-  test('creates an object schema with primitive: object', () => {
-    const params = [ast.factory.createParameter({ name: 'petId', schema: ast.factory.createSchema({ type: 'string' }), in: 'path', required: true })]
-    const result = buildGroupedParamsSchema({ params })
-
-    expect(result.type).toBe('object')
-    expect(result.primitive).toBe('object')
-    expect(result.optional).toBeUndefined()
-  })
-
-  test('propagates optional flag', () => {
-    const params = [ast.factory.createParameter({ name: 'limit', schema: ast.factory.createSchema({ type: 'integer' }), in: 'query', required: false })]
-    const result = buildGroupedParamsSchema({ params, optional: true })
-
-    expect(result.optional).toBe(true)
-  })
-
-  test('maps each parameter to a property with matching name and required', () => {
-    const params = [
-      ast.factory.createParameter({ name: 'id', schema: ast.factory.createSchema({ type: 'string' }), in: 'path', required: true }),
-      ast.factory.createParameter({ name: 'q', schema: ast.factory.createSchema({ type: 'string' }), in: 'query', required: false }),
-    ]
-    const result = buildGroupedParamsSchema({ params })
-    const obj = ast.narrowSchema(result, 'object')!
-
-    expect(obj.properties).toHaveLength(2)
-    expect(obj.properties![0]!.name).toBe('id')
-    expect(obj.properties![0]!.required).toBe(true)
-    expect(obj.properties![1]!.name).toBe('q')
-    expect(obj.properties![1]!.required).toBe(false)
   })
 })
 

@@ -22,8 +22,4 @@ describe('getRelativePath', () => {
     expect(getRelativePath(winMocks, winFolder)).toBe('./folder')
     expect(getRelativePath('C:/Users/user/project/mocks', 'C:\\Users\\user\\project\\mocks\\folder\\test.js')).toBe('./folder/test.js')
   })
-
-  test('throws when arguments are missing', () => {
-    expect(() => getRelativePath(null, null)).toThrow()
-  })
 })

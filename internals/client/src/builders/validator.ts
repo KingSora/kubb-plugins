@@ -1,7 +1,7 @@
 import type { ast } from 'kubb/kit'
 import type { ResolverZod } from '@kubb/plugin-zod'
 import type { ValidatorOptions } from '../types.ts'
-import { buildZodErrorParse, buildZodResponseParse, resolveRequestValidator, resolveResponseValidator } from './validatorOptions.ts'
+import { buildZodErrorParse, resolveRequestValidator, resolveResponseValidator } from './validatorOptions.ts'
 
 /**
  * The per-call validator references a generated function wires into its request config. Each hook is
@@ -44,20 +44,16 @@ export function buildValidatorHooks({
   validator: ValidatorOptions | undefined
   zodResolver: ResolverZod | null | undefined
 }): ValidatorHooks {
-  const importedZodNames: Array<string> = []
-
   const hasRequestBody = Boolean(node.requestBody?.content?.[0]?.schema)
-  const zodRequestName = zodResolver && resolveRequestValidator(validator) === 'zod' && hasRequestBody ? zodResolver.response.body(node) : null
-  const request = zodRequestName ?? null
-  if (zodRequestName) importedZodNames.push(zodRequestName)
+  const parsesResponse = zodResolver && resolveResponseValidator(validator) === 'zod'
 
-  const responseParse = zodResolver && resolveResponseValidator(validator) === 'zod' ? buildZodResponseParse(node, zodResolver) : null
-  const response = responseParse ? responseParse.expression : null
-  if (responseParse) importedZodNames.push(...responseParse.importNames)
+  // Success responses validate with the success-only `<operation>ResponseSchema`; error bodies are never zod-parsed on the throw path.
+  const response = parsesResponse ? zodResolver.response.response(node) || null : null
+  const error = parsesResponse ? buildZodErrorParse(node, zodResolver) : null
+  const request = zodResolver && resolveRequestValidator(validator) === 'zod' && hasRequestBody ? zodResolver.response.body(node) || null : null
 
-  const errorParse = zodResolver && resolveResponseValidator(validator) === 'zod' ? buildZodErrorParse(node, zodResolver) : null
-  const error = errorParse ? errorParse.expression : null
-  if (errorParse) importedZodNames.push(...errorParse.importNames)
+  // Order is output: the generated file imports the response schema, then the error schema, then the request body schema.
+  const importedZodNames = [response, error, request].filter((name): name is string => Boolean(name))
 
   return { request, response, error, importedZodNames }
 }

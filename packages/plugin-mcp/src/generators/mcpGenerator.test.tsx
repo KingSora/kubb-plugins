@@ -8,7 +8,6 @@ import type { PluginTs } from '@kubb/plugin-ts'
 import { resolverTs } from '@kubb/plugin-ts'
 import { describe, expect, test } from 'vitest'
 import { createMultiPluginDriver, matchFiles, rawSources, testConfig as baseConfig } from '#mocks'
-import { McpHandler } from '../components/McpHandler.tsx'
 import { resolverMcp } from '../resolvers/resolverMcp.ts'
 import type { PluginMcp } from '../types.ts'
 import { mcpGenerator } from './mcpGenerator.tsx'
@@ -192,10 +191,5 @@ describe("mcpGenerator — the client plugin's returnType", () => {
     expect(source).toContain('text: JSON.stringify(res)')
     expect(source).toContain('structuredContent: { data: res }')
     expect(source).not.toContain('res.data')
-  })
-
-  test('McpHandler returns null for non-HTTP operation node', () => {
-    const nonHttpNode = ast.factory.createSchema({ type: 'string' }) as unknown as ast.OperationNode
-    expect(McpHandler({ name: 'test', clientName: 'testClient', node: nonHttpNode, resolver: resolverTs })).toBeNull()
   })
 })

@@ -1,5 +1,4 @@
 import { ast, type Group, type NodeCache, type Output, type Resolver, type ResolverFileParams, Url } from 'kubb/kit'
-import { dedupeParams } from './params.ts'
 
 /**
  * Builds the `ResolverFileParams` every operation generator passes to
@@ -241,12 +240,13 @@ export function resolveContentTypeVariants(entries: Array<ContentVariantInput>, 
     })
 }
 
+// The request groups come from the grouped params, so `config` drops the data-shape keys to stay
+// assignable to `Options`, which omits them from `RequestConfig`.
+const requestConfigBaseType = `Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>>`
+
 export function buildRequestConfigType(node: ast.OperationNode): string {
   const request = getContentTypeInfo(node)
   const response = getResponseContentTypeInfo(node)
-  // The request groups come from the grouped params, so `config` drops the data-shape keys to stay
-  // assignable to `Options`, which omits them from `RequestConfig`.
-  const configType = `Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>>`
 
   // Only the ambiguous side is offered: a single-type side has nothing to pick, so it stays baked in
   // the generated call.
@@ -255,7 +255,7 @@ export function buildRequestConfigType(node: ast.OperationNode): string {
     response.isMultipleContentTypes ? `response?: ${response.contentTypeUnion}` : null,
   ].filter(Boolean)
 
-  return members.length ? `${configType} & { contentType?: { ${members.join('; ')} } }` : configType
+  return members.length ? `${requestConfigBaseType} & { contentType?: { ${members.join('; ')} } }` : requestConfigBaseType
 }
 
 /**
@@ -265,7 +265,7 @@ export function buildRequestConfigType(node: ast.OperationNode): string {
  * content type for.
  */
 export function buildClientOptionType(): string {
-  return `Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>>`
+  return requestConfigBaseType
 }
 
 export type RequestGroups = {
@@ -381,12 +381,20 @@ export function getOperationParameters(node: ast.OperationNode): OperationParame
   const cached = operationParameterGroupsByNode.get(node)
   if (cached) return cached
 
-  const groups: OperationParameterGroups = {
-    path: dedupeParams(node.parameters.filter((param) => param.in === 'path')),
-    query: dedupeParams(node.parameters.filter((param) => param.in === 'query')),
-    header: dedupeParams(node.parameters.filter((param) => param.in === 'header')),
-    cookie: dedupeParams(node.parameters.filter((param) => param.in === 'cookie')),
+  // A malformed spec can declare the same name twice within one location. Both would resolve to the
+  // same output property, so emitting both would yield an object type with a duplicate member,
+  // which TypeScript rejects. Keep the first.
+  const group = (location: ast.ParameterNode['in']) => {
+    const seen = new Set<string>()
+
+    return node.parameters.filter((param) => {
+      if (param.in !== location || seen.has(param.name)) return false
+      seen.add(param.name)
+      return true
+    })
   }
+
+  const groups: OperationParameterGroups = { path: group('path'), query: group('query'), header: group('header'), cookie: group('cookie') }
 
   operationParameterGroupsByNode.set(node, groups)
   return groups

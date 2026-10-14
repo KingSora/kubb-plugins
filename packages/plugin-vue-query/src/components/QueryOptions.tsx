@@ -3,8 +3,8 @@ import type { FunctionParametersNode, ResolverTs } from '@kubb/plugin-ts'
 import { functionPrinter } from '@kubb/plugin-ts'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import { buildCallResultBody, buildQueryOptionsParams, buildResponseTypes } from '@internals/tanstack-query'
-import { buildVueClientCall, maybeRefOrGetter } from '../utils.ts'
+import { buildCallResultBody, buildClientCall, buildQueryOptionsParams, buildResponseTypes } from '@internals/tanstack-query'
+import { maybeRefOrGetter } from '../utils.ts'
 import { buildQueryKeyParamsNode } from './QueryKey.tsx'
 
 type Props = {
@@ -36,7 +36,7 @@ export function QueryOptions({ name, clientName, node, tsResolver, queryKeyName,
 
   const paramsNode = getQueryOptionsParams(node, { resolver: tsResolver })
   const paramsSignature = declarationPrinter.print(paramsNode) ?? ''
-  const queryFnBody = buildCallResultBody(buildVueClientCall(node, { clientName, signal: true }), { returnType })
+  const queryFnBody = buildCallResultBody(buildClientCall(node, { clientName, signal: true, unwrapName: (name) => `toValue(${name})` }), { returnType })
 
   return (
     <File.Source name={name} isExportable isIndexable>

@@ -4,7 +4,7 @@ import { createFunctionParameter, createFunctionParameters, functionPrinter } fr
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import { buildGroupedRequestParam, buildQueryOptionsParams } from '@internals/tanstack-query'
-import { buildClientOptionType, buildQueryKeyParams, getComments, resolveErrorNames, resolveSuccessNames } from '../utils.ts'
+import { buildClientOptionType, buildQueryKeyParams, buildResponseTypes, getComments } from '../utils.ts'
 
 type Props = {
   name: string
@@ -25,12 +25,7 @@ function buildQueryParamsNode(
   },
 ): FunctionParametersNode {
   const { resolver } = options
-  const successNames = resolveSuccessNames(node, resolver)
-  const responseName = successNames.length > 0 ? successNames.join(' | ') : resolver.response.response(node)
-  const errorNames = resolveErrorNames(node, resolver)
-
-  const TData = responseName
-  const TError = `ResponseErrorConfig<${errorNames.length > 0 ? errorNames.join(' | ') : 'Error'}>`
+  const { TData, TError } = buildResponseTypes(node, resolver)
 
   const optionsParam = createFunctionParameter({
     name: 'options',
@@ -49,12 +44,7 @@ function buildQueryParamsNode(
 }
 
 export function Query({ name, queryKeyTypeName, queryOptionsName, queryKeyName, node, tsResolver }: Props): KubbReactNode {
-  const successNames = resolveSuccessNames(node, tsResolver)
-  const responseName = successNames.length > 0 ? successNames.join(' | ') : tsResolver.response.response(node)
-  const errorNames = resolveErrorNames(node, tsResolver)
-
-  const TData = responseName
-  const TError = `ResponseErrorConfig<${errorNames.length > 0 ? errorNames.join(' | ') : 'Error'}>`
+  const { TData, TError } = buildResponseTypes(node, tsResolver)
   const generics = [TData, TError, `${queryKeyTypeName} | null`]
 
   const queryKeyParamsNode = buildQueryKeyParams(node, { resolver: tsResolver })

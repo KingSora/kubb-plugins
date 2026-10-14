@@ -1,12 +1,11 @@
 import { jsStringEscape } from '@internals/utils'
 import { containsCircularRef } from 'kubb/kit'
 import type { ast } from 'kubb/kit'
-import { createFunctionParameter, createFunctionParameters, functionPrinter } from '@kubb/plugin-ts'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import type { PrinterFakerFactory } from '../printers/printerFaker.ts'
 import type { PluginFaker } from '../types.ts'
-import { resolveFakerTypeUsage } from '../utils.ts'
+import { resolveFakerTypeUsage, SCALAR_TYPES } from '../utils.ts'
 
 type Props = {
   name: string
@@ -19,23 +18,6 @@ type Props = {
 }
 
 const OBJECT_TYPES = new Set<ast.SchemaNode['type']>(['object', 'intersection'])
-const SCALAR_TYPES = new Set<ast.SchemaNode['type']>([
-  'string',
-  'email',
-  'url',
-  'uuid',
-  'number',
-  'integer',
-  'bigint',
-  'boolean',
-  'date',
-  'time',
-  'datetime',
-  'blob',
-  'enum',
-])
-const declarationPrinter = functionPrinter({ mode: 'declaration' })
-
 export function Faker({ node, description, name, typeName, printer, canOverride, typeMode = 'inferred' }: Props): KubbReactNode {
   const fakerText = printer.print(node) ?? 'undefined'
 
@@ -64,16 +46,7 @@ export function Faker({ node, description, name, typeName, printer, canOverride,
   if (!useObjectOverride) {
     const usesData = /\bdata\b/.test(fakerTextWithOverride)
     const dataParamName = usesData ? 'data' : '_data'
-    const params = createFunctionParameters({
-      params: [
-        createFunctionParameter({
-          name: dataParamName,
-          type: dataType,
-          optional: true,
-        }),
-      ],
-    })
-    const paramsSignature = declarationPrinter.print(params) ?? ''
+    const paramsSignature = `${dataParamName}?: ${dataType}`
     const returnType = resolvedReturnType
 
     // `as` binds tighter than `??`/`?:`, so tuple/union need parens or `data`'s own type leaks through.

@@ -16,11 +16,7 @@ function toSlash(p: string): string {
  * getRelativePath('/src/components', '/src/utils/helpers.ts')      // '../utils/helpers.ts'
  * ```
  */
-export function getRelativePath(rootDir?: string | null, filePath?: string | null): string {
-  if (!rootDir || !filePath) {
-    throw new Error(`Root and file should be filled in when retrieving the relativePath, ${rootDir || ''} ${filePath || ''}`)
-  }
-
+export function getRelativePath(rootDir: string, filePath: string): string {
   const relativePath = posix.relative(toSlash(rootDir), toSlash(filePath))
 
   return relativePath.startsWith('../') ? relativePath : `./${relativePath}`

@@ -1,4 +1,8 @@
-import { PARAM_RANK } from '../constants.ts'
+/**
+ * Ordering priority for function parameters: lower = sorted earlier.
+ */
+const PARAM_RANK = { required: 0, optional: 1, withDefault: 2, rest: 3 } as const
+
 import { isIndexedAccessType, isTypeLiteral } from './functionParams.ts'
 import type { FunctionParameterNode, FunctionParametersNode, ObjectBindingPatternNode, TypeExpression } from './functionParams.ts'
 
@@ -25,15 +29,15 @@ function renderKey(name: string): string {
   return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name) ? name : JSON.stringify(name)
 }
 
+function renderMembers(members: Array<{ key: string; type: string; optional?: boolean }>): string {
+  return `{ ${members.map((member) => `${renderKey(member.key)}${member.optional ? '?' : ''}: ${member.type}`).join('; ')} }`
+}
+
 function renderTypeExpression(type: TypeExpression): string {
   if (typeof type === 'string') return type
   if (isIndexedAccessType(type)) return `${type.target}['${type.key}']`
 
-  const parts = type.members.map((member) => {
-    const value = renderTypeExpression(member.type)
-    return member.optional ? `${renderKey(member.name)}?: ${value}` : `${renderKey(member.name)}: ${value}`
-  })
-  return `{ ${parts.join('; ')} }`
+  return renderMembers(type.members.map((member) => ({ key: member.name, type: renderTypeExpression(member.type), optional: member.optional })))
 }
 
 export type FunctionPrinterOptions = {
@@ -67,11 +71,6 @@ function rank(param: FunctionParameterNode): number {
   const members = groupMembers(param)
   if (members) return members.every((m) => m.optional) ? PARAM_RANK.optional : PARAM_RANK.required
   return param.optional ? PARAM_RANK.optional : PARAM_RANK.required
-}
-
-function sortParams(params: ReadonlyArray<FunctionParameterNode>): Array<FunctionParameterNode> {
-  // `toSorted` is a stable sort, so equal-rank params keep their declared order.
-  return params.toSorted((a, b) => rank(a) - rank(b))
 }
 
 /**
@@ -113,12 +112,9 @@ function renderGroupType(type: TypeExpression | undefined, sorted: Array<GroupMe
 
   const typed = sorted.filter((member) => member.type !== undefined)
   if (!typed.length) return undefined
-  const parts = typed.map((member) => {
-    const key = renderKey(member.propertyName ?? member.name)
-    const value = renderType(member.type!, transformType)
-    return member.optional ? `${key}?: ${value}` : `${key}: ${value}`
-  })
-  return `{ ${parts.join('; ')} }`
+  return renderMembers(
+    typed.map((member) => ({ key: member.propertyName ?? member.name, type: renderType(member.type!, transformType), optional: member.optional })),
+  )
 }
 
 function printParameter(node: FunctionParameterNode, options: FunctionPrinterOptions): string {
@@ -184,7 +180,9 @@ export function functionPrinter(options: FunctionPrinterOptions) {
     name: 'functionParameters' as const,
     options,
     print(node: FunctionParametersNode): string {
-      return sortParams(node.params)
+      // `toSorted` is a stable sort, so equal-rank params keep their declared order.
+      return node.params
+        .toSorted((a, b) => rank(a) - rank(b))
         .map((p) => printParameter(p, options))
         .filter(Boolean)
         .join(', ')

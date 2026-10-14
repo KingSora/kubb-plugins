@@ -46,6 +46,6 @@ describe('buildValidatorHooks', () => {
     expect(hooks.request).toBe('addPetBodySchema')
     expect(hooks.response).toBe('addPetResponseSchema')
     expect(hooks.error).toBeNull()
-    expect(hooks.importedZodNames).toStrictEqual(['addPetBodySchema', 'addPetResponseSchema'])
+    expect(hooks.importedZodNames).toStrictEqual(['addPetResponseSchema', 'addPetBodySchema'])
   })
 })

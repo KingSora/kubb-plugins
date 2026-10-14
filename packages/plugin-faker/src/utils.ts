@@ -1,4 +1,5 @@
 import { posix } from 'node:path'
+import { getRelativePath } from '@internals/utils'
 import { ast } from 'kubb/kit'
 import type { ResolverFaker } from './types.ts'
 
@@ -28,55 +29,24 @@ export function localeToFakerImport(locale?: string): string {
 }
 
 /**
+ * Schema types a factory cannot override with `data`: they print a constant or have no faker value.
+ */
+const NON_OVERRIDABLE_TYPES = new Set<ast.SchemaNode['type']>(['any', 'unknown', 'void', 'null', 'never', 'ipv4', 'ipv6'])
+
+/**
+ * Schema types a single response cannot inline: they reference or compose other schemas.
+ */
+const NON_INLINABLE_RESPONSE_TYPES = new Set<ast.SchemaNode['type']>(['object', 'intersection', 'ref', 'never', 'ipv4', 'ipv6'])
+
+/**
  * Determines if a schema node can be overridden during faker generation.
  */
 export function canOverrideSchema(node: ast.SchemaNode): boolean {
-  return new Set<ast.SchemaNode['type']>([
-    'array',
-    'tuple',
-    'object',
-    'intersection',
-    'union',
-    'enum',
-    'ref',
-    'string',
-    'email',
-    'url',
-    'uuid',
-    'number',
-    'integer',
-    'bigint',
-    'boolean',
-    'date',
-    'time',
-    'datetime',
-    'blob',
-  ]).has(node.type)
+  return !NON_OVERRIDABLE_TYPES.has(node.type)
 }
 
 function shouldInlineSingleResponseSchema(schema: ast.SchemaNode): boolean {
-  return new Set<ast.SchemaNode['type']>([
-    'any',
-    'unknown',
-    'void',
-    'null',
-    'array',
-    'tuple',
-    'string',
-    'email',
-    'url',
-    'uuid',
-    'number',
-    'integer',
-    'bigint',
-    'boolean',
-    'date',
-    'time',
-    'datetime',
-    'blob',
-    'enum',
-    'union',
-  ]).has(schema.type)
+  return !NON_INLINABLE_RESPONSE_TYPES.has(schema.type)
 }
 
 /**
@@ -108,7 +78,7 @@ export function buildResponseUnionSchema(node: ast.OperationNode, resolver: Reso
   })
 }
 
-const SCALAR_TYPES = new Set<ast.SchemaNode['type']>([
+export const SCALAR_TYPES = new Set<ast.SchemaNode['type']>([
   'string',
   'email',
   'url',
@@ -123,11 +93,6 @@ const SCALAR_TYPES = new Set<ast.SchemaNode['type']>([
   'blob',
   'enum',
 ])
-
-function toRelativeImportPath(from: string, to: string): string {
-  const relativePath = posix.relative(posix.dirname(from), to)
-  return relativePath.startsWith('../') ? relativePath : `./${relativePath}`
-}
 
 /**
  * Resolves a type reference, determining if it needs an import statement or inline type reference.
@@ -156,7 +121,7 @@ export function resolveTypeReference({
 
   if (name === typeName) {
     return {
-      typeName: `import('${toRelativeImportPath(filePath, typeFilePath)}').${typeName}`,
+      typeName: `import('${getRelativePath(posix.dirname(filePath), typeFilePath)}').${typeName}`,
     }
   }
 
@@ -191,20 +156,9 @@ function getScalarType(node: ast.SchemaNode, typeName: string): string {
       return 'string'
     case 'blob':
       return 'Blob'
-    case 'enum':
-      return typeName
     default:
       return typeName
   }
-}
-
-/**
- * A nullable scalar inlines its primitive instead of naming the generated type, so the
- * nullability the type plugin emitted has to be reapplied here. Non-scalars keep `typeName`,
- * which already carries it.
- */
-function withNullability(type: string, node: ast.SchemaNode): string {
-  return node.nullable ? `${type} | null` : type
 }
 
 /**
@@ -220,22 +174,16 @@ export function resolveFakerTypeUsage(
   returnType: string | null
   usesTypeName: boolean
 } {
-  const isScalar = SCALAR_TYPES.has(node.type)
+  // A nullable scalar inlines its primitive instead of naming the generated type, so the
+  // nullability the type plugin emitted has to be reapplied here. Non-scalars keep `typeName`,
+  // which already carries it.
+  const scalarType = SCALAR_TYPES.has(node.type) ? `${getScalarType(node, typeName)}${node.nullable ? ' | null' : ''}` : undefined
 
   // Every overridable factory takes `Partial<T>`, so a `ref` wrapper can forward its own
   // `Partial<T>` argument to whatever schema it points at. Scalars are the exception:
   // `Partial<string>` is still `string`, so they name the primitive directly.
-  let dataType = `Partial<${typeName}>`
-
-  if (isScalar) {
-    dataType = withNullability(getScalarType(node, typeName), node)
-  }
-
-  let returnType = canOverride ? typeName : null
-
-  if (isScalar) {
-    returnType = withNullability(getScalarType(node, typeName), node)
-  }
+  const dataType = scalarType ?? `Partial<${typeName}>`
+  const returnType = scalarType ?? (canOverride ? typeName : null)
 
   return {
     dataType,

@@ -1,5 +1,4 @@
 import type { ast } from 'kubb/kit'
-import { createFunctionParameter, createFunctionParameters, createObjectBindingPattern, functionPrinter } from '@kubb/plugin-ts'
 import { Const, File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 
@@ -52,8 +51,6 @@ type Props = {
   }>
 }
 
-const keysPrinter = functionPrinter({ mode: 'call' })
-
 export function Server({ serverName, serverVersion, operations }: Props): KubbReactNode {
   const registrations = operations
     .map(({ tool, mcp, zod }) => {
@@ -77,18 +74,7 @@ export function Server({ serverName, serverVersion, operations }: Props): KubbRe
         entries.push({ key: 'body', value: zod.requestName })
       }
 
-      const paramsNode = entries.length
-        ? createFunctionParameters({
-            params: [
-              createFunctionParameter({
-                name: createObjectBindingPattern({ elements: entries.map((e) => ({ name: e.key })) }),
-                optional: false,
-              }),
-            ],
-          })
-        : null
-
-      const destructured = paramsNode ? (keysPrinter.print(paramsNode) ?? '') : ''
+      const destructured = `{ ${entries.map((e) => e.key).join(', ')} }`
       const inputSchema = entries.length ? `z.object({ ${entries.map((e) => `${e.key}: ${e.value}`).join(', ')} })` : null
       const outputSchema = zod.responseName
 

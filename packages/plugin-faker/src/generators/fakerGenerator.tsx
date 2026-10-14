@@ -1,5 +1,5 @@
 import { collectRefNames, getOperationParameters, getPerContentTypeName, resolveContentTypeVariants, resolveDependencyOperationFile } from '@internals/shared'
-import { aliasConflictingImports, filterUsedImports, rewriteAliasedImports } from '@internals/utils'
+import { aliasConflictingImports, filterUsedImports, rewriteAliasedImports } from '../utils/imports.ts'
 import { ast, defineGenerator } from 'kubb/kit'
 import { buildParams, pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
@@ -271,24 +271,8 @@ export const fakerGenerator = defineGenerator<PluginFaker>({
         {dateParser !== 'faker' && <File.Import path={dateParser} name={dateParser} />}
         {seed ? <File.Source name="faker-seed">{`faker.seed(${JSON.stringify(seed)})`}</File.Source> : undefined}
         {paramGroups.map((group) => renderEntry(group))}
-        {responseUnits.map((unit) =>
-          renderEntry({
-            schema: unit.schema,
-            name: unit.name,
-            typeName: unit.typeName,
-            description: unit.description,
-            skipImportNames: unit.skipImportNames,
-          }),
-        )}
-        {dataUnits.map((unit) =>
-          renderEntry({
-            schema: unit.schema,
-            name: unit.name,
-            typeName: unit.typeName,
-            description: unit.description,
-            skipImportNames: unit.skipImportNames,
-          }),
-        )}
+        {responseUnits.map((unit) => renderEntry(unit))}
+        {dataUnits.map((unit) => renderEntry(unit))}
         {!hasResponseNameCollision &&
           renderEntry({
             schema: buildResponseUnionSchema(node, resolver),

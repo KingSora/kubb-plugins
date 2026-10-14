@@ -228,6 +228,18 @@ describe('getOperationParameters', () => {
     expect(grouped.cookie.map((param) => param.name)).toStrictEqual(['session-id'])
   })
 
+  test('drops parameters that share a name within one location, keeping the first', () => {
+    const query = (name: string) => ast.factory.createParameter({ name, in: 'query', schema: ast.factory.createSchema({ type: 'string' }) })
+    const node = ast.factory.createOperation({
+      operationId: 'listUploads',
+      method: 'GET',
+      path: '/uploads',
+      parameters: [query('max-uploads'), query('prefix'), query('max-uploads'), query('MaxUploads')],
+    })
+
+    expect(getOperationParameters(node).query.map((param) => param.name)).toStrictEqual(['max-uploads', 'prefix', 'MaxUploads'])
+  })
+
   test('caches the grouped result per node so repeat calls for the same operation skip re-grouping', () => {
     const node = ast.factory.createOperation({
       operationId: 'showPet',

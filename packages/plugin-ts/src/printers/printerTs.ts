@@ -2,7 +2,6 @@ import { mapSchemaItems, mapSchemaProperties } from '@internals/shared'
 import { ast, isStringType, syncSchemaRef } from 'kubb/kit'
 import { parserTs } from '@kubb/parser-ts'
 import type ts from 'typescript'
-import { ENUM_TYPES_WITH_KEY_SUFFIX, OPTIONAL_ADDS_QUESTION_TOKEN, OPTIONAL_ADDS_UNDEFINED } from '../constants.ts'
 import * as factory from '../factory.ts'
 import type { PluginTs, ResolverTs } from '../types.ts'
 import { buildPropertyJSDocComments, isInlineConstEnum } from '../utils.ts'
@@ -122,7 +121,7 @@ type PrinterTs = PrinterTsFactory
  * ```
  */
 export const printerTs = ast.createPrinter<PrinterTs>((options) => {
-  const addsUndefined = OPTIONAL_ADDS_UNDEFINED.has(options.optionalType)
+  const addsUndefined = options.optionalType === 'undefined' || options.optionalType === 'questionTokenAndUndefined'
 
   return {
     name: 'typescript',
@@ -165,8 +164,7 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
 
         // When a Key suffix is configured, enum refs must use the suffixed name (e.g. `StatusKey`)
         // so the reference matches what the enum file actually exports.
-        const isEnumRef =
-          node.ref && ENUM_TYPES_WITH_KEY_SUFFIX.has(this.options.enum.type) && this.options.enum.typeSuffix && this.options.enumSchemaNames?.has(refName)
+        const isEnumRef = node.ref && this.options.enum.type === 'asConst' && this.options.enum.typeSuffix && this.options.enumSchemaNames?.has(refName)
 
         const name = isEnumRef
           ? this.options.resolver.enum.keyName({ name: refName }, this.options.enum.typeSuffix)
@@ -187,11 +185,11 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
             .map((value) => factory.constToTypeNode(value, typeof value as 'string' | 'number' | 'boolean'))
             .filter(isNonNullable)
 
-          return factory.createUnionDeclaration({ withParentheses: true, nodes: literalNodes }) ?? undefined
+          return factory.createUnionDeclaration({ withParentheses: true, nodes: literalNodes })
         }
 
         const resolvedName =
-          ENUM_TYPES_WITH_KEY_SUFFIX.has(this.options.enum.type) && this.options.enum.typeSuffix
+          this.options.enum.type === 'asConst' && this.options.enum.typeSuffix
             ? this.options.resolver.enum.keyName(node, this.options.enum.typeSuffix)
             : this.options.resolver.name(node.name)
 
@@ -220,28 +218,28 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
             })
             .filter(isNonNullable)
 
-          return factory.createUnionDeclaration({ withParentheses: true, nodes: memberNodes }) ?? undefined
+          return factory.createUnionDeclaration({ withParentheses: true, nodes: memberNodes })
         }
 
-        return factory.createUnionDeclaration({ withParentheses: true, nodes: factory.buildMemberNodes(members, this.transform) }) ?? undefined
+        return factory.createUnionDeclaration({ withParentheses: true, nodes: factory.buildMemberNodes(members, this.transform) })
       },
       intersection(node) {
-        return factory.createIntersectionDeclaration({ withParentheses: true, nodes: factory.buildMemberNodes(node.members, this.transform) }) ?? null
+        return factory.createIntersectionDeclaration({ withParentheses: true, nodes: factory.buildMemberNodes(node.members, this.transform) })
       },
       array(node) {
         const itemNodes = mapSchemaItems(node, (item) => this.transform(item))
           .map(({ output }) => output)
           .filter(isNonNullable)
 
-        return factory.createArrayDeclaration({ nodes: itemNodes, arrayType: this.options.arrayType }) ?? null
+        return factory.createArrayDeclaration({ nodes: itemNodes, arrayType: this.options.arrayType })
       },
       tuple(node) {
-        return factory.buildTupleNode(node, this.transform) ?? null
+        return factory.buildTupleNode(node, this.transform)
       },
       object(node) {
         const { transform, options } = this
 
-        const addsQuestionToken = OPTIONAL_ADDS_QUESTION_TOKEN.has(options.optionalType)
+        const addsQuestionToken = options.optionalType === 'questionToken' || options.optionalType === 'questionTokenAndUndefined'
 
         const propertyNodes: Array<ts.TypeElement> = mapSchemaProperties(node, (schema) => transform(schema)).map(({ name, property, output }) => {
           const baseType = output ?? factory.keywordTypeNodes.unknown
@@ -280,11 +278,7 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
 
       // Without name, apply modifiers inline and return.
       if (!name) {
-        const withNullable = meta.nullable ? factory.createUnionDeclaration({ nodes: [transformed, factory.keywordTypeNodes.null] }) : transformed
-        const result =
-          (meta.nullish || meta.optional) && addsUndefined
-            ? factory.createUnionDeclaration({ nodes: [withNullable, factory.keywordTypeNodes.undefined] })
-            : withNullable
+        const result = factory.wrapNullableOptional(transformed, !!meta.nullable, !!(meta.nullish || meta.optional) && addsUndefined)
         return parserTs().print(result)
       }
 
@@ -294,10 +288,9 @@ export const printerTs = ast.createPrinter<PrinterTs>((options) => {
         const omitted: ts.TypeNode = keysToOmit?.length
           ? factory.createOmitDeclaration({ keys: keysToOmit, type: transformed, nonNullable: true })
           : transformed
-        const withNullable = meta.nullable ? factory.createUnionDeclaration({ nodes: [omitted, factory.keywordTypeNodes.null] }) : omitted
         // For named type declarations (type aliases), optional/nullish always produces | undefined
         // regardless of optionalType — the questionToken ? modifier only applies to object properties.
-        return meta.nullish || meta.optional ? factory.createUnionDeclaration({ nodes: [withNullable, factory.keywordTypeNodes.undefined] }) : withNullable
+        return factory.wrapNullableOptional(omitted, !!meta.nullable, !!(meta.nullish || meta.optional))
       })()
 
       const useTypeGeneration = syntaxType === 'type' || factory.isUnionTypeNode(inner) || !!keysToOmit?.length

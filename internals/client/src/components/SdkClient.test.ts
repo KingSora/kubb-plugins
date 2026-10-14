@@ -1,7 +1,7 @@
 import { ast } from 'kubb/kit'
 import { resolverTs } from '@kubb/plugin-ts'
 import { describe, expect, test } from 'vitest'
-import { buildSdkMethod } from './sdkMethod.ts'
+import { buildSdkMethod } from './SdkClient.tsx'
 
 describe('buildSdkMethod', () => {
   test('bakes a non-JSON request content type into the call config', () => {

@@ -1,4 +1,4 @@
-import type { ClientSelector } from '@internals/client'
+import type { ClientSelector, ResolvedContractClient } from '@internals/client'
 import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 /**
@@ -60,12 +60,6 @@ export type Options = OutputOptions & {
   macros?: Array<ast.Macro>
 }
 
-/**
- * The resolved client strategy for the generated handlers, computed once during setup. The handlers
- * always import and call a registered contract client plugin's `<op>`.
- */
-export type ResolvedClient = { kind: 'contract'; pluginName: string }
-
 export type ResolvedOptions = {
   output: Output
   exclude: Array<Exclude>
@@ -75,7 +69,7 @@ export type ResolvedOptions = {
   /**
    * The resolved client strategy the generators branch on.
    */
-  client: ResolvedClient
+  client: ResolvedContractClient
   resolver: ResolverMcp
 }
 

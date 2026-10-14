@@ -1,9 +1,10 @@
-import { getOperationParameters, operationFileEntry } from '@internals/shared'
+import { operationFileEntry } from '@internals/shared'
+import { matchesInfinite } from '@internals/tanstack-query'
 import { ast, defineGenerator } from 'kubb/kit'
 import { File, jsxRenderer, Type } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 import type { PluginReactQuery } from '../types'
-import { resolveOperationOverrides } from '../utils.ts'
+import { classifyOperation, resolveOperationOverrides } from '../utils.ts'
 
 type QueryOption = PluginReactQuery['resolvedOptions']['query']
 type MutationOption = PluginReactQuery['resolvedOptions']['mutation']
@@ -43,15 +44,10 @@ export const hookOptionsGenerator = defineGenerator<PluginReactQuery>({
       const nodeInfiniteOptions = nodeInfinite && typeof nodeInfinite === 'object' ? nodeInfinite : null
 
       // query: false means "still a query but skip the useQuery hook"
-      const isQueryOp =
-        nodeQuery === false
-          ? !!query && query.methods.some((m) => node.method.toLowerCase() === m.toLowerCase())
-          : !!nodeQuery && nodeQuery.methods.some((m) => node.method.toLowerCase() === m.toLowerCase())
-      const nodeQueryMethods = new Set(nodeQuery ? nodeQuery.methods : [])
-      const isMutationOp =
-        nodeMutation !== false &&
-        !isQueryOp &&
-        (nodeMutation ? nodeMutation.methods : []).some((m) => !nodeQueryMethods.has(m) && node.method.toLowerCase() === m.toLowerCase())
+      const { isQuery: isQueryOp, isMutation: isMutationOp } = classifyOperation(node, {
+        query: nodeQuery === false ? query : nodeQuery,
+        mutation: nodeMutation,
+      })
       const isSuspenseOp = !!suspense
       const isInfiniteOp = !!nodeInfiniteOptions
 
@@ -72,9 +68,7 @@ export const hookOptionsGenerator = defineGenerator<PluginReactQuery>({
 
         if (isInfiniteOp) {
           // Validate queryParam
-          const normalizeKey = (key: string) => key.replace(/\?$/, '')
-          const queryParamKeys = getOperationParameters(node).query.map((p) => p.name)
-          const hasQueryParam = nodeInfiniteOptions!.queryParam ? queryParamKeys.some((k) => normalizeKey(k) === nodeInfiniteOptions!.queryParam) : false
+          const hasQueryParam = matchesInfinite(node, nodeInfiniteOptions!)
 
           if (hasQueryParam) {
             const infiniteOptionsName = resolver.infiniteQuery.optionsName(node)

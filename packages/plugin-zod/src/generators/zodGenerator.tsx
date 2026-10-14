@@ -11,12 +11,10 @@ import {
 import { ast, defineGenerator } from 'kubb/kit'
 import { File, jsxRenderer } from 'kubb/jsx'
 import { Zod } from '../components/Zod.tsx'
-import { ZOD_NAMESPACE_IMPORTS } from '../constants.ts'
 import { collectDirectionalRefNames, containsDirectionalNode, printerZod } from '../printers/printerZod.ts'
 import type { PrinterZodOptions } from '../printers/printerZod.ts'
 import { printerZodMini } from '../printers/printerZodMini.ts'
 import type { PluginZod, ResolverZod } from '../types'
-import { buildGroupedParamsSchema } from '../utils.ts'
 
 type StdPrinters = { decode: ReturnType<typeof printerZod>; encode: ReturnType<typeof printerZod> }
 type ZodPrinterEntry = StdPrinters & { coercion: unknown; guidType: unknown; regexType: unknown; dateType: unknown; nodes: unknown }
@@ -113,7 +111,7 @@ export const zodGenerator = defineGenerator<PluginZod>({
       return
     }
 
-    const isZodImport = ZOD_NAMESPACE_IMPORTS.has(importPath as 'zod' | 'zod/mini')
+    const isZodImport = importPath === 'zod' || importPath === 'zod/mini'
     const cyclicSchemas = new Set<string>(ctx.meta.circularNames)
     const printerOptions: PrinterZodOptions = { coercion, guidType, regexType, dateType, resolver, cyclicSchemas, nodes: printer?.nodes }
 
@@ -128,13 +126,11 @@ export const zodGenerator = defineGenerator<PluginZod>({
           path: resolver.file({ name: schemaName, extname: '.ts', root, output, group: group ?? undefined }).path,
         }))
       : []
-    const seenImports = new Set<string>()
-    const imports = [...importEntries, ...inputImportEntries].filter((imp) => {
-      const key = `${Array.isArray(imp.name) ? imp.name.join(',') : imp.name}|${imp.path}`
-      if (seenImports.has(key)) return false
-      seenImports.add(key)
-      return true
-    })
+    const imports = [
+      ...new Map(
+        [...importEntries, ...inputImportEntries].map((imp) => [`${Array.isArray(imp.name) ? imp.name.join(',') : imp.name}|${imp.path}`, imp] as const),
+      ).values(),
+    ]
 
     const meta = {
       name: resolver.name(node.name),
@@ -196,7 +192,7 @@ export const zodGenerator = defineGenerator<PluginZod>({
     const { output, coercion, guidType, regexType, compile, mini, inferred, importPath, group, printer } = ctx.options
     const dateType = getOasAdapter(adapter).options.dateType
 
-    const isZodImport = ZOD_NAMESPACE_IMPORTS.has(importPath as 'zod' | 'zod/mini')
+    const isZodImport = importPath === 'zod' || importPath === 'zod/mini'
 
     const meta = {
       file: resolver.file({ name: node.operationId, extname: '.ts', tag: node.tags[0] ?? 'default', path: node.path, root, output, group: group ?? undefined }),
@@ -393,7 +389,12 @@ export const zodGenerator = defineGenerator<PluginZod>({
           .filter(({ params }) => params.length > 0)
           .map(({ kind, params }) =>
             renderSchemaEntry({
-              schema: buildGroupedParamsSchema({ params }),
+              schema: ast.factory.createSchema({
+                type: 'object',
+                // `primitive: 'object'` makes the printer emit `z.object(…)` rather than a record.
+                primitive: 'object',
+                properties: params.map((param) => ast.factory.createProperty({ name: param.name, required: param.required, schema: param.schema })),
+              }),
               name: resolver.param[kind](node, params[0]!),
               direction: 'encode',
             }),
