@@ -17,9 +17,13 @@ type Props = {
    * @default 'query'
    */
   variant?: KeyVariant
-  /** Wraps each grouped request member type, used by vue-query for `MaybeRefOrGetter`. */
+  /**
+   * Wraps each grouped request member type, used by vue-query for `MaybeRefOrGetter`.
+   */
   memberTypeWrapper?: (type: string) => string
-  /** Exports and indexes the `typeName` alias too (default `false`). */
+  /**
+   * Exports and indexes the `typeName` alias too (default `false`).
+   */
   exportType?: boolean
 }
 

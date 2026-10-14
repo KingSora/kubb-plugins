@@ -435,7 +435,9 @@ export function buildQueryKeyParams(
   return createFunctionParameters({ params: groupedParam ? [groupedParam] : [] })
 }
 
-/** Builds the hook parameter list: the grouped request param (omitted when `withRequest` is `false`) then `options` typed as `optionsType`. */
+/**
+ * Builds the hook parameter list: the grouped request param (omitted when `withRequest` is `false`) then `options` typed as `optionsType`.
+ */
 export function buildHookParams(
   node: ast.OperationNode,
   options: { resolver: ResolverTs; optionsType: string; memberTypeWrapper?: (type: string) => string; withRequest?: boolean },
@@ -447,12 +449,16 @@ export function buildHookParams(
   return createFunctionParameters({ params: [groupedParam, optionsParam].filter((param): param is FunctionParameterNode => param !== null) })
 }
 
-/** The `TRequest` type argument of a mutation hook: the options type when the operation takes a request, else `undefined`. */
+/**
+ * The `TRequest` type argument of a mutation hook: the options type when the operation takes a request, else `undefined`.
+ */
 export function resolveMutationRequestType(node: ast.OperationNode, resolver: ResolverTs): string {
   return buildGroupedRequestParam(node, { resolver }) ? resolver.response.options(node) : 'undefined'
 }
 
-/** Builds the object literal that unwraps each request group's getter before it reaches `queryKey`/`queryOptions`; `null` without a request group. */
+/**
+ * Builds the object literal that unwraps each request group's getter before it reaches `queryKey`/`queryOptions`; `null` without a request group.
+ */
 export function buildResolvedRequestParams(node: ast.OperationNode): string | null {
   const groups = getRequestGroups(node)
   const names = requestGroupOrder.filter((key) => groups[key])

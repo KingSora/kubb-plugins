@@ -66,7 +66,6 @@ export function createQueryGenerator({ name, variant }: { name: string; variant:
         if (pageParamsWarning) ctx.warn(pageParamsWarning)
       }
 
-      // The registered contract client plugin owns the `<op>` the hook imports and calls.
       const contractOp = resolveClientOperation({ clientPlugin: { pluginName: client.pluginName }, driver, node, root, output, cache: ctx.cache })
       if (!contractOp) return null
 

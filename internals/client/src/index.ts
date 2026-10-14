@@ -1,5 +1,4 @@
 export type { SecurityDocument } from './builders/security.ts'
-export { createClientPlugin, resolveClientOptions } from './createClientPlugin.ts'
 export { createClientGenerator } from './generators/clientGenerator.tsx'
 export { createSdkGenerator } from './generators/sdkGenerator.tsx'
 export { defaultMacros } from './macros.ts'

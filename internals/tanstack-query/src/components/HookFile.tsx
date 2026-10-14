@@ -5,20 +5,22 @@ import type { ResolverTs } from '@kubb/plugin-ts'
 import { File } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
 
-/** The registered contract client's `<op>`, from `resolveClientOperation`. */
 type ContractOperation = { name: string; path: string; clientPath: string; clientPathIsFile: boolean }
 
 type HookFileContext = Pick<GeneratorContext, 'config' | 'root' | 'cache' | 'meta' | 'driver' | 'requirePlugin' | 'resolver'>
 
 type ResolveHookFileOptions = {
-  /** The hook's resolved name, used as the file's base name. */
   name: string
   output: Output
   group?: Group | null
   contractOp: ContractOperation
-  /** The `<Key>` type alias declared in this file, left out of the imported type names. */
+  /**
+   * The `<Key>` type alias declared in this file, left out of the imported type names.
+   */
   keyTypeName?: string
-  /** Type names imported right after the response options type. */
+  /**
+   * Type names imported right after the response options type.
+   */
   extraTypeNames?: Array<string | null | undefined>
 }
 
@@ -32,7 +34,9 @@ type ResolvedHookFile = {
   footer: string | null
 }
 
-/** Resolves what every TanStack hook file shares: its file, the `@kubb/plugin-ts` file and type names, banner and footer. */
+/**
+ * Resolves what every TanStack hook file shares: its file, the `@kubb/plugin-ts` file and type names, banner and footer.
+ */
 export function resolveHookFile(node: ast.OperationNode, ctx: HookFileContext, options: ResolveHookFileOptions): ResolvedHookFile {
   const { name, output, group, contractOp, keyTypeName, extraTypeNames = [] } = options
   const { config, root, resolver } = ctx
@@ -72,12 +76,16 @@ export function resolveHookFile(node: ast.OperationNode, ctx: HookFileContext, o
 
 type HookFileProps = {
   hook: ResolvedHookFile
-  /** Framework imports rendered between the client imports and the type import. */
+  /**
+   * Framework imports rendered between the client imports and the type import.
+   */
   imports?: KubbReactNode
   children?: KubbReactNode
 }
 
-/** The `<File>` shell shared by the TanStack hook generators; renders `children` after the imports. */
+/**
+ * The `<File>` shell shared by the TanStack hook generators; renders `children` after the imports.
+ */
 export function HookFile({ hook, imports, children }: HookFileProps): KubbReactNode {
   const { file, fileTs, contractOp, importedTypeNames, banner, footer } = hook
 

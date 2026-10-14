@@ -8,7 +8,9 @@ type Props = {
   name: string
   node: ast.OperationNode
   transformer: Transformer | null | undefined
-  /** Also emits `ReturnType<typeof name>` as an exported type alias of this name. */
+  /**
+   * Also emits `ReturnType<typeof name>` as an exported type alias of this name.
+   */
   typeName?: string
 }
 

@@ -1,19 +1,17 @@
-import { createClientGenerator, createClientPlugin, resolveClientOptions } from '@internals/client'
+import { createGroupConfig } from '@internals/shared'
+import { addGenerator, defineExtension, Resolver, setMacros, setResolver } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
-import type { PluginClient } from './types.ts'
+import { pluginTsName } from '@kubb/plugin-ts'
+import { pluginZodName } from '@kubb/plugin-zod'
+import { clientGenerator } from './generators/clientGenerator.tsx'
+import { defaultMacros, resolverClient } from '@internals/client'
+import type { PluginClient, ResolverClient } from './types.ts'
 
 /**
  * Canonical plugin name for `@kubb/plugin-client`.
  */
 export const pluginClientName = 'plugin-client' satisfies PluginClient['name']
-
-/**
- * Built-in operation generator for `@kubb/plugin-client`. Emits one async function per OpenAPI
- * operation using the shared `Operation` component: a grouped `<Name>Request` type and a function
- * that forwards a single `options` object to the user-provided client module and returns the `RequestResult`.
- */
-const clientGenerator = createClientGenerator<PluginClient>('client', (options) => options.importPath)
 
 /**
  * Generates typed operations that call a client module owned by your application.
@@ -25,17 +23,44 @@ const clientGenerator = createClientGenerator<PluginClient>('client', (options) 
  * pluginClient({ importPath: '../api/client' })
  * ```
  */
-export const pluginClient = createClientPlugin({
+export const pluginClient = defineExtension<PluginClient>({
+  kind: 'plugin',
   meta: { name: pluginClientName, version, compatibility },
-  generator: clientGenerator,
-  // The application owns the client module, so there is no baseURL, SDK, or return type to configure.
-  resolveOptions: (options) => ({
-    ...resolveClientOptions(options),
-    baseURL: undefined,
-    returnType: 'plain',
-    sdk: undefined,
-    importPath: options.importPath,
-  }),
+  dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !options.validator } }),
+  setup(options) {
+    const {
+      output = { path: 'clients', barrel: { type: 'named' } },
+      exclude = [],
+      include,
+      override = [],
+      importPath,
+      throwOnErrorDefault = true,
+      validator = false,
+      group,
+      resolver: userResolver,
+    } = options
+
+    const resolver = userResolver ? Resolver.merge<ResolverClient>(resolverClient, userResolver) : resolverClient
+
+    setResolver(resolver)
+    setMacros([...defaultMacros, ...(options.macros ?? [])])
+    addGenerator(clientGenerator)
+
+    return {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      importPath,
+      baseURL: undefined,
+      throwOnErrorDefault,
+      validator,
+      returnType: 'plain',
+      sdk: undefined,
+      resolver,
+    }
+  },
 })
 
 export default pluginClient

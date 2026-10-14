@@ -52,7 +52,6 @@ type HookTypesProps = Pick<Props, 'node' | 'suspense' | 'queryKeyTypeName' | 'in
   resultTypeName: string
 }
 
-/** Type parameters, observer options type, and return type of the generated hook. */
 function buildHookTypes({ node, tsResolver, infinite, suspense, TData, TError, queryKeyTypeName, observerOptionsName, resultTypeName }: HookTypesProps) {
   if (infinite) {
     const { pageParamType } = resolvePageParamType(node, { resolver: tsResolver, initialPageParam: infinite.initialPageParam, queryParam: infinite.queryParam })

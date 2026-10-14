@@ -13,7 +13,6 @@ export function shouldCoerce(coercion: PluginZod['resolvedOptions']['coercion'] 
   return !!coercion[type]
 }
 
-/** The `propertyNames` key schema of an object node, if any. */
 export function propertyNamesOf(node: ast.SchemaNode): ast.SchemaNode | undefined {
   return 'propertyNames' in node ? (node as { propertyNames?: ast.SchemaNode }).propertyNames : undefined
 }
@@ -214,7 +213,6 @@ function regexSource(pattern: string, regexType: PluginZod['resolvedOptions']['r
   return toRegExpString(pattern, regexType === 'constructor' ? 'RegExp' : null)
 }
 
-/** Several patterns combine into one alternation (`(^a)|(^b)`). */
 function joinPatterns(patterns: Array<string>): string {
   return patterns.length === 1 ? patterns[0]! : patterns.map((pattern) => `(${pattern})`).join('|')
 }
@@ -353,7 +351,9 @@ export function applyMiniModifiers({ value, schema, nullable, optional, nullish,
   return literal !== null ? `z._default(${withModifier}, ${literal})` : withModifier
 }
 
-/** Calls for string `format`s with a dedicated Zod constructor; a `Map` so `constructor` cannot hit `Object.prototype`. */
+/**
+ * Calls for string `format`s with a dedicated Zod constructor; a `Map` so `constructor` cannot hit `Object.prototype`.
+ */
 export const STRING_FORMAT_CALLS = new Map<string | undefined, string>([
   ['byte', 'z.base64()'],
   ['base64', 'z.base64()'],
@@ -364,12 +364,16 @@ export const STRING_FORMAT_CALLS = new Map<string | undefined, string>([
   ['duration', 'z.iso.duration()'],
 ])
 
-/** Marks an inline `oneOf` object strict, so `object()` builds `z.strictObject(...)` and no eager `.shape` read hits a deferred getter. */
+/**
+ * Marks an inline `oneOf` object strict, so `object()` builds `z.strictObject(...)` and no eager `.shape` read hits a deferred getter.
+ */
 export function strictOneOfNode(node: ast.SchemaNode): ast.SchemaNode {
   return node.type === 'object' && node.additionalProperties === undefined ? { ...node, additionalProperties: false } : node
 }
 
-/** The constraint chain an `allOf` member adds to a bare string, number or array; each printer passes its own renderers. */
+/**
+ * The constraint chain an `allOf` member adds to a bare string, number or array; each printer passes its own renderers.
+ */
 export function getMemberConstraint({
   member,
   regexType,
@@ -387,13 +391,14 @@ export function getMemberConstraint({
   if (member.primitive === 'array') return lengths({ ...(ast.narrowSchema(member, 'array') ?? {}), regexType }) || undefined
 }
 
-/** The printer slice the shared builders need: `transform` and the resolved options. */
 type PrinterContext = {
   transform: (node: ast.SchemaNode) => string | null
   options: { cyclicSchemas?: ReadonlySet<string> }
 }
 
-/** Builds the `{ key: value, … }` shape shared by the `z.object(...)` and `.extend(...)` renderings. */
+/**
+ * Builds the `{ key: value, … }` shape shared by the `z.object(...)` and `.extend(...)` renderings.
+ */
 export function buildObjectShape(
   ctx: PrinterContext,
   node: ast.SchemaNode,
@@ -423,7 +428,9 @@ export function buildObjectShape(
   return buildObject(entries)
 }
 
-/** Shared `print` body: transforms the node, applies `keysToOmit` as `.omit(...)`, then `modify` adds the modifiers. */
+/**
+ * Shared `print` body: transforms the node, applies `keysToOmit` as `.omit(...)`, then `modify` adds the modifiers.
+ */
 export function printWithOmit(
   ctx: { transform: (node: ast.SchemaNode) => string | null; options: { keysToOmit?: Array<string> | null } },
   node: ast.SchemaNode,

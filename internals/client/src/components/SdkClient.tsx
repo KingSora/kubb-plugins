@@ -12,7 +12,9 @@ import { buildValidatorHooks } from '../builders/validator.ts'
 import type { OperationTypeNames } from '../resolveOperationTypes.ts'
 import type { ReturnTypeOption, ValidatorOptions } from '../types.ts'
 
-/** Builds the call config literal forwarded to the contract client; the `throwOnError` fallback is applied after the `...config` spread. */
+/**
+ * Builds the call config literal forwarded to the contract client; the `throwOnError` fallback is applied after the `...config` spread.
+ */
 function buildCallConfig({
   node,
   validator,
@@ -48,7 +50,9 @@ function buildCallConfig({
     .join(', ')} }`
 }
 
-/** Builds one instance method of a generated SDK class; a per-call `options.client` overrides `this.client`. */
+/**
+ * Builds one instance method of a generated SDK class; a per-call `options.client` overrides `this.client`.
+ */
 export function buildSdkMethod({
   node,
   name,
