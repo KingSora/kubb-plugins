@@ -1,5 +1,15 @@
 # @kubb/plugin-swr
 
+## 5.4.0
+
+### Minor Changes
+
+- [#1106](https://github.com/kubb-labs/plugins/pull/1106) [`f88d584`](https://github.com/kubb-labs/plugins/commit/f88d5841d5108ad732bba1a6af8e9719d00ccca3) Thanks [@mohammad-naji7](https://github.com/mohammad-naji7)! - Support operations using the HTTP QUERY method (RFC 10008), which `@kubb/adapter-oas` parses from the OpenAPI 3.2 `query` field.
+  
+  - `@kubb/plugin-fetch` and `@kubb/plugin-axios`: `RequestConfig['method']` accepts `'QUERY'`.
+  - `@kubb/plugin-react-query`, `@kubb/plugin-vue-query` and `@kubb/plugin-swr`: `query.methods` defaults to `['GET', 'QUERY']`, so a QUERY operation gets query hooks keyed by its body, like a GET.
+  - `@kubb/plugin-msw`: MSW has no `http.query`, so a QUERY handler is registered with `http.all` and answers only QUERY requests, letting other methods on the same path pass through.
+
 ## 5.3.0
 
 ### Minor Changes
