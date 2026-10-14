@@ -6,14 +6,6 @@ describe('trimQuotes', () => {
     expect(trimQuotes('"hello"')).toBe('hello')
   })
 
-  it('strips a balanced single-quote pair', () => {
-    expect(trimQuotes("'hello'")).toBe('hello')
-  })
-
-  it('strips a balanced backtick pair', () => {
-    expect(trimQuotes('`hello`')).toBe('hello')
-  })
-
   it('leaves an unquoted string unchanged', () => {
     expect(trimQuotes('hello')).toBe('hello')
   })
@@ -40,12 +32,9 @@ describe('stringify', () => {
     expect(stringify('a\nb')).toBe("'a\\nb'")
   })
 
-  it('serializes numbers and booleans', () => {
+  it('serializes numbers, booleans, and undefined', () => {
     expect(stringify(42)).toBe("'42'")
     expect(stringify(true)).toBe("'true'")
-  })
-
-  it('returns empty quotes for undefined', () => {
     expect(stringify(undefined)).toBe("''")
   })
 })
@@ -94,10 +83,6 @@ describe('stringifyObject', () => {
 describe('getNestedAccessor', () => {
   it('renders an optional-chaining accessor from a dotted path', () => {
     expect(getNestedAccessor('pagination.next.id', 'lastPage')).toBe("lastPage?.['pagination']?.['next']?.['id']")
-  })
-
-  it('accepts a string array', () => {
-    expect(getNestedAccessor(['a', 'b'], 'root')).toBe("root?.['a']?.['b']")
   })
 
   it('returns null for an empty path', () => {

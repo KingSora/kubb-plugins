@@ -2,16 +2,8 @@ import { describe, expect, test } from 'vitest'
 import { resolveClient } from './resolveClient.ts'
 
 describe('resolveClient', () => {
-  test("client: 'fetch' selects plugin-fetch when it is registered", () => {
-    expect(resolveClient({ client: 'fetch', pluginNames: ['plugin-ts', 'plugin-fetch'] })).toStrictEqual({ kind: 'contract', pluginName: 'plugin-fetch' })
-  })
-
-  test("client: 'axios' selects plugin-axios when it is registered", () => {
-    expect(resolveClient({ client: 'axios', pluginNames: ['plugin-ts', 'plugin-axios'] })).toStrictEqual({ kind: 'contract', pluginName: 'plugin-axios' })
-  })
-
-  test("client: 'client' selects plugin-client when it is registered", () => {
-    expect(resolveClient({ client: 'client', pluginNames: ['plugin-ts', 'plugin-client'] })).toStrictEqual({ kind: 'contract', pluginName: 'plugin-client' })
+  test.each(['fetch', 'axios', 'client'] as const)('client: %s selects the matching plugin when it is registered', (client) => {
+    expect(resolveClient({ client, pluginNames: ['plugin-ts', `plugin-${client}`] })).toStrictEqual({ kind: 'contract', pluginName: `plugin-${client}` })
   })
 
   test("client: 'fetch' without plugin-fetch returns a diagnostic naming the package", () => {

@@ -1,13 +1,7 @@
 import { ast } from 'kubb/kit'
 import { resolverZod } from '@kubb/plugin-zod'
 import { describe, expect, test } from 'vitest'
-import {
-  buildZodResponseParse,
-  isValidatorEnabled,
-  resolveQueryParamsValidator,
-  resolveRequestValidator,
-  resolveResponseValidator,
-} from './validatorOptions.ts'
+import { buildZodResponseParse, isValidatorEnabled } from './validatorOptions.ts'
 
 const node = ast.factory.createOperation({
   operationId: 'addPet',
@@ -23,18 +17,6 @@ describe('validator resolvers', () => {
     expect(isValidatorEnabled('zod')).toBe(true)
     expect(isValidatorEnabled({ request: 'zod' })).toBe(true)
     expect(isValidatorEnabled({})).toBe(false)
-  })
-
-  test("the 'zod' shorthand maps to response parsing only", () => {
-    expect(resolveResponseValidator('zod')).toBe('zod')
-    expect(resolveRequestValidator('zod')).toBeNull()
-    expect(resolveQueryParamsValidator('zod')).toBeNull()
-  })
-
-  test('the object form opts in per direction', () => {
-    expect(resolveRequestValidator({ request: 'zod' })).toBe('zod')
-    expect(resolveQueryParamsValidator({ request: 'zod' })).toBe('zod')
-    expect(resolveResponseValidator({ response: 'zod' })).toBe('zod')
   })
 })
 

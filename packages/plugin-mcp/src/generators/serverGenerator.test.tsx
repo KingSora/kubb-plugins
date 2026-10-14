@@ -1,26 +1,14 @@
-import type { Config } from 'kubb/kit'
-import { ast, memoryStorage } from 'kubb/kit'
+import { ast } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperations } from 'kubb/kit/testing'
 import type { PluginTs } from '@kubb/plugin-ts'
 import { resolverTs } from '@kubb/plugin-ts'
 import type { PluginZod } from '@kubb/plugin-zod'
 import { resolverZod } from '@kubb/plugin-zod'
 import { describe, test } from 'vitest'
-import { matchFiles } from '#mocks'
+import { matchFiles, testConfig } from '#mocks'
 import { resolverMcp } from '../resolvers/resolverMcp.ts'
 import type { PluginMcp } from '../types.ts'
 import { serverGenerator } from './serverGenerator.tsx'
-
-const testConfig: Config = {
-  root: '.',
-  input: {},
-  output: { path: 'test' },
-  plugins: [],
-  parsers: [],
-  reporters: [],
-  adapter: createMockedAdapter(),
-  storage: memoryStorage(),
-}
 
 const defaultOptions: PluginMcp['resolvedOptions'] = {
   output: { path: '.', mode: 'directory' },

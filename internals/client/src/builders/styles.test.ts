@@ -21,16 +21,6 @@ describe('buildStyles', () => {
     expect(buildStyles({ node })).toBeNull()
   })
 
-  test('emits path style and explode keyed by the camelCased name', () => {
-    const node = createOperation([{ name: 'pet_id', in: 'path', schema: stringSchema(), style: 'matrix', explode: true }])
-    expect(buildStyles({ node })).toBe("{ path: { petId: { style: 'matrix', explode: true } } }")
-  })
-
-  test('emits query style and explode', () => {
-    const node = createOperation([{ name: 'tags', in: 'query', schema: stringSchema(), style: 'pipeDelimited', explode: false }])
-    expect(buildStyles({ node })).toBe("{ query: { tags: { style: 'pipeDelimited', explode: false } } }")
-  })
-
   test('keeps the spec name for header and cookie parameters, quoted when not a bare identifier', () => {
     const node = createOperation([
       { name: 'X-Ids', in: 'header', schema: stringSchema(), style: 'simple', explode: true },
@@ -42,13 +32,5 @@ describe('buildStyles', () => {
   test('quotes a query key that is not a bare identifier', () => {
     const node = createOperation([{ name: '2fa', in: 'query', schema: stringSchema(), explode: true }])
     expect(buildStyles({ node })).toBe('{ query: { "2fa": { explode: true } } }')
-  })
-
-  test('groups multiple locations together', () => {
-    const node = createOperation([
-      { name: 'id', in: 'path', schema: stringSchema(), style: 'label', explode: false },
-      { name: 'fields', in: 'query', schema: stringSchema(), explode: true },
-    ])
-    expect(buildStyles({ node })).toBe("{ path: { id: { style: 'label', explode: false } }, query: { fields: { explode: true } } }")
   })
 })

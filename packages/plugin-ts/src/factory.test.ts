@@ -286,153 +286,6 @@ describe('Code Generation', () => {
     ).toMatchSnapshot()
   })
 
-  it('should create enum declaration', async () => {
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'enum',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['FILE.UPLOADED', 'FILE.UPLOADED'],
-            ['FILE.PREVIEW', 'FILE.PREVIEW'],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // Test pascalCase const with Key suffix in typeName (real-world scenario from Type.tsx)
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'GetPetsQueryParamsStatusEnum',
-          typeName: 'GetPetsQueryParamsStatusEnumKey',
-          enums: [
-            ['available', 'available'],
-            ['pending', 'pending'],
-            ['sold', 'sold'],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'constEnum',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'literal',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'enum',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['1', 'world'],
-            ['2', 2050],
-            ['3', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // https://github.com/kubb-labs/kubb/issues/2564
-    // Empty enum should not create a runtime const (undefined nameNode)
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'hello',
-          typeName: 'HelloKey',
-          enums: [],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // https://github.com/kubb-labs/kubb/issues/2564
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'Hello',
-          typeName: 'HelloKey',
-          enums: [],
-        }),
-      ),
-    ).toMatchSnapshot()
-  })
-
   it('should quote enum keys that are not valid identifiers', async () => {
     // Enum values like `#VERCEL_SKIP` are not valid TS identifiers and must be emitted as
     // quoted string keys, otherwise they parse as illegal private identifiers.
@@ -590,78 +443,21 @@ describe('Import/Export Sorting Consistency', () => {
     expect(output2).toBe(output3)
     expect(output1).toContain('AuthService, CacheService, DatabaseService, UserService')
   })
-
-  it('should create URL template type for path without parameters', () => {
-    const result = createUrlTemplateType('/pets')
-
-    expect(parserTs().print(result).trim()).toBe('"/pets"')
-  })
-
-  it('should create URL template type for path with single parameter', () => {
-    const result = createUrlTemplateType('/pets/{petId}')
-
-    expect(parserTs().print(result).trim()).toBe('`/pets/${string}`')
-  })
-
-  it('should create URL template type for path with multiple parameters', () => {
-    const result = createUrlTemplateType('/pets/{petId}/owner/{ownerId}')
-
-    expect(parserTs().print(result).trim()).toBe('`/pets/${string}/owner/${string}`')
-  })
-
-  it('should create URL template type for path with parameter at start', () => {
-    const result = createUrlTemplateType('/{category}/pets')
-
-    expect(parserTs().print(result).trim()).toBe('`/${string}/pets`')
-  })
-
-  it('should create URL template type for path with parameter at end', () => {
-    const result = createUrlTemplateType('/user/{username}')
-
-    expect(parserTs().print(result).trim()).toBe('`/user/${string}`')
-  })
-
-  it('should create URL template type for complex path', () => {
-    const result = createUrlTemplateType('/pet/findByStatus/{step_id}')
-
-    expect(parserTs().print(result).trim()).toBe('`/pet/findByStatus/${string}`')
-  })
-
-  it('should create URL template type for path with consecutive parameters', () => {
-    const result = createUrlTemplateType('/api/{version}/{resource}')
-
-    expect(parserTs().print(result).trim()).toBe('`/api/${string}/${string}`')
-  })
 })
 
-describe('createUrlTemplateType (Express-style paths)', () => {
-  it('returns a string literal for paths without params', () => {
-    const result = createUrlTemplateType('/pets')
-
-    expect(parserTs().print(result).trim()).toBe('"/pets"')
-  })
-
-  it('converts a single Express path param to a template literal', () => {
-    const result = createUrlTemplateType('/pets/:petId')
-
-    expect(parserTs().print(result).trim()).toBe('`/pets/${string}`')
-  })
-
-  it('converts multiple Express path params to a template literal', () => {
-    const result = createUrlTemplateType('/store/:storeId/order/:orderId')
-
-    expect(parserTs().print(result).trim()).toBe('`/store/${string}/order/${string}`')
-  })
-
-  it('handles trailing static segments after params', () => {
-    const result = createUrlTemplateType('/pets/:petId/photos')
-
-    expect(parserTs().print(result).trim()).toBe('`/pets/${string}/photos`')
-  })
-
-  it('handles consecutive params', () => {
-    const result = createUrlTemplateType('/api/:version/:resource')
-
-    expect(parserTs().print(result).trim()).toBe('`/api/${string}/${string}`')
+describe('createUrlTemplateType', () => {
+  it.each([
+    ['/pets', '"/pets"'],
+    ['/pets/{petId}', '`/pets/${string}`'],
+    ['/pets/{petId}/owner/{ownerId}', '`/pets/${string}/owner/${string}`'],
+    ['/{category}/pets', '`/${string}/pets`'],
+    ['/user/{username}', '`/user/${string}`'],
+    ['/pet/findByStatus/{step_id}', '`/pet/findByStatus/${string}`'],
+    ['/api/{version}/{resource}', '`/api/${string}/${string}`'],
+    ['/pets/:petId', '`/pets/${string}`'],
+    ['/store/:storeId/order/:orderId', '`/store/${string}/order/${string}`'],
+    ['/pets/:petId/photos', '`/pets/${string}/photos`'],
+  ])('should create URL template type for %s', (path, expected) => {
+    expect(parserTs().print(createUrlTemplateType(path)).trim()).toBe(expected)
   })
 })

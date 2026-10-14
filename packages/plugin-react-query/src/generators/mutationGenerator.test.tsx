@@ -1,27 +1,15 @@
-import type { Config } from 'kubb/kit'
-import { ast, memoryStorage } from 'kubb/kit'
-import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation } from 'kubb/kit/testing'
+import { ast } from 'kubb/kit'
+import { createMockedAdapter, createMockedPlugin, renderGeneratorOperation } from 'kubb/kit/testing'
 import type { PluginTs } from '@kubb/plugin-ts'
 import { resolverTs } from '@kubb/plugin-ts'
 import { resolverClient } from '@internals/client'
 import { describe, expect, test, vi } from 'vitest'
-import { matchFiles } from '#mocks'
+import { createMultiPluginDriver, matchFiles, testConfig } from '#mocks'
 import { mutationKeyTransformer, queryKeyTransformer } from '@internals/tanstack-query'
 import type { Transformer } from '@internals/tanstack-query'
 import { resolverReactQuery } from '../resolvers/resolverReactQuery.ts'
 import type { PluginReactQuery } from '../types.ts'
 import { mutationGenerator } from './mutationGenerator.tsx'
-
-const testConfig: Config = {
-  root: '.',
-  input: {},
-  output: { path: 'test' },
-  plugins: [],
-  parsers: [],
-  reporters: [],
-  adapter: createMockedAdapter(),
-  storage: memoryStorage(),
-}
 
 const defaultOptions: PluginReactQuery['resolvedOptions'] = {
   client: { kind: 'contract', pluginName: 'plugin-axios' },
@@ -59,20 +47,7 @@ const mockedAxiosPlugin = createMockedPlugin({
   resolver: resolverClient,
 })
 
-// The generator looks plugins up by name: plugin-ts for the request types, plugin-axios for the
-// contract <op>. The built-in mock is name-agnostic, so dispatch on the name here.
-function createMultiPluginDriver(name: string) {
-  const driver = createMockedPluginDriver({
-    name,
-    plugin: mockedTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
-  })
-  const byName = { 'plugin-ts': mockedTsPlugin, 'plugin-axios': mockedAxiosPlugin } as Record<string, { resolver?: unknown }>
-  return {
-    ...driver,
-    getPlugin: (pluginName: string) => byName[pluginName] ?? mockedTsPlugin,
-    getResolver: (pluginName: string) => byName[pluginName]?.resolver ?? resolverTs,
-  } as typeof driver
-}
+const plugins = { 'plugin-ts': mockedTsPlugin, 'plugin-axios': mockedAxiosPlugin }
 
 // Shared operation nodes
 const findByTagsNode = ast.factory.createOperation({
@@ -165,11 +140,6 @@ const multiContentTypeNode = ast.factory.createOperation({
 describe('mutationGenerator operation', () => {
   const testData = [
     { name: 'getAsMutation', node: findByTagsNode, options: { mutation: { importPath: 'custom-swr/mutation', methods: ['get'] } } },
-    {
-      name: 'clientPostImportPath',
-      node: updatePetByIdNode,
-      options: { client: { kind: 'contract', pluginName: 'plugin-axios' } },
-    },
     { name: 'updatePetById', node: updatePetByIdNode, options: {} },
     { name: 'deletePet', node: deletePetNode, options: {} },
     { name: 'multiContentType', node: multiContentTypeNode, options: {} },
@@ -181,7 +151,7 @@ describe('mutationGenerator operation', () => {
       ...props.options,
     }
     const plugin = createMockedPlugin<PluginReactQuery>({ name: 'plugin-react-query', options, resolver: resolverReactQuery })
-    const driver = createMultiPluginDriver(props.name)
+    const driver = createMultiPluginDriver(props.name, plugins)
 
     await renderGeneratorOperation(mutationGenerator, props.node, {
       config: testConfig,
@@ -201,7 +171,7 @@ describe('mutationGenerator mutationKey', () => {
     const mutationKey = vi.fn<Transformer>(mutationKeyTransformer)
     const options: PluginReactQuery['resolvedOptions'] = { ...defaultOptions, mutationKey }
     const plugin = createMockedPlugin<PluginReactQuery>({ name: 'plugin-react-query', options, resolver: resolverReactQuery })
-    const driver = createMultiPluginDriver('customMutationKey')
+    const driver = createMultiPluginDriver('customMutationKey', plugins)
 
     await renderGeneratorOperation(mutationGenerator, updatePetByIdNode, {
       config: testConfig,

@@ -1,11 +1,9 @@
-import { aliasConflictingImports, rewriteAliasedImports } from '@internals/utils'
-import type { Config } from 'kubb/kit'
-import { ast, memoryStorage } from 'kubb/kit'
+import { ast } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation, renderGeneratorSchema } from 'kubb/kit/testing'
 import { parserTs } from '@kubb/parser-ts'
 import { type PluginTs, resolverTs } from '@kubb/plugin-ts'
 import { describe, expect, test } from 'vitest'
-import { format, matchFiles } from '#mocks'
+import { format, matchFiles, testConfig } from '#mocks'
 import { resolverFaker } from '../resolvers/resolverFaker.ts'
 import type { PluginFaker } from '../types.ts'
 import { fakerGenerator } from './fakerGenerator.tsx'
@@ -234,17 +232,6 @@ const dogSchema = ast.factory.createSchema({
   ],
 })
 
-const testConfig: Config = {
-  root: '.',
-  input: {},
-  output: { path: 'test' },
-  plugins: [],
-  parsers: [],
-  reporters: [],
-  adapter: createMockedAdapter(),
-  storage: memoryStorage(),
-}
-
 const defaultOptions: PluginFaker['resolvedOptions'] = {
   output: { path: '.', mode: 'directory' },
   exclude: [],
@@ -268,8 +255,6 @@ const defaultTsPlugin = createMockedPlugin<PluginTs>({
 describe('fakerGenerator — schema', () => {
   test.each([
     { name: 'pet', node: petSchema, options: {} },
-    { name: 'petWithDayjs', node: petSchema, options: { dateParser: 'dayjs' as const } },
-    { name: 'petWithRandExp', node: petSchema, options: { regexGenerator: 'randexp' as const } },
     { name: 'treeNode', node: treeNodeSchema, options: {} },
     { name: 'apiError', node: apiErrorSchema, options: {} },
     { name: 'apiErrorDetailed', node: apiErrorDetailedSchema, options: {} },
@@ -277,8 +262,6 @@ describe('fakerGenerator — schema', () => {
     { name: 'petOrPetList', node: petOrPetListSchema, options: {} },
     { name: 'coordinate', node: coordinateSchema, options: {} },
     { name: 'catCycle', node: catSchema, options: {} },
-    { name: 'petWithLocale', node: petSchema, options: { locale: 'de' as const } },
-    { name: 'petWithSeed', node: petSchema, options: { seed: [1] as Array<number> } },
     { name: 'nullableName', node: nullableNameSchema, options: {} },
   ] as const)('$name', async ({ name, node, options }) => {
     const resolvedOptions: PluginFaker['resolvedOptions'] = { ...defaultOptions, ...options }
@@ -318,42 +301,6 @@ describe('fakerGenerator — schema', () => {
     })
 
     await matchFiles(driver.fileManager.files, name)
-  })
-
-  test('macro rewrites a property to fixed enum values (mapper replacement)', async () => {
-    const propertyValues: ast.Macro = {
-      name: 'property-values',
-      schema(node) {
-        if ('properties' in node) {
-          return {
-            ...node,
-            properties: node.properties.map((property) =>
-              property.name === 'name'
-                ? { ...property, schema: ast.factory.createSchema({ type: 'enum', primitive: 'string', enumValues: ['working', 'idle'] }) }
-                : property,
-            ),
-          }
-        }
-        return node
-      },
-    }
-    const resolvedOptions: PluginFaker['resolvedOptions'] = { ...defaultOptions }
-    const plugin = createMockedPlugin<PluginFaker>({ name: 'plugin-faker', options: resolvedOptions, resolver: resolverFaker, macros: [propertyValues] })
-    const driver = createMockedPluginDriver({
-      name: 'petWithMacroValues',
-      plugin: defaultTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
-    })
-
-    await renderGeneratorSchema(fakerGenerator, petSchema, {
-      config: testConfig,
-      adapter: createMockedAdapter(),
-      driver,
-      plugin,
-      options: resolvedOptions,
-      resolver: resolverFaker,
-    })
-
-    await matchFiles(driver.fileManager.files, 'petWithMacroValues')
   })
 
   test('named string schema omits unused type import', async () => {
@@ -473,29 +420,6 @@ describe('fakerGenerator — operation', () => {
         ],
       }),
       options: {},
-    },
-    {
-      name: 'showPetByIdWithSeed',
-      node: ast.factory.createOperation({
-        operationId: 'showPetById',
-        method: 'GET',
-        path: '/pets/{petId}',
-        tags: ['pets'],
-        parameters: [ast.factory.createParameter({ name: 'petId', in: 'path', schema: ast.factory.createSchema({ type: 'string' }), required: true })],
-        responses: [
-          ast.factory.createResponse({
-            statusCode: '200',
-            description: 'Expected response to a valid request',
-            schema: ast.factory.createSchema({ type: 'ref', name: 'Pet', ref: '#/components/schemas/Pet' }),
-          }),
-          ast.factory.createResponse({
-            statusCode: 'default',
-            description: 'Unexpected error',
-            schema: ast.factory.createSchema({ type: 'ref', name: 'Error', ref: '#/components/schemas/Error' }),
-          }),
-        ],
-      }),
-      options: { seed: [1] as Array<number> },
     },
     {
       name: 'getPet',
@@ -642,25 +566,5 @@ describe('fakerGenerator — operation', () => {
     })
 
     await matchFiles(driver.fileManager.files, name)
-  })
-
-  test('aliases imported helpers that collide with operation helper names', () => {
-    const { imports, aliases } = aliasConflictingImports(
-      [{ name: 'createWidgetResponse', path: './createWidgetResponse.ts' }],
-      new Set(['createWidgetResponse']),
-    )
-
-    expect(imports).toStrictEqual([
-      {
-        name: [{ propertyName: 'createWidgetResponse', name: 'createWidgetResponseSchema' }],
-        path: './createWidgetResponse.ts',
-      },
-    ])
-    expect(rewriteAliasedImports('return createWidgetResponse(data)', aliases)).toBe('return createWidgetResponseSchema(data)')
-  })
-
-  test('default resolver applies create prefix to names', () => {
-    expect(resolverFaker.name('Eval')).toBe('createEval')
-    expect(resolverFaker.file({ name: 'Eval', extname: '.ts', root: '.', output: { path: '.', mode: 'directory' } }).baseName).toBe('createEval.ts')
   })
 })

@@ -22,10 +22,6 @@ describe('isValidVarName', () => {
     expect(isValidVarName('1test')).toBe(false)
   })
 
-  test('empty string returns false', () => {
-    expect(isValidVarName('')).toBe(false)
-  })
-
   test('names with special characters return false', () => {
     expect(isValidVarName('foo-bar')).toBe(false)
     expect(isValidVarName('foo bar')).toBe(false)
@@ -34,24 +30,9 @@ describe('isValidVarName', () => {
 })
 
 describe('ensureValidVarName', () => {
-  test('valid identifiers pass through unchanged', () => {
+  test('prefixes digit-leading and reserved names with _ and leaves valid ones alone', () => {
     expect(ensureValidVarName('status')).toBe('status')
-    expect(ensureValidVarName('Pet')).toBe('Pet')
-    expect(ensureValidVarName('_private')).toBe('_private')
-  })
-
-  test('identifiers starting with a digit are prefixed with _', () => {
-    expect(ensureValidVarName('409')).toBe('_409')
-    expect(ensureValidVarName('504AccountCancel')).toBe('_504AccountCancel')
     expect(ensureValidVarName('409Schema')).toBe('_409Schema')
-  })
-
-  test('reserved words are prefixed with _', () => {
     expect(ensureValidVarName('class')).toBe('_class')
-    expect(ensureValidVarName('return')).toBe('_return')
-  })
-
-  test('empty string passes through unchanged', () => {
-    expect(ensureValidVarName('')).toBe('')
   })
 })

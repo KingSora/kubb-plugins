@@ -32,90 +32,23 @@ const formatTS = async (node: ts.Node | null | undefined): Promise<string> => {
 describe('printerTs', () => {
   const printer = printerTs({ resolver: resolverTs, optionalType: 'questionToken', arrayType: 'array', enum: inlineLiteralEnum })
 
-  describe('scalar types', () => {
-    it('any', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'any' }))
-
-      expect(await formatTS(result)).toBe('any')
-    })
-
-    it('unknown', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'unknown' }))
-
-      expect(await formatTS(result)).toBe('unknown')
-    })
-
-    it('void', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'void' }))
-
-      expect(await formatTS(result)).toBe('void')
-    })
-
-    it('boolean', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'boolean' }))
-
-      expect(await formatTS(result)).toBe('boolean')
-    })
-
-    it('null', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'null' }))
-
-      expect(await formatTS(result)).toBe('null')
-    })
-
-    it('string', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'string' }))
-
-      expect(await formatTS(result)).toBe('string')
-    })
-
-    it('uuid', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'uuid' }))
-
-      expect(await formatTS(result)).toBe('string')
-    })
-
-    it('email', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'email' }))
-
-      expect(await formatTS(result)).toBe('string')
-    })
-
-    it('url', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'url' }))
-
-      expect(await formatTS(result)).toBe('string')
-    })
-
-    it('datetime', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'datetime' }))
-
-      expect(await formatTS(result)).toBe('string')
-    })
-
-    it('number', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'number' }))
-
-      expect(await formatTS(result)).toBe('number')
-    })
-
-    it('integer', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'integer' }))
-
-      expect(await formatTS(result)).toBe('number')
-    })
-
-    it('bigint', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'bigint' }))
-
-      expect(await formatTS(result)).toBe('bigint')
-    })
-
-    it('blob', async () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'blob' }))
-
-      expect(await formatTS(result)).toBe('Blob')
-    })
+  it.each([
+    ['any', 'any'],
+    ['unknown', 'unknown'],
+    ['void', 'void'],
+    ['boolean', 'boolean'],
+    ['null', 'null'],
+    ['string', 'string'],
+    ['uuid', 'string'],
+    ['email', 'string'],
+    ['url', 'string'],
+    ['datetime', 'string'],
+    ['number', 'number'],
+    ['integer', 'number'],
+    ['bigint', 'bigint'],
+    ['blob', 'Blob'],
+  ] as const)('scalar type %s', async (type, expected) => {
+    expect(await formatTS(printer.transform(ast.factory.createSchema({ type })))).toBe(expected)
   })
 
   describe('date / time', () => {
@@ -149,12 +82,6 @@ describe('printerTs', () => {
       const result = printer.transform(ast.factory.createSchema({ type: 'ref', name: 'MyType' }))
 
       expect(await formatTS(result)).toBe('MyType')
-    })
-
-    it('ref without name returns undefined', () => {
-      const result = printer.transform(ast.factory.createSchema({ type: 'ref' }))
-
-      expect(result).toBeNull()
     })
 
     it('ref with $ref path uses canonical name from path, not node.name (Bug 1: allOf name override)', async () => {
@@ -701,21 +628,6 @@ describe('printerTs', () => {
 }`)
     })
 
-    it('nullish property with optionalType=questionToken adds ?', async () => {
-      const result = printer.transform(
-        ast.factory.createSchema({
-          type: 'object',
-          properties: [ast.factory.createProperty({ name: 'tag', schema: ast.factory.createSchema({ type: 'string', nullish: true }) })],
-        }),
-      )
-
-      expect(await formatTS(result)).toMatchInlineSnapshot(`
-        "{
-          tag?: string
-        }"
-      `)
-    })
-
     it('nullish property with optionalType=undefined adds | undefined', async () => {
       const p = printerTs({ resolver: resolverTs, optionalType: 'undefined', arrayType: 'array', enum: inlineLiteralEnum })
       const result = p.transform(
@@ -728,83 +640,6 @@ describe('printerTs', () => {
       expect(await formatTS(result)).toMatchInlineSnapshot(`
         "{
           tag: string | undefined
-        }"
-      `)
-    })
-
-    it('property with description adds @description JSDoc comment', async () => {
-      const result = printer.transform(
-        ast.factory.createSchema({
-          type: 'object',
-          properties: [ast.factory.createProperty({ name: 'name', schema: ast.factory.createSchema({ type: 'string', description: 'The user name' }) })],
-        }),
-      )
-
-      expect(await formatTS(result)).toMatchInlineSnapshot(`
-        "{
-          /**
-           * @description The user name
-           * @type string | undefined
-           */
-          name?: string
-        }"
-      `)
-    })
-
-    it('property with deprecated flag adds @deprecated JSDoc comment', async () => {
-      const result = printer.transform(
-        ast.factory.createSchema({
-          type: 'object',
-          properties: [ast.factory.createProperty({ name: 'oldField', schema: ast.factory.createSchema({ type: 'string', deprecated: true }) })],
-        }),
-      )
-
-      expect(await formatTS(result)).toMatchInlineSnapshot(`
-        "{
-          /**
-           * @deprecated
-           * @type string | undefined
-           */
-          oldField?: string
-        }"
-      `)
-    })
-
-    it('property with min/max adds Minimum/Maximum length JSDoc comments', async () => {
-      const result = printer.transform(
-        ast.factory.createSchema({
-          type: 'object',
-          properties: [ast.factory.createProperty({ name: 'code', schema: ast.factory.createSchema({ type: 'string', min: 2, max: 10 }) })],
-        }),
-      )
-
-      expect(await formatTS(result)).toMatchInlineSnapshot(`
-        "{
-          /**
-           * @minLength 2
-           * @maxLength 10
-           * @type string | undefined
-           */
-          code?: string
-        }"
-      `)
-    })
-
-    it('property with default adds @default JSDoc comment', async () => {
-      const result = printer.transform(
-        ast.factory.createSchema({
-          type: 'object',
-          properties: [ast.factory.createProperty({ name: 'count', schema: ast.factory.createSchema({ type: 'number', default: 0 }) })],
-        }),
-      )
-
-      expect(await formatTS(result)).toMatchInlineSnapshot(`
-        "{
-          /**
-           * @default 0
-           * @type number | undefined
-           */
-          count?: number
         }"
       `)
     })

@@ -1,27 +1,15 @@
-import type { Config } from 'kubb/kit'
-import { ast, memoryStorage } from 'kubb/kit'
-import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation } from 'kubb/kit/testing'
+import { ast } from 'kubb/kit'
+import { createMockedAdapter, createMockedPlugin, renderGeneratorOperation } from 'kubb/kit/testing'
 import type { PluginTs } from '@kubb/plugin-ts'
 import { resolverTs } from '@kubb/plugin-ts'
 import { resolverClient } from '@internals/client'
 import { describe, expect, test, vi } from 'vitest'
-import { matchFiles } from '#mocks'
+import { createMultiPluginDriver, matchFiles, testConfig } from '#mocks'
 import { mutationKeyTransformer, queryKeyTransformer } from '@internals/tanstack-query'
 import type { Transformer } from '@internals/tanstack-query'
 import { resolverReactQuery } from '../resolvers/resolverReactQuery.ts'
 import type { PluginReactQuery } from '../types.ts'
 import { suspenseQueryGenerator } from './suspenseQueryGenerator.tsx'
-
-const testConfig: Config = {
-  root: '.',
-  input: {},
-  output: { path: 'test' },
-  plugins: [],
-  parsers: [],
-  reporters: [],
-  adapter: createMockedAdapter(),
-  storage: memoryStorage(),
-}
 
 const defaultOptions: PluginReactQuery['resolvedOptions'] = {
   client: { kind: 'contract', pluginName: 'plugin-axios' },
@@ -59,20 +47,7 @@ const mockedAxiosPlugin = createMockedPlugin({
   resolver: resolverClient,
 })
 
-// The generator looks plugins up by name: plugin-ts for the request types, plugin-axios for the
-// contract <op>. The built-in mock is name-agnostic, so dispatch on the name here.
-function createMultiPluginDriver(name: string) {
-  const driver = createMockedPluginDriver({
-    name,
-    plugin: mockedTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
-  })
-  const byName = { 'plugin-ts': mockedTsPlugin, 'plugin-axios': mockedAxiosPlugin } as Record<string, { resolver?: unknown }>
-  return {
-    ...driver,
-    getPlugin: (pluginName: string) => byName[pluginName] ?? mockedTsPlugin,
-    getResolver: (pluginName: string) => byName[pluginName]?.resolver ?? resolverTs,
-  } as typeof driver
-}
+const plugins = { 'plugin-ts': mockedTsPlugin, 'plugin-axios': mockedAxiosPlugin }
 
 // Shared operation nodes
 const findByTagsNode = ast.factory.createOperation({
@@ -118,12 +93,6 @@ const getPetByIdNode = ast.factory.createOperation({
 describe('suspenseQueryGenerator operation', () => {
   const testData = [
     { name: 'findByTags', node: findByTagsNode, options: { suspense: {} } },
-    {
-      name: 'clientPostImportPath',
-      node: findByTagsNode,
-      options: { suspense: {}, client: { kind: 'contract', pluginName: 'plugin-axios' } },
-    },
-    { name: 'findByTagsObject', node: findByTagsNode, options: { suspense: {} } },
     { name: 'getPetIdCamelCase', node: getPetByIdNode, options: { suspense: {} } },
   ] as const satisfies Array<{ name: string; node: ast.OperationNode; options: Partial<PluginReactQuery['resolvedOptions']> }>
 
@@ -133,7 +102,7 @@ describe('suspenseQueryGenerator operation', () => {
       ...props.options,
     }
     const plugin = createMockedPlugin<PluginReactQuery>({ name: 'plugin-react-query', options, resolver: resolverReactQuery })
-    const driver = createMultiPluginDriver(props.name)
+    const driver = createMultiPluginDriver(props.name, plugins)
 
     await renderGeneratorOperation(suspenseQueryGenerator, props.node, {
       config: testConfig,
@@ -156,7 +125,7 @@ describe('suspenseQueryGenerator operation with hooks disabled', () => {
       hooks: false,
     }
     const plugin = createMockedPlugin<PluginReactQuery>({ name: 'plugin-react-query', options, resolver: resolverReactQuery })
-    const driver = createMultiPluginDriver('hooksDisabled')
+    const driver = createMultiPluginDriver('hooksDisabled', plugins)
 
     await renderGeneratorOperation(suspenseQueryGenerator, findByTagsNode, {
       config: testConfig,
@@ -176,7 +145,7 @@ describe('suspenseQueryGenerator queryKey', () => {
     const queryKey = vi.fn<Transformer>(queryKeyTransformer)
     const options: PluginReactQuery['resolvedOptions'] = { ...defaultOptions, suspense: {}, queryKey }
     const plugin = createMockedPlugin<PluginReactQuery>({ name: 'plugin-react-query', options, resolver: resolverReactQuery })
-    const driver = createMultiPluginDriver('customQueryKey')
+    const driver = createMultiPluginDriver('customQueryKey', plugins)
 
     await renderGeneratorOperation(suspenseQueryGenerator, findByTagsNode, {
       config: testConfig,

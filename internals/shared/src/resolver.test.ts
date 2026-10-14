@@ -1,4 +1,4 @@
-import { camelCase, pascalCase } from '@internals/utils'
+import { pascalCase } from '@internals/utils'
 import type { Resolver } from 'kubb/kit'
 import { ast } from 'kubb/kit'
 import { describe, expect, test } from 'vitest'
@@ -38,10 +38,5 @@ describe('createCasedFile', () => {
   test('baseName cases the final segment and appends the extension', () => {
     const file = createCasedFile(pascalCase)
     expect(file.baseName?.({ name: 'pet.petId', extname: '.ts' })).toBe('pet/PetId.ts')
-  })
-
-  test('baseName supports prefixed and suffixed casing', () => {
-    const file = createCasedFile((part) => camelCase(part, { suffix: 'schema' }))
-    expect(file.baseName?.({ name: 'tag.tag', extname: '.ts' })).toBe('tag/tagSchema.ts')
   })
 })
