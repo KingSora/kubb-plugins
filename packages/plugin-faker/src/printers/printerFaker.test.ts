@@ -80,6 +80,12 @@ describe('printerFaker', () => {
     )
   })
 
+  test('renders regex matches as a regex literal', () => {
+    const node = ast.factory.createSchema({ type: 'string', pattern: '^\\d{6}$' })
+
+    expect(printerFaker({ resolver: resolverFaker }).print(node)).toMatchInlineSnapshot(`"faker.helpers.fromRegExp(/^\\d{6}$/)"`)
+  })
+
   test('renders regex matches with randexp', () => {
     const node = ast.factory.createSchema({ type: 'string', pattern: '^[A-Z]+$' })
 

@@ -111,7 +111,8 @@ export type Options = OutputOptions & {
   dateParser?: 'faker' | 'dayjs' | 'moment' | (string & {})
   /**
    * Library used to generate strings that satisfy a regex `pattern` keyword.
-   * - `'faker'` uses `faker.helpers.fromRegExp`. No extra dependency.
+   * - `'faker'` uses `faker.helpers.fromRegExp`. No extra dependency. Faker does not support
+   *   shorthand classes such as `\d`, `\w`, or `\s`; use `'randexp'` for those patterns.
    * - `'randexp'` uses the `randexp` package. Supports a wider regex grammar.
    *
    * @default 'faker'

@@ -199,7 +199,7 @@ const fakerKeywordMapper = {
       return `${toRegExpString(value, 'RandExp')}.gen()`
     }
 
-    return `faker.helpers.fromRegExp("${value}")`
+    return `faker.helpers.fromRegExp(${toRegExpString(value, null)})`
   },
   email: () => 'faker.internet.email()',
   blob: () => 'faker.image.url() as unknown as Blob',
