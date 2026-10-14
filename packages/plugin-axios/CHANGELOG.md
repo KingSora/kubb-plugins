@@ -1,5 +1,11 @@
 # @kubb/plugin-axios
 
+## 5.6.1
+
+### Patch Changes
+
+- [#1118](https://github.com/kubb-labs/plugins/pull/1118) [`d056634`](https://github.com/kubb-labs/plugins/commit/d056634db6914ae014b2773c1ad776f431d3e948) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Ship declaration files for the templates so importing their types from `@kubb/plugin-fetch/templates/*` and `@kubb/plugin-axios/templates/*` no longer requires `allowImportingTsExtensions`.
+
 ## 5.6.0
 
 ### Minor Changes
