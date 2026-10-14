@@ -31,4 +31,15 @@ export default defineConfig([
     dts: false,
     ...shared,
   },
+  {
+    // Declarations for the raw templates so consumers can import their types without `allowImportingTsExtensions`.
+    entry: {
+      'templates/axios': 'templates/axios.ts',
+      'templates/serializers': 'templates/serializers.ts',
+      'templates/standardSchema': 'templates/standardSchema.ts',
+    },
+    format: 'esm',
+    fixedExtension: false,
+    dts: { emitDtsOnly: true },
+  },
 ])
