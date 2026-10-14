@@ -35,7 +35,25 @@ describe('queryKeyTransformer', () => {
       }),
     })
 
-    expect(keys('infiniteQuery', node)).toEqual(["{ url: '/pet/search', infinite: true }", '...(body ? [body] : [])'])
+    expect(keys('infiniteQuery', node)).toEqual(["{ url: '/pet/search', infinite: true }", '...(body !== undefined ? [body] : [])'])
+  })
+
+  test('keeps a falsy body in the key of a QUERY operation', () => {
+    const node = ast.factory.createOperation({
+      operationId: 'searchPets',
+      method: 'QUERY',
+      path: '/pet/search',
+      requestBody: ast.factory.createRequestBody({
+        content: [ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'string' }) })],
+      }),
+    })
+    const [, bodyEntry] = keys('query', node)
+    const keyFor = (body: unknown) => new Function('body', `return [${bodyEntry}]`)(body)
+
+    // '' and null are different inputs, so they must not share a cache entry.
+    expect(keyFor('')).toEqual([''])
+    expect(keyFor(null)).toEqual([null])
+    expect(keyFor(undefined)).toEqual([])
   })
 
   test('builds key for an operation without parameters', () => {

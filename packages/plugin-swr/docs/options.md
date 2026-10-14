@@ -62,6 +62,8 @@ HTTP methods treated as queries. An operation whose method is in this list gener
 | Required | `false`            |
 | Default  | `['GET', 'QUERY']` |
 
+Operations whose method is in neither `query.methods` nor `mutation.methods` get no hook. Keep `'QUERY'` here when overriding the list, or QUERY operations are skipped.
+
 #### query.importPath
 
 Module that `useSWR` is imported from, emitted as `import useSWR from '${importPath}'`. Relative and absolute paths are used as written, with relative paths resolved against the generated file.

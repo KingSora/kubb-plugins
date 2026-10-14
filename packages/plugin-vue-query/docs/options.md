@@ -156,6 +156,8 @@ HTTP methods treated as queries. A matching operation generates a `queryOptions`
 | Required | `false`            |
 | Default  | `['GET', 'QUERY']` |
 
+Operations whose method is in neither `query.methods` nor `mutation.methods` get no hook. Keep `'QUERY'` here when overriding the list, or QUERY operations are skipped.
+
 #### query.importPath
 
 Module specifier for the generated `import { queryOptions } from '...'`.
