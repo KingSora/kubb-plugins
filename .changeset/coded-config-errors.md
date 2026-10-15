@@ -1,5 +1,6 @@
 ---
 '@kubb/plugin-axios': patch
+'@kubb/plugin-client': patch
 '@kubb/plugin-faker': patch
 '@kubb/plugin-fetch': patch
 '@kubb/plugin-mcp': patch
