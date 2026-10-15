@@ -216,9 +216,12 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
         const refName = ast.resolveRefName(node)
 
         if (!refName) {
-          throw new Error(
-            `Name not defined for ref node "${node.ref ?? node.name ?? 'unknown'}"${this.options.schemaName ? ` in schema "${this.options.schemaName}"` : ''}`,
-          )
+          throw new Diagnostics.Error({
+            code: Diagnostics.code.pluginFailed,
+            severity: 'error',
+            message: `Name not defined for ref node "${node.ref ?? node.name ?? 'unknown'}"${this.options.schemaName ? ` in schema "${this.options.schemaName}"` : ''}.`,
+            plugin: 'plugin-faker',
+          })
         }
 
         if (this.options.schemaName && refName === this.options.schemaName) {

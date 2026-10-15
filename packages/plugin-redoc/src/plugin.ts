@@ -56,9 +56,12 @@ export const pluginRedoc = defineExtension<PluginRedoc>({
     const document = (adapter as Adapter<AdapterOas>).document
 
     if (!document) {
-      throw new Error(
-        `[${pluginRedocName}] No OpenAPI document found. The adapterOas did not produce a document — ensure the adapter has run before this plugin.`,
-      )
+      throw new Diagnostics.Error({
+        code: Diagnostics.code.pluginFailed,
+        severity: 'error',
+        message: 'No OpenAPI document found. The adapterOas did not produce a document before this plugin ran.',
+        plugin: pluginRedocName,
+      })
     }
 
     const pageHTML = getPageHTML(document)
