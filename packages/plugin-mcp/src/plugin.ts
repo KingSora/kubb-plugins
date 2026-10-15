@@ -75,7 +75,7 @@ export const pluginMcp = defineExtension<PluginMcp>({
       include,
       override,
       group: createGroupConfig(group),
-      client: resolveContractClient({ client, plugins: useConfig().plugins }),
+      client: resolveContractClient({ plugin: pluginMcpName, client, plugins: useConfig().plugins }),
       resolver,
     }
   },

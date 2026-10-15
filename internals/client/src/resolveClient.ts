@@ -15,6 +15,8 @@
  * lone registered contract client plugin is picked up automatically.
  */
 
+import { Diagnostics } from 'kubb/kit'
+
 // Canonical plugin names. They mirror the `pluginFetchName` / `pluginAxiosName` / `pluginClientName`
 // consts the plugins export, kept as literals so this internal needs no plugin install deps.
 const pluginFetchName = 'plugin-fetch'
@@ -38,9 +40,11 @@ export type ResolvedContractClient = { kind: 'contract'; pluginName: string }
  * The outcome of {@link resolveClient}.
  *
  * - `contract` names the contract client plugin whose `<op>` functions the consumer imports.
- * - `error` carries a setup diagnostic.
+ * - `error` carries a setup diagnostic: its code, what is wrong, and how to fix it.
  */
-export type ResolveClientResult = ResolvedContractClient | { kind: 'error'; message: string }
+export type ResolveClientResult =
+  | ResolvedContractClient
+  | { kind: 'error'; code: typeof Diagnostics.code.missingDependency | typeof Diagnostics.code.invalidPluginOptions; message: string; help: string }
 
 const selectorToPlugin: Record<ClientSelector, string> = {
   fetch: pluginFetchName,
@@ -63,7 +67,7 @@ const contractPlugins = [pluginFetchName, pluginAxiosName, pluginClientName] as 
  * @example
  * ```ts
  * resolveClient({ client: undefined, pluginNames: ['plugin-ts'] })
- * // { kind: 'error', message: 'No client plugin is registered…' }
+ * // { kind: 'error', code: 'KUBB_MISSING_DEPENDENCY', message: 'No client plugin is registered.', help: 'Add …' }
  * ```
  */
 export function resolveClient(options: { client: ClientSelector | undefined; pluginNames: ReadonlyArray<string> }): ResolveClientResult {
@@ -75,7 +79,9 @@ export function resolveClient(options: { client: ClientSelector | undefined; plu
     if (!has(pluginName)) {
       return {
         kind: 'error',
-        message: `\`client: '${client}'\` is set but \`@kubb/plugin-${client}\` is not registered in \`plugins\`. Add it, or drop \`client\` to use a different client plugin.`,
+        code: Diagnostics.code.missingDependency,
+        message: `\`client: '${client}'\` is set but \`@kubb/plugin-${client}\` is not registered in \`plugins\`.`,
+        help: `Add \`@kubb/plugin-${client}\` to \`plugins\`, or drop \`client\` to use a different client plugin.`,
       }
     }
     return { kind: 'contract', pluginName }
@@ -85,7 +91,9 @@ export function resolveClient(options: { client: ClientSelector | undefined; plu
   if (client !== undefined) {
     return {
       kind: 'error',
-      message: `Option \`client\` is ${typeof client === 'string' ? `'${client}'` : String(client)}, but it must be one of 'fetch', 'axios', 'client'. Drop \`client\` to use the registered client plugin.`,
+      code: Diagnostics.code.invalidPluginOptions,
+      message: `Option \`client\` is ${typeof client === 'string' ? `'${client}'` : String(client)}, but it must be one of 'fetch', 'axios', 'client'.`,
+      help: 'Set `client` to one of those values, or drop it to use the registered client plugin.',
     }
   }
 
@@ -97,28 +105,37 @@ export function resolveClient(options: { client: ClientSelector | undefined; plu
   if (registered.length > 1) {
     return {
       kind: 'error',
-      message: `Multiple client plugins are registered (${registered.map((name) => `\`@kubb/${name}\``).join(', ')}). Set \`client: 'fetch' | 'axios' | 'client'\` to choose which client the hooks call, or register a single client plugin.`,
+      code: Diagnostics.code.invalidPluginOptions,
+      message: `Multiple client plugins are registered (${registered.map((name) => `\`@kubb/${name}\``).join(', ')}) and \`client\` is not set.`,
+      help: "Set `client: 'fetch' | 'axios' | 'client'` to choose which client the hooks call, or register a single client plugin.",
     }
   }
 
   return {
     kind: 'error',
-    message:
-      'No client plugin is registered. Add `@kubb/plugin-axios`, `@kubb/plugin-fetch`, or `@kubb/plugin-client` to `plugins` so the generated code has an HTTP client to call.',
+    code: Diagnostics.code.missingDependency,
+    message: 'No client plugin is registered.',
+    help: 'Add `@kubb/plugin-fetch`, `@kubb/plugin-axios`, or `@kubb/plugin-client` to `plugins` so the generated code has an HTTP client to call.',
   }
 }
 
 /**
- * Resolves the contract client during a consumer plugin's setup hook. Extracts the plugin names
- * from the raw `plugins` config, applies {@link resolveClient}, and throws the diagnostic on a
- * misconfiguration so every consumer fails fast with the same message.
+ * Resolves the contract client during a consumer plugin's setup hook.
+ * It extracts the plugin names from the raw `plugins` config and applies {@link resolveClient}.
+ * On a misconfiguration it throws a config diagnostic tagged with `plugin`, so every consumer
+ * fails fast with the same message.
  */
-export function resolveContractClient(options: { client: ClientSelector | undefined; plugins?: ReadonlyArray<unknown> }): ResolvedContractClient {
-  const { client, plugins = [] } = options
+export function resolveContractClient(options: {
+  plugin: string
+  client: ClientSelector | undefined
+  plugins?: ReadonlyArray<unknown>
+}): ResolvedContractClient {
+  const { plugin, client, plugins = [] } = options
   const pluginNames = plugins.map((plugin) => (plugin as { name?: string }).name).filter((name): name is string => Boolean(name))
   const resolved = resolveClient({ client, pluginNames })
   if (resolved.kind === 'error') {
-    throw new Error(resolved.message)
+    const { code, message, help } = resolved
+    throw new Diagnostics.Error({ code, severity: 'error', message, help, location: { kind: 'config' }, plugin })
   }
   return resolved
 }

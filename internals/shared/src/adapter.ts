@@ -1,4 +1,4 @@
-import type { Adapter } from 'kubb/kit'
+import { type Adapter, Diagnostics } from 'kubb/kit'
 import type { AdapterOas } from '@kubb/adapter-oas'
 
 /**
@@ -15,7 +15,13 @@ import type { AdapterOas } from '@kubb/adapter-oas'
  */
 export function getOasAdapter(adapter: Adapter): Adapter<AdapterOas> {
   if (adapter.name !== 'oas') {
-    throw new Error(`Expected the OpenAPI adapter (adapterOas), but received "${adapter.name}". Configure \`adapter: adapterOas()\` in your Kubb config.`)
+    throw new Diagnostics.Error({
+      code: Diagnostics.code.adapterRequired,
+      severity: 'error',
+      message: `Expected the OpenAPI adapter (adapterOas), but received "${adapter.name}".`,
+      help: 'Set `adapter: adapterOas()` in kubb.config.ts.',
+      location: { kind: 'config' },
+    })
   }
 
   return adapter as Adapter<AdapterOas>
