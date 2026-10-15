@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { createSdkGenerator, defaultMacros, resolverClient } from '@internals/client'
 import { createGroupConfig } from '@internals/shared'
-import { addGenerator, defineExtension, injectFile, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { addGenerator, assertPluginOption, defineExtension, injectFile, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
@@ -41,9 +41,9 @@ export const pluginAxiosName = 'plugin-axios' satisfies PluginAxios['name']
 export const pluginAxios = defineExtension<PluginAxios>({
   kind: 'plugin',
   meta: { name: pluginAxiosName, version, compatibility },
-  // Both are ordering hints, skipped when the plugin is not in the pipeline. `plugin-ts` supplies
-  // the operation types unless it is absent, in which case `pluginZod({ inferred: true })` does.
-  dependencies: { [pluginTsName]: { optional: true }, [pluginZodName]: { optional: true } },
+  // `plugin-ts` supplies the operation types unless it is absent, in which case `pluginZod({ inferred: true })`
+  // does. `plugin-zod` is required once `validator` is set, so a missing one fails setup instead of codegen.
+  dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !options.validator } }),
   setup(options) {
     const config = useConfig()
     const {
@@ -72,6 +72,21 @@ export const pluginAxios = defineExtension<PluginAxios>({
       returnType,
       sdk: sdk ? { mode: sdk.mode ?? 'tag', name: sdk.name } : undefined,
       resolver: userResolver ? Resolver.merge<ResolverClient>(resolverClient, userResolver) : resolverClient,
+    }
+
+    assertPluginOption({
+      plugin: pluginAxiosName,
+      option: 'returnType',
+      value: returnType,
+      allowed: ['full', 'data', 'plain'] satisfies Array<ResolvedOptions['returnType']>,
+    })
+    if (resolved.sdk) {
+      assertPluginOption({
+        plugin: pluginAxiosName,
+        option: 'sdk.mode',
+        value: resolved.sdk.mode,
+        allowed: ['tag', 'flat'] satisfies Array<NonNullable<ResolvedOptions['sdk']>['mode']>,
+      })
     }
 
     setResolver(resolved.resolver)
