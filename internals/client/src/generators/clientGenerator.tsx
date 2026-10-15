@@ -8,7 +8,7 @@ import { buildValidatorHooks } from '../builders/validator.ts'
 import { resolveRequestValidator, resolveResponseValidator } from '../builders/validatorOptions.ts'
 import { getOperationSecurity, type SecurityDocument } from '../builders/security.ts'
 import { Operation } from '../components/Operation.tsx'
-import { MISSING_OPERATION_TYPES_WARNING, resolveOperationTypes } from '../resolveOperationTypes.ts'
+import { resolveOperationTypes } from '../resolveOperationTypes.ts'
 import type { ContractClientFactory } from '../types.ts'
 
 /**
@@ -32,11 +32,7 @@ export function createClientGenerator<TFactory extends ContractClientFactory>(
       const { config, driver, resolver, root } = ctx
       const { output, validator, returnType, throwOnErrorDefault, group } = ctx.options
 
-      const types = resolveOperationTypes(driver)
-      if (!types) {
-        ctx.warn(MISSING_OPERATION_TYPES_WARNING)
-        return null
-      }
+      const types = resolveOperationTypes(driver, ctx.plugin.name)
 
       const validatorEnabled = resolveResponseValidator(validator) === 'zod' || resolveRequestValidator(validator) === 'zod'
       const pluginZod = validatorEnabled ? driver.getPlugin(pluginZodName) : null

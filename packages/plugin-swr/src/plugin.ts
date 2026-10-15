@@ -67,7 +67,7 @@ export const pluginSwr = defineExtension<PluginSwr>({
 
     return {
       output,
-      client: resolveContractClient({ client, plugins: useConfig().plugins }),
+      client: resolveContractClient({ plugin: pluginSwrName, client, plugins: useConfig().plugins }),
       queryKey,
       query: resolveQueryConfig(query, { importPath: 'swr' }),
       mutationKey,

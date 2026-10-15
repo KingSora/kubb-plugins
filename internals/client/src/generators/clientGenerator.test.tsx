@@ -3,7 +3,7 @@ import { ast, memoryStorage } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation } from 'kubb/kit/testing'
 import type { PluginTs } from '@kubb/plugin-ts'
 import { resolverTs } from '@kubb/plugin-ts'
-import { describe, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { matchFiles } from '#mocks'
 import { resolverClient } from '../resolver.ts'
 import type { SecurityDocument } from '../builders/security.ts'
@@ -257,5 +257,28 @@ describe('clientGenerator with a custom client module', () => {
     })
 
     await matchFiles(driver.fileManager.files, 'getPetByIdPlainCustomClientPath')
+  })
+})
+
+describe('clientGenerator without an operation type source', () => {
+  test('throws KUBB_MISSING_DEPENDENCY when neither plugin-ts nor an inferred plugin-zod is registered', async () => {
+    const plugin = createMockedPlugin<PluginFetch>({ name: 'plugin-fetch', options: defaultOptions, resolver: resolverClient })
+
+    await expect(
+      renderGeneratorOperation(clientGenerator, getPetByIdNode, {
+        config: testConfig,
+        adapter: createMockedAdapter(),
+        driver: createMockedPluginDriver({ name: 'missingOperationTypes' }),
+        plugin,
+        options: defaultOptions,
+        resolver: resolverClient,
+      }),
+    ).rejects.toMatchObject({
+      diagnostic: {
+        code: 'KUBB_MISSING_DEPENDENCY',
+        message: 'Plugin "plugin-fetch" has no source for operation types.',
+        help: 'Add pluginTs() before it, or pluginZod({ inferred: true }).',
+      },
+    })
   })
 })

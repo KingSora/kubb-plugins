@@ -1,4 +1,4 @@
-import type { ast, Generator, Group, Output, Resolver } from 'kubb/kit'
+import { type ast, Diagnostics, type Generator, type Group, type Output, type Resolver } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import type { ContractClientFactory } from './types.ts'
@@ -42,29 +42,22 @@ export type OperationTypeSource = OperationTypeNames & {
 }
 
 /**
- * Warning a client generator reports when neither plugin can supply the operation types, so the
- * pipeline says why nothing was generated instead of silently emitting no files.
- */
-export const MISSING_OPERATION_TYPES_WARNING =
-  'Skipped: no operation types available. Add `pluginTs()`, or `pluginZod({ inferred: true })` to type the client from its zod schemas.'
-
-/**
  * Picks the plugin a generated client takes its `Options` and `Responses` types from.
  *
  * `plugin-ts` wins whenever it is in the pipeline, so existing configs keep the types they generate
  * today. Without it, `pluginZod({ inferred: true })` takes over: its inferred options and responses
  * types are built from the same shared schemas as the `plugin-ts` ones, so a client typed off
  * `z.infer` carries what the codecs decode to (a `Temporal` instance, a `Date`) rather than the raw
- * wire type. Returns `null` when neither is available, leaving the caller nothing to type against.
+ * wire type. Throws `KUBB_MISSING_DEPENDENCY` for `pluginName` when neither is available, since the
+ * client has nothing to type against.
  *
  * @example
  * ```ts
- * const types = resolveOperationTypes(ctx.driver)
- * if (!types) return null
+ * const types = resolveOperationTypes(ctx.driver, ctx.plugin.name)
  * types.response.options(node) // 'GetPetByIdOptions', or 'GetPetByIdOptionsSchemaType' from zod
  * ```
  */
-export function resolveOperationTypes(driver: GeneratorDriver): OperationTypeSource | null {
+export function resolveOperationTypes(driver: GeneratorDriver, pluginName: string): OperationTypeSource {
   const pluginTs = driver.getPlugin(pluginTsName)
 
   if (pluginTs) {
@@ -80,7 +73,16 @@ export function resolveOperationTypes(driver: GeneratorDriver): OperationTypeSou
 
   const pluginZod = driver.getPlugin(pluginZodName)
 
-  if (!pluginZod?.options?.inferred) return null
+  if (!pluginZod?.options?.inferred) {
+    throw new Diagnostics.Error({
+      code: Diagnostics.code.missingDependency,
+      severity: 'error',
+      message: `Plugin "${pluginName}" has no source for operation types.`,
+      help: 'Add pluginTs() before it, or pluginZod({ inferred: true }).',
+      location: { kind: 'config' },
+      plugin: pluginName,
+    })
+  }
 
   const resolver = driver.getResolver(pluginZodName)
 

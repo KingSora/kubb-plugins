@@ -72,7 +72,7 @@ export const pluginVueQuery = defineExtension<PluginVueQuery>({
 
     return {
       output,
-      client: resolveContractClient({ client, plugins: useConfig().plugins }),
+      client: resolveContractClient({ plugin: pluginVueQueryName, client, plugins: useConfig().plugins }),
       queryKey,
       query: resolveQueryConfig(query, { importPath: '@tanstack/vue-query' }),
       mutationKey,

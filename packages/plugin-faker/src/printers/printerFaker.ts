@@ -1,6 +1,6 @@
 import { mapSchemaItems, mapSchemaMembers } from '@internals/shared'
 import { buildObject, objectKey, stringify, toRegExpString } from '@internals/utils'
-import { ast, containsCircularRef } from 'kubb/kit'
+import { ast, containsCircularRef, Diagnostics } from 'kubb/kit'
 import type { PluginFaker, ResolverFaker } from '../types.ts'
 
 /**
@@ -84,13 +84,21 @@ function dateTimeCall(
   representation: 'date' | 'string',
   { format, substring }: { format: string; substring: string },
   parser: PluginFaker['resolvedOptions']['dateParser'] = 'faker',
+  schemaName?: string,
 ): string {
   if (representation === 'string') {
     return parser !== 'faker' ? `${parser}(faker.date.anytime()).format("${format}")` : `faker.date.anytime().toISOString().substring(${substring})`
   }
 
   if (parser !== 'faker') {
-    throw new Error(`type '${representation}' and parser '${parser}' can not work together`)
+    throw new Diagnostics.Error({
+      code: Diagnostics.code.invalidPluginOptions,
+      severity: 'error',
+      message: `Option \`dateParser: '${parser}'\` cannot format the adapter's \`dateType: 'date'\` values${schemaName ? ` in schema "${schemaName}"` : ''}.`,
+      help: "Set adapterOas({ dateType: 'string' }) or remove `dateParser`.",
+      location: { kind: 'config' },
+      plugin: 'plugin-faker',
+    })
   }
 
   return 'faker.date.anytime()'
@@ -195,10 +203,10 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
       blob: () => 'faker.image.url() as unknown as Blob',
       datetime: () => 'faker.date.anytime().toISOString()',
       date(node) {
-        return dateTimeCall(node.representation ?? 'string', { format: 'YYYY-MM-DD', substring: '0, 10' }, this.options.dateParser)
+        return dateTimeCall(node.representation ?? 'string', { format: 'YYYY-MM-DD', substring: '0, 10' }, this.options.dateParser, this.options.schemaName)
       },
       time(node) {
-        return dateTimeCall(node.representation ?? 'string', { format: 'HH:mm:ss', substring: '11, 19' }, this.options.dateParser)
+        return dateTimeCall(node.representation ?? 'string', { format: 'HH:mm:ss', substring: '11, 19' }, this.options.dateParser, this.options.schemaName)
       },
       ref(node) {
         // `resolveRefName` prefers the node's `targetName` (set for collision or macro renames),
@@ -208,7 +216,9 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
         const refName = ast.resolveRefName(node)
 
         if (!refName) {
-          throw new Error('Name not defined for ref node')
+          throw new Error(
+            `Name not defined for ref node "${node.ref ?? node.name ?? 'unknown'}"${this.options.schemaName ? ` in schema "${this.options.schemaName}"` : ''}`,
+          )
         }
 
         if (this.options.schemaName && refName === this.options.schemaName) {
