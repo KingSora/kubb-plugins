@@ -1,5 +1,3 @@
-import { copyFile } from 'node:fs/promises'
-import path from 'node:path'
 import { defineConfig, type UserConfig } from 'tsdown'
 
 const entry = {
@@ -35,14 +33,11 @@ export default defineConfig([
   },
   {
     // Declarations get their own build: `keepNames` leaks an untyped `__name` helper into .d.ts/.d.cts files.
-    // The .d.cts is a copy of the .d.ts, so one TypeScript program serves both formats instead of two at once.
     entry,
-    format: 'esm',
+    format: ['esm', 'cjs'],
     ...shared,
     outputOptions: {},
-    dts: { emitDtsOnly: true },
-    hooks: {
-      'build:done': ({ options }) => copyFile(path.join(options.outDir, 'index.d.ts'), path.join(options.outDir, 'index.d.cts')),
-    },
+    // Root tsconfig `paths` would resolve from this package; without the base every bundled @internals file gets its own TypeScript program.
+    dts: { emitDtsOnly: true, compilerOptions: { baseUrl: '../..' } },
   },
 ])
