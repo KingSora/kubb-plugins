@@ -1,5 +1,14 @@
 # @kubb/plugin-fetch
 
+## 5.6.4
+
+### Patch Changes
+
+- [#1139](https://github.com/kubb-labs/plugins/pull/1139) [`cd003f2`](https://github.com/kubb-labs/plugins/commit/cd003f29b011cc911f8946f9e7627b0ae460a414) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Require Node.js 22.12 or higher.
+- Updated dependencies [[`cd003f2`](https://github.com/kubb-labs/plugins/commit/cd003f29b011cc911f8946f9e7627b0ae460a414)]:
+  - @kubb/plugin-ts@5.0.14
+  - @kubb/plugin-zod@5.4.12
+
 ## 5.6.3
 
 ### Patch Changes
