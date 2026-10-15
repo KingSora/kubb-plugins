@@ -1,5 +1,13 @@
 # @kubb/plugin-redoc
 
+## 5.0.10
+
+### Patch Changes
+
+- [#1131](https://github.com/kubb-labs/plugins/pull/1131) [`5c9ae77`](https://github.com/kubb-labs/plugins/commit/5c9ae772af531103fd2584cdac0475dbf9c7dea6) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Config mistakes now fail with a diagnostic code and a fix instead of a plugin crash. A client plugin without `pluginTs()` or `pluginZod({ inferred: true })` now fails instead of generating nothing.
+
+- [#1122](https://github.com/kubb-labs/plugins/pull/1122) [`94dcb86`](https://github.com/kubb-labs/plugins/commit/94dcb86a6625f98305da7bbbd747ac36ff460673) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Internal cleanup: remove unused code. Generated output is unchanged.
+
 ## 5.0.9
 
 ### Patch Changes
