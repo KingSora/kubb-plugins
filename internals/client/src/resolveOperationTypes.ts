@@ -78,7 +78,7 @@ export function resolveOperationTypes(driver: GeneratorDriver, pluginName: strin
       code: Diagnostics.code.missingDependency,
       severity: 'error',
       message: `Plugin "${pluginName}" has no source for operation types.`,
-      help: 'Add pluginTs() before it, or pluginZod({ inferred: true }).',
+      help: `Add \`pluginTs()\` before "${pluginName}", or add \`pluginZod({ inferred: true })\`.`,
       location: { kind: 'config' },
       plugin: pluginName,
     })

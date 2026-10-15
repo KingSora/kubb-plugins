@@ -219,7 +219,7 @@ export const printerFaker: (options: PrinterFakerOptions) => ast.Printer<Printer
           throw new Diagnostics.Error({
             code: Diagnostics.code.pluginFailed,
             severity: 'error',
-            message: `Name not defined for ref node "${node.ref ?? node.name ?? 'unknown'}"${this.options.schemaName ? ` in schema "${this.options.schemaName}"` : ''}.`,
+            message: `Ref node "${node.ref ?? node.name ?? 'unknown'}"${this.options.schemaName ? ` in schema "${this.options.schemaName}"` : ''} has no name.`,
             plugin: 'plugin-faker',
           })
         }

@@ -277,7 +277,7 @@ describe('clientGenerator without an operation type source', () => {
       diagnostic: {
         code: 'KUBB_MISSING_DEPENDENCY',
         message: 'Plugin "plugin-fetch" has no source for operation types.',
-        help: 'Add pluginTs() before it, or pluginZod({ inferred: true }).',
+        help: 'Add `pluginTs()` before "plugin-fetch", or add `pluginZod({ inferred: true })`.',
       },
     })
   })

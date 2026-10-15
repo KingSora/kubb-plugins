@@ -120,9 +120,10 @@ export function resolveClient(options: { client: ClientSelector | undefined; plu
 }
 
 /**
- * Resolves the contract client during a consumer plugin's setup hook. Extracts the plugin names
- * from the raw `plugins` config, applies {@link resolveClient}, and throws a coded config
- * diagnostic for `plugin` on a misconfiguration so every consumer fails fast with the same message.
+ * Resolves the contract client during a consumer plugin's setup hook.
+ * It extracts the plugin names from the raw `plugins` config and applies {@link resolveClient}.
+ * On a misconfiguration it throws a config diagnostic tagged with `plugin`, so every consumer
+ * fails fast with the same message.
  */
 export function resolveContractClient(options: {
   plugin: string

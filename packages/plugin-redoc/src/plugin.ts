@@ -59,7 +59,7 @@ export const pluginRedoc = defineExtension<PluginRedoc>({
       throw new Diagnostics.Error({
         code: Diagnostics.code.pluginFailed,
         severity: 'error',
-        message: 'No OpenAPI document found. The adapterOas did not produce a document before this plugin ran.',
+        message: `No OpenAPI document found. \`adapterOas\` did not produce a document before ${pluginRedocName} ran.`,
         plugin: pluginRedocName,
       })
     }
