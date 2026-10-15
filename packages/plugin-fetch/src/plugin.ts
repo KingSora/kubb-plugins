@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { createSdkGenerator, defaultMacros, resolverClient } from '@internals/client'
+import { createSdkGenerator, defaultMacros, isValidatorEnabled, resolverClient } from '@internals/client'
 import { createGroupConfig } from '@internals/shared'
 import { addGenerator, assertPluginOption, defineExtension, injectFile, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
 import { compatibility } from '../kubb-extension.json'
@@ -42,8 +42,8 @@ export const pluginFetch = defineExtension<PluginFetch>({
   kind: 'plugin',
   meta: { name: pluginFetchName, version, compatibility },
   // `plugin-ts` supplies the operation types unless it is absent, in which case `pluginZod({ inferred: true })`
-  // does. `plugin-zod` is required once `validator` is set, so a missing one fails setup instead of codegen.
-  dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !options.validator } }),
+  // does. `plugin-zod` is required once `validator` enables a direction, so a missing one fails setup instead of codegen.
+  dependencies: (options) => ({ [pluginTsName]: { optional: true }, [pluginZodName]: { optional: !isValidatorEnabled(options.validator) } }),
   setup(options) {
     const config = useConfig()
     const {
@@ -74,12 +74,18 @@ export const pluginFetch = defineExtension<PluginFetch>({
       resolver: userResolver ? Resolver.merge<ResolverClient>(resolverClient, userResolver) : resolverClient,
     }
 
-    assertPluginOption({
-      plugin: pluginFetchName,
-      option: 'returnType',
-      value: returnType,
-      allowed: ['full', 'data', 'plain'] satisfies Array<ResolvedOptions['returnType']>,
-    })
+    const allowedReturnTypes = ['full', 'data', 'plain'] satisfies Array<ResolvedOptions['returnType']>
+    assertPluginOption({ plugin: pluginFetchName, option: 'returnType', value: returnType, allowed: allowedReturnTypes })
+    // An override replaces `returnType` per operation, so its values are checked too.
+    for (const [index, entry] of override.entries()) {
+      if (entry.options.returnType === undefined) continue
+      assertPluginOption({
+        plugin: pluginFetchName,
+        option: `override[${index}].options.returnType`,
+        value: entry.options.returnType,
+        allowed: allowedReturnTypes,
+      })
+    }
     if (resolved.sdk) {
       assertPluginOption({
         plugin: pluginFetchName,
