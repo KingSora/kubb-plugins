@@ -21,7 +21,6 @@ import {
   strictOneOfNode,
   STRING_FORMAT_CALLS,
 } from '../utils.ts'
-import type { AdapterOas } from '@kubb/adapter-oas'
 
 /**
  * Partial map of node-type overrides for the Zod printer.
@@ -80,7 +79,7 @@ export type PrinterZodOptions = {
   /**
    * Date format in the OpenAPI spec (`'date'` or `'date-time'`).
    */
-  dateType?: AdapterOas['resolvedOptions']['dateType']
+  dateType?: ast.ParserOptions['dateType']
   /**
    * Transforms raw schema names into valid JavaScript identifiers.
    */
