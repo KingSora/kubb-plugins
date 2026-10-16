@@ -7,7 +7,7 @@ import type { Pet } from '../Pet'
 
 export type FindPetsByTagsQuery = {
   /**
-   * @description Tags to filter by
+   * @description Tags to filter by. Tags may contain reserved characters such as `/`, which are sent unencoded.
    * @type array | undefined
    */
   tags?: string[]

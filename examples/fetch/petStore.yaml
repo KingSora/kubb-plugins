@@ -163,9 +163,10 @@ paths:
       parameters:
         - name: tags
           in: query
-          description: Tags to filter by
+          description: Tags to filter by. Tags may contain reserved characters such as `/`, which are sent unencoded.
           required: false
           explode: true
+          allowReserved: true
           schema:
             type: array
             items:

@@ -29,6 +29,15 @@ describe('buildStyles', () => {
     expect(buildStyles({ node })).toBe('{ header: { "X-Ids": { explode: true } }, cookie: { session_id: { explode: false } } }')
   })
 
+  test('emits allowReserved for query parameters only', () => {
+    const node = createOperation([
+      { name: 'path', in: 'query', schema: stringSchema(), allowReserved: true },
+      { name: 'tags', in: 'query', schema: stringSchema(), explode: false, allowReserved: false },
+      { name: 'id', in: 'path', schema: stringSchema(), allowReserved: true },
+    ])
+    expect(buildStyles({ node })).toBe('{ query: { path: { allowReserved: true }, tags: { explode: false, allowReserved: false } } }')
+  })
+
   test('quotes a query key that is not a bare identifier', () => {
     const node = createOperation([{ name: '2fa', in: 'query', schema: stringSchema(), explode: true }])
     expect(buildStyles({ node })).toBe('{ query: { "2fa": { explode: true } } }')
