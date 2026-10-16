@@ -22,7 +22,7 @@ export function findPetsByTags<ThrowOnError extends boolean = true>(
       method: 'GET',
       url: '/pet/findByTags',
       security: [{ type: 'oauth2' }],
-      styles: { query: { tags: { explode: true } } },
+      styles: { query: { tags: { explode: true, allowReserved: true } } },
       ...config,
       throwOnError: config.throwOnError ?? true,
     }) as Promise<RequestResult<FindPetsByTagsResponses, ThrowOnError>>,
