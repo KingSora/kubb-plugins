@@ -1,5 +1,11 @@
 # @kubb/plugin-axios
 
+## 5.6.5
+
+### Patch Changes
+
+- [#1124](https://github.com/kubb-labs/plugins/pull/1124) [`d7faeeb`](https://github.com/kubb-labs/plugins/commit/d7faeeb2771132e3cee2c5b17076d95b0a432d62) Thanks [@mohammad-naji7](https://github.com/mohammad-naji7)! - Emit `allowReserved` for query parameters in the generated `styles`, so the runtime keeps reserved characters in those values unencoded.
+
 ## 5.6.4
 
 ### Patch Changes
