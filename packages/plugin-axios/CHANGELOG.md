@@ -1,5 +1,23 @@
 # @kubb/plugin-axios
 
+## 5.7.0
+
+### Minor Changes
+
+- [#1143](https://github.com/kubb-labs/plugins/pull/1143) [`4a2c7ad`](https://github.com/kubb-labs/plugins/commit/4a2c7adac45c328df5839bd98aa10fe03d923af1) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Export `defaultTransport` from the generated `.kubb/client.ts`.
+  
+  With `@kubb/plugin-fetch`, wrap it in a custom transport to add tracing or other behavior and keep the built-in `fetch` send and response parsing:
+  
+  ```ts
+  import { client, defaultTransport } from './gen/.kubb/client'
+  
+  client.setConfig({
+    transport: (request) => withSpan(request, () => defaultTransport(request)),
+  })
+  ```
+  
+  With `@kubb/plugin-axios`, `defaultTransport` is the `axios.create()` instance the default `client` sends through. Add axios interceptors or defaults to it directly. `createClientCore` accepts a matching `defaultTransport` option.
+
 ## 5.6.5
 
 ### Patch Changes
