@@ -814,7 +814,7 @@ async function parseResponse(response: Response, responseType?: ResponseType): P
 /**
  * The default transport that sends the resolved request through `globalThis.fetch` and returns the parsed body with the native request and response.
  */
-const defaultTransport: Transport = async (request: ResolvedRequest): Promise<TransportResult> => {
+export const defaultTransport: Transport = async (request: ResolvedRequest): Promise<TransportResult> => {
   const init: RequestInit = {
     ...request.options, // cache, mode, redirect, keepalive, duplex, next, …
     method: request.method,

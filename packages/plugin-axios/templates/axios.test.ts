@@ -51,6 +51,15 @@ function toFailingSchema(message = 'invalid') {
 }
 
 describe('createClientCore', () => {
+  test('sends through defaultTransport and gives createClient a fresh instance', async () => {
+    const { instance, request } = fakeAxios()
+    const client = createClientCore({ defaultTransport: instance })
+    await client({ method: 'GET', url: '/pet' })
+    expect(request).toHaveBeenCalledOnce()
+
+    expect(client.createClient().getConfig()).not.toHaveProperty('defaultTransport')
+  })
+
   test('returns errors for a non-throwing call and honors a per-call override', async () => {
     const { instance } = fakeAxios({ data: { message: 'invalid' }, status: 405 })
     const client = createClientCore({ transport: instance })
