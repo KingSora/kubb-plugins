@@ -13,16 +13,13 @@ function toKey(name: string, location: StyledLocation): string {
   return isValidVarName(key) ? key : JSON.stringify(key)
 }
 
-// TODO: drop once the `@kubb/ast` release that adds `ParameterNode.allowReserved` (kubb-labs/kubb#4304) is installable.
-type ReservedParameterNode = ast.ParameterNode & { allowReserved?: boolean }
-
 /**
  * Serializes one parameter's metadata into a `{ style, explode, allowReserved }` literal, or `null`
  * when the parameter carries none. Path and query carry the serialization `style`; header and cookie
  * use a fixed style (`simple` and `form`), so only `explode` is emitted for them. `allowReserved`
  * only applies to query parameters.
  */
-function serializeParameter(parameter: ReservedParameterNode): string | null {
+function serializeParameter(parameter: ast.ParameterNode): string | null {
   const parts: Array<string> = []
   if ((parameter.in === 'path' || parameter.in === 'query') && parameter.style) parts.push(`style: '${parameter.style}'`)
   if (parameter.explode !== undefined) parts.push(`explode: ${parameter.explode}`)
