@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-swr",
-  "version": "5.2.0",
+  "version": "5.4.3",
   "description": "Generate type-safe SWR hooks with Kubb. Covers useSWR and useSWRMutation with full TypeScript support.",
   "keywords": [
     "code-generation",
@@ -15,7 +15,7 @@
     "use-swr",
     "use-swr-mutation"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-swr",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-swr",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -39,6 +39,8 @@
   ],
   "files": [
     "dist",
+    "kubb-extension.json",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -60,11 +62,17 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json"
   },
   "publishConfig": {
     "access": "public",
@@ -89,7 +97,7 @@
   },
   "peerDependencies": {
     "kubb": "catalog:",
-    "swr": "^2.0.0"
+    "swr": "^2.2.0"
   },
   "peerDependenciesMeta": {
     "swr": {
@@ -97,6 +105,6 @@
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

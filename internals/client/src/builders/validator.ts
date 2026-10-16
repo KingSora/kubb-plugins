@@ -2,7 +2,7 @@ import { getOperationParameters } from '@internals/shared'
 import type { ast } from 'kubb/kit'
 import type { ResolverZod } from '@kubb/plugin-zod'
 import type { ValidatorOptions } from '../types.ts'
-import { buildZodErrorParse, buildZodResponseParse, resolveParamsValidator, resolveRequestValidator, resolveResponseValidator } from './validatorOptions.ts'
+import { buildZodErrorParse, resolveParamsValidator, resolveRequestValidator, resolveResponseValidator } from './validatorOptions.ts'
 
 /**
  * The per-call validator references a generated function wires into its request config. Each hook is
@@ -61,7 +61,12 @@ export function buildValidatorHooks({
   zodResolver: ResolverZod | null | undefined
 }): ValidatorHooks {
   const hasRequestBody = Boolean(node.requestBody?.content?.[0]?.schema)
-  const request = zodResolver && resolveRequestValidator(validator) === 'zod' && hasRequestBody ? zodResolver.response.body(node) : null
+  const parsesResponse = zodResolver && resolveResponseValidator(validator) === 'zod'
+
+  // Success responses validate with the success-only `<operation>ResponseSchema`; error bodies are never zod-parsed on the throw path.
+  const response = parsesResponse ? zodResolver.response.response(node) || null : null
+  const error = parsesResponse ? buildZodErrorParse(node, zodResolver) : null
+  const request = zodResolver && resolveRequestValidator(validator) === 'zod' && hasRequestBody ? zodResolver.response.body(node) || null : null
 
   const paramGroups = getOperationParameters(node)
   const resolveParamsName = (kind: 'path' | 'query' | 'headers', params: Array<ast.ParameterNode>): string | null =>
@@ -70,15 +75,8 @@ export function buildValidatorHooks({
   const query = resolveParamsName('query', paramGroups.query)
   const headers = resolveParamsName('headers', paramGroups.header)
 
-  const responseParse = zodResolver && resolveResponseValidator(validator) === 'zod' ? buildZodResponseParse(node, zodResolver) : null
-  const response = responseParse ? responseParse.expression : null
-
-  const errorParse = zodResolver && resolveResponseValidator(validator) === 'zod' ? buildZodErrorParse(node, zodResolver) : null
-  const error = errorParse ? errorParse.expression : null
-
-  const importedZodNames = [...(responseParse?.importNames ?? []), ...(errorParse?.importNames ?? []), request, path, query, headers].filter(
-    (name): name is string => Boolean(name),
-  )
+  // Order is output: the generated file imports the response schema, then the error schema, then the request body and params schemas.
+  const importedZodNames = [response, error, request, path, query, headers].filter((name): name is string => Boolean(name))
 
   const headersValidator = headers ? `toHeadersStandardSchema(${headers}, ${headers}.shape)` : null
 

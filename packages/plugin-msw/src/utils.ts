@@ -1,6 +1,4 @@
-import { ast } from 'kubb/kit'
-import type { ResolverFaker } from '@kubb/plugin-faker'
-import type { PluginMsw } from './types.ts'
+import type { ast } from 'kubb/kit'
 
 /**
  * Gets the content type from a response, defaulting to 'application/json' if a schema exists.
@@ -36,29 +34,25 @@ function getResponseContentType(response: ast.ResponseNode | null | undefined): 
 }
 
 /**
- * Converts an HTTP method to its lowercase MSW equivalent (e.g., 'POST' → 'post').
+ * Converts an HTTP method to its lowercase MSW equivalent (e.g., 'POST' → 'post'). MSW has no
+ * `http.query`, so a QUERY operation maps to `http.all` and its handler checks the method itself.
  */
-export function getMswMethod(node: ast.OperationNode): string {
-  return ast.isHttpOperationNode(node) ? node.method.toLowerCase() : ''
+export function getMswMethod(node: ast.HttpOperationNode): string {
+  return node.method === 'QUERY' ? 'all' : node.method.toLowerCase()
 }
 
 /**
- * Resolves faker metadata for an MSW operation, including response name and file path.
+ * The `headers` entry of a mocked `Response` init, or an empty string when there is no content type.
  */
-export function resolveFakerMeta(
-  node: ast.OperationNode,
-  options: {
-    root: string
-    fakerResolver: ResolverFaker
-    fakerOutput: PluginMsw['resolvedOptions']['output']
-    fakerGroup: PluginMsw['resolvedOptions']['group']
-  },
-): { name: string; file: { path: string } } {
-  const { root, fakerResolver, fakerOutput, fakerGroup } = options
-  const tag = node.tags[0] ?? 'default'
+function headersBlock(contentType: string | null): string {
+  return contentType ? `\n      headers: {\n        'Content-Type': '${contentType}'\n      },` : ''
+}
 
-  return {
-    name: fakerResolver.response.response(node),
-    file: fakerResolver.file({ name: node.operationId, extname: '.ts', tag, path: node.path, root, output: fakerOutput, group: fakerGroup ?? undefined }),
-  }
+/**
+ * The `new Response(...)` expression a mocked handler returns.
+ */
+export function responseLiteral(body: string, status: number, contentType: string | null): string {
+  return `new Response(${body}, {
+      status: ${status},${headersBlock(contentType)}
+    })`
 }

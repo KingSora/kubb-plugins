@@ -8,10 +8,7 @@ type Member = {
 
 type Props = {
   name: string
-  isExportable?: boolean
-  isIndexable?: boolean
   members: Array<Member>
-  children?: KubbReactNode
 }
 
 /**
@@ -19,7 +16,7 @@ type Props = {
  * `new PetStore({ baseURL }).petClient.getPetById(...)` reaches an operation through a single entry
  * point bound to one environment. The per-tag clients are read-only fields built in the constructor.
  */
-export function SdkFacade({ name, isExportable = true, isIndexable = true, members, children }: Props): KubbReactNode {
+export function SdkFacade({ name, members }: Props): KubbReactNode {
   const fields = members.map((member) => `  readonly ${member.propName}: ${member.className}`)
   const assignments = members.map((member) => `    this.${member.propName} = new ${member.className}(config)`)
   const body = [...fields, '', '  constructor(config: ClientConfig = {}) {', ...assignments, '  }'].join('\n')
@@ -27,9 +24,8 @@ export function SdkFacade({ name, isExportable = true, isIndexable = true, membe
   const classCode = `export class ${name} {\n${body}\n}`
 
   return (
-    <File.Source name={name} isExportable={isExportable} isIndexable={isIndexable}>
+    <File.Source name={name} isExportable isIndexable>
       {classCode}
-      {children}
     </File.Source>
   )
 }

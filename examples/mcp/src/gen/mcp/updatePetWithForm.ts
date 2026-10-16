@@ -4,19 +4,15 @@
  */
 
 import type { UpdatePetWithFormOptions } from '../models/ts/UpdatePetWithForm'
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolResult, ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ServerContext } from '@modelcontextprotocol/server'
 import { updatePetWithForm } from '../clients/updatePetWithForm'
 
 /**
  * @summary Updates a pet in the store with form data
  * {@link /pet/:petId}
  */
-export async function updatePetWithFormHandler(
-  { path, query }: UpdatePetWithFormOptions,
-  request: RequestHandlerExtra<ServerRequest, ServerNotification>,
-): Promise<CallToolResult> {
-  const res = await updatePetWithForm({ path, query, signal: request.signal, throwOnError: true })
+export async function updatePetWithFormHandler({ path, query }: UpdatePetWithFormOptions, ctx: ServerContext): Promise<CallToolResult> {
+  const res = await updatePetWithForm({ path, query, signal: ctx.mcpReq.signal, throwOnError: true })
 
   return {
     content: [

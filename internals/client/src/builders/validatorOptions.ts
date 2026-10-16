@@ -41,37 +41,12 @@ export function resolveResponseValidator(validator: ValidatorOptions | undefined
 }
 
 /**
- * The zod validation a generated client applies to a success response body.
- */
-export type ZodResponseParse = {
-  /**
-   * The success-only response schema name that the generated code calls `.parse(data)` on.
-   */
-  expression: string
-  /**
-   * Schema names the generated file imports from the zod plugin output.
-   */
-  importNames: Array<string>
-}
-
-/**
- * Resolves the zod expression a generated client validates a success response with. Only success
- * (2xx) bodies reach the parse under the throw-on-error contract, so the success-only
- * `<operation>ResponseSchema` is used; error bodies are never zod-parsed.
- */
-export function buildZodResponseParse(node: ast.OperationNode, zodResolver: ResolverZod): ZodResponseParse | null {
-  const name = zodResolver.response.response(node)
-  return name ? { expression: name, importNames: [name] } : null
-}
-
-/**
- * Resolves the zod expression a generated client validates an error body with on the non-throw path.
+ * Resolves the zod schema name a generated client validates an error body with on the non-throw path.
  * Uses the error-only `<operation>ErrorSchema` (the union of non-2xx statuses); returns `null` when the
  * operation documents no error responses with a schema.
  */
-export function buildZodErrorParse(node: ast.OperationNode, zodResolver: ResolverZod): ZodResponseParse | null {
+export function buildZodErrorParse(node: ast.OperationNode, zodResolver: ResolverZod): string | null {
   const hasErrorResponse = node.responses.some((res) => !isSuccessStatusCode(res.statusCode) && res.content?.some((entry) => entry.schema))
   if (!hasErrorResponse) return null
-  const name = zodResolver.response.error?.(node)
-  return name ? { expression: name, importNames: [name] } : null
+  return zodResolver.response.error?.(node) || null
 }

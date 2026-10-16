@@ -1,5 +1,4 @@
 import { ast, type Group, type NodeCache, type Output, type Resolver, type ResolverFileParams, Url } from 'kubb/kit'
-import { dedupeParams } from './params.ts'
 
 /**
  * Builds the `ResolverFileParams` every operation generator passes to
@@ -81,62 +80,6 @@ export type OperationTypeNameResolver = RequestConfigResolver &
       headers(node: ast.OperationNode, param: ast.ParameterNode): string
     }
   }
-
-/**
- * Resolver interface for building operation parameters.
- *
- * `ResolverTs` from `@kubb/plugin-ts` satisfies this interface and can be passed directly.
- */
-export type OperationParamsResolver = {
-  /**
-   * Naming for an operation's parameters, grouped by location.
-   */
-  param: {
-    /**
-     * Resolves the type name for an individual parameter.
-     *
-     * @example Individual path parameter name
-     * `resolver.param.name(node, param) // → 'DeletePetPathPetId'`
-     */
-    name(node: ast.OperationNode, param: ast.ParameterNode): string
-    /**
-     * Resolves the grouped path parameters type name.
-     * When the return value equals `resolver.param.name`, no indexed access is emitted.
-     *
-     * @example Grouped path params type name
-     * `resolver.param.path(node, param) // → 'DeletePetPath'`
-     */
-    path(node: ast.OperationNode, param: ast.ParameterNode): string
-    /**
-     * Resolves the grouped query parameters type name.
-     * When the return value equals `resolver.param.name`, an inline struct type is emitted instead.
-     *
-     * @example Grouped query params type name
-     * `resolver.param.query(node, param) // → 'FindPetsByStatusQuery'`
-     */
-    query(node: ast.OperationNode, param: ast.ParameterNode): string
-    /**
-     * Resolves the grouped header parameters type name.
-     * When the return value equals `resolver.param.name`, an inline struct type is emitted instead.
-     *
-     * @example Grouped header params type name
-     * `resolver.param.headers(node, param) // → 'DeletePetHeaders'`
-     */
-    headers(node: ast.OperationNode, param: ast.ParameterNode): string
-  }
-  /**
-   * Naming for an operation's request and response types.
-   */
-  response: {
-    /**
-     * Resolves the request body type name.
-     *
-     * @example Request body type name
-     * `resolver.response.body(node) // → 'CreatePetBody'`
-     */
-    body(node: ast.OperationNode): string
-  }
-}
 
 export type OperationCommentLink = 'pathTemplate' | 'urlPath' | false | ((node: ast.OperationNode) => string | undefined)
 
@@ -297,12 +240,13 @@ export function resolveContentTypeVariants(entries: Array<ContentVariantInput>, 
     })
 }
 
+// The request groups come from the grouped params, so `config` drops the data-shape keys to stay
+// assignable to `Options`, which omits them from `RequestConfig`.
+const requestConfigBaseType = `Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>>`
+
 export function buildRequestConfigType(node: ast.OperationNode): string {
   const request = getContentTypeInfo(node)
   const response = getResponseContentTypeInfo(node)
-  // The request groups come from the grouped params, so `config` drops the data-shape keys to stay
-  // assignable to `Options`, which omits them from `RequestConfig`.
-  const configType = `Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>>`
 
   // Only the ambiguous side is offered: a single-type side has nothing to pick, so it stays baked in
   // the generated call.
@@ -311,7 +255,7 @@ export function buildRequestConfigType(node: ast.OperationNode): string {
     response.isMultipleContentTypes ? `response?: ${response.contentTypeUnion}` : null,
   ].filter(Boolean)
 
-  return members.length ? `${configType} & { contentType?: { ${members.join('; ')} } }` : configType
+  return members.length ? `${requestConfigBaseType} & { contentType?: { ${members.join('; ')} } }` : requestConfigBaseType
 }
 
 /**
@@ -321,7 +265,7 @@ export function buildRequestConfigType(node: ast.OperationNode): string {
  * content type for.
  */
 export function buildClientOptionType(): string {
-  return `Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>>`
+  return requestConfigBaseType
 }
 
 export type RequestGroups = {
@@ -437,12 +381,20 @@ export function getOperationParameters(node: ast.OperationNode): OperationParame
   const cached = operationParameterGroupsByNode.get(node)
   if (cached) return cached
 
-  const groups: OperationParameterGroups = {
-    path: dedupeParams(node.parameters.filter((param) => param.in === 'path')),
-    query: dedupeParams(node.parameters.filter((param) => param.in === 'query')),
-    header: dedupeParams(node.parameters.filter((param) => param.in === 'header')),
-    cookie: dedupeParams(node.parameters.filter((param) => param.in === 'cookie')),
+  // A malformed spec can declare the same name twice within one location. Both would resolve to the
+  // same output property, so emitting both would yield an object type with a duplicate member,
+  // which TypeScript rejects. Keep the first.
+  const group = (location: ast.ParameterNode['in']) => {
+    const seen = new Set<string>()
+
+    return node.parameters.filter((param) => {
+      if (param.in !== location || seen.has(param.name)) return false
+      seen.add(param.name)
+      return true
+    })
   }
+
+  const groups: OperationParameterGroups = { path: group('path'), query: group('query'), header: group('header'), cookie: group('cookie') }
 
   operationParameterGroupsByNode.set(node, groups)
   return groups
@@ -657,14 +609,4 @@ export function resolveResponseTypes(node: ast.OperationNode, resolver: Response
   }
 
   return types
-}
-
-export function findSuccessStatusCode(responses: Array<{ statusCode: ast.StatusCode | number | string }>): ast.StatusCode | null {
-  for (const response of responses) {
-    if (isSuccessStatusCode(response.statusCode)) {
-      return response.statusCode as ast.StatusCode
-    }
-  }
-
-  return null
 }

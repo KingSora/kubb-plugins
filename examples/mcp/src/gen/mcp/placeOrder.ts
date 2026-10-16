@@ -4,8 +4,7 @@
  */
 
 import type { PlaceOrderOptions } from '../models/ts/PlaceOrder'
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolResult, ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ServerContext } from '@modelcontextprotocol/server'
 import { placeOrder } from '../clients/placeOrder'
 
 /**
@@ -13,8 +12,8 @@ import { placeOrder } from '../clients/placeOrder'
  * @summary Place an order for a pet
  * {@link /store/order}
  */
-export async function placeOrderHandler({ body }: PlaceOrderOptions, request: RequestHandlerExtra<ServerRequest, ServerNotification>): Promise<CallToolResult> {
-  const res = await placeOrder({ body, signal: request.signal, throwOnError: true })
+export async function placeOrderHandler({ body }: PlaceOrderOptions, ctx: ServerContext): Promise<CallToolResult> {
+  const res = await placeOrder({ body, signal: ctx.mcpReq.signal, throwOnError: true })
 
   return {
     content: [

@@ -1,8 +1,11 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, assertPluginOption, defineExtension, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { compatibility } from '../kubb-extension.json'
+import { version } from '../package.json'
 import { pluginFakerName } from '@kubb/plugin-faker'
 import { pluginTsName } from '@kubb/plugin-ts'
-import { handlersGenerator, mswGenerator } from './generators'
+import { handlersGenerator } from './generators/handlersGenerator.ts'
+import { mswGenerator } from './generators/mswGenerator.tsx'
 import { resolverMsw } from './resolvers/resolverMsw.ts'
 import type { PluginMsw, ResolverMsw } from './types.ts'
 
@@ -38,53 +41,54 @@ export const pluginMswName = 'plugin-msw' satisfies PluginMsw['name']
  * })
  * ```
  */
-export const pluginMsw = definePlugin<PluginMsw>((options) => {
-  const {
-    output = { path: 'handlers', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    handlers = false,
-    parser = 'data',
-    baseURL,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginMsw = defineExtension<PluginMsw>({
+  kind: 'plugin',
+  meta: { name: pluginMswName, version, compatibility },
+  dependencies: (options) => ({ [pluginTsName]: {}, ...(options.parser === 'faker' ? { [pluginFakerName]: {} } : {}) }),
+  setup(options) {
+    const {
+      output = { path: 'handlers', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      handlers = false,
+      parser = 'data',
+      baseURL,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    assertPluginOption({
+      plugin: pluginMswName,
+      option: 'parser',
+      value: parser,
+      allowed: ['data', 'faker'] satisfies Array<PluginMsw['resolvedOptions']['parser']>,
+    })
 
-  return {
-    name: pluginMswName,
-    options,
-    dependencies: [pluginTsName, parser === 'faker' ? pluginFakerName : null].filter((dependency): dependency is string => Boolean(dependency)),
-    hooks: {
-      'kubb:plugin:setup'(ctx) {
-        const resolver = userResolver ? Resolver.merge<ResolverMsw>(resolverMsw, userResolver) : resolverMsw
+    const resolver = userResolver ? Resolver.merge<ResolverMsw>(resolverMsw, userResolver) : resolverMsw
 
-        ctx.setOptions({
-          output,
-          parser,
-          baseURL,
-          group: groupConfig,
-          exclude,
-          include,
-          override,
-          handlers,
-          resolver,
-        })
-        ctx.setResolver(resolver)
-        if (userMacros?.length) {
-          ctx.setMacros(userMacros)
-        }
+    setResolver(resolver)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
 
-        ctx.addGenerator(mswGenerator)
-        if (handlers) {
-          ctx.addGenerator(handlersGenerator)
-        }
-      },
-    },
-  }
+    addGenerator(mswGenerator)
+    if (handlers) {
+      addGenerator(handlersGenerator)
+    }
+
+    return {
+      output,
+      parser,
+      baseURL,
+      group: createGroupConfig(group),
+      exclude,
+      include,
+      override,
+      handlers,
+    }
+  },
 })
 
 export default pluginMsw

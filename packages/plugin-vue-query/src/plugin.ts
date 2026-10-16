@@ -1,5 +1,7 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, defineExtension, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { compatibility } from '../kubb-extension.json'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { mutationKeyTransformer, queryKeyTransformer, resolveInfiniteConfig, resolveMutationConfig, resolveQueryConfig } from '@internals/tanstack-query'
 import { resolveContractClient } from '@internals/client'
@@ -37,60 +39,53 @@ export const pluginVueQueryName = 'plugin-vue-query' satisfies PluginVueQuery['n
  * })
  * ```
  */
-export const pluginVueQuery = definePlugin<PluginVueQuery>((options) => {
-  const {
-    output = { path: 'hooks', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    infinite = false,
-    mutation = {},
-    query = {},
-    mutationKey = mutationKeyTransformer,
-    queryKey = queryKeyTransformer,
-    hooks = false,
-    client,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginVueQuery = defineExtension<PluginVueQuery>({
+  kind: 'plugin',
+  meta: { name: pluginVueQueryName, version, compatibility },
+  dependencies: { [pluginTsName]: {} },
+  setup(options) {
+    const {
+      output = { path: 'hooks', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      infinite = false,
+      mutation = {},
+      query = {},
+      mutationKey = mutationKeyTransformer,
+      queryKey = queryKeyTransformer,
+      hooks = false,
+      client,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const selectedGenerators = [queryGenerator, infiniteQueryGenerator, mutationGenerator]
+    const resolver = userResolver ? Resolver.merge<ResolverVueQuery>(resolverVueQuery, userResolver) : resolverVueQuery
 
-  const groupConfig = createGroupConfig(group)
+    setResolver(resolver)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
 
-  return {
-    name: pluginVueQueryName,
-    options,
-    dependencies: [pluginTsName],
-    hooks: {
-      'kubb:plugin:setup'(ctx) {
-        const resolver = userResolver ? Resolver.merge<ResolverVueQuery>(resolverVueQuery, userResolver) : resolverVueQuery
+    addGenerator(queryGenerator, infiniteQueryGenerator, mutationGenerator)
 
-        ctx.setOptions({
-          output,
-          client: resolveContractClient({ client, plugins: ctx.config.plugins }),
-          queryKey,
-          query: resolveQueryConfig(query, { importPath: '@tanstack/vue-query' }),
-          mutationKey,
-          mutation: resolveMutationConfig(mutation, { importPath: '@tanstack/vue-query' }),
-          infinite: resolveInfiniteConfig(infinite),
-          hooks,
-          group: groupConfig,
-          exclude,
-          include,
-          override,
-          resolver,
-        })
-        ctx.setResolver(resolver)
-        if (userMacros?.length) {
-          ctx.setMacros(userMacros)
-        }
-
-        ctx.addGenerator(...selectedGenerators)
-      },
-    },
-  }
+    return {
+      output,
+      client: resolveContractClient({ plugin: pluginVueQueryName, client, plugins: useConfig().plugins }),
+      queryKey,
+      query: resolveQueryConfig(query, { importPath: '@tanstack/vue-query' }),
+      mutationKey,
+      mutation: resolveMutationConfig(mutation, { importPath: '@tanstack/vue-query' }),
+      infinite: resolveInfiniteConfig(infinite),
+      hooks,
+      group: createGroupConfig(group),
+      exclude,
+      include,
+      override,
+      resolver,
+    }
+  },
 })
 
 export default pluginVueQuery

@@ -1,0 +1,225 @@
+{
+  "$schema": "https://kubb.dev/schemas/kubb-extension.json",
+  "kind": "plugin",
+  "name": "plugin-react-query",
+  "export": "pluginReactQuery",
+  "displayName": "React Query",
+  "description": "Generates typed TanStack Query helpers for React from your OpenAPI spec: queryOptions and mutationOptions factories with their cache keys. Set hooks to also get useQuery and useMutation hooks, plus useInfiniteQuery when infinite is set.",
+  "category": "framework",
+  "icon": {
+    "light": "https://kubb.dev/feature/tanstack.svg"
+  },
+  "tags": ["react-query", "tanstack-query", "react", "hooks", "data-fetching", "codegen", "openapi"],
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-react-query",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts"],
+  "compatibility": {
+    "kubb": ">=5.8.3",
+    "node": ">=22.12"
+  },
+  "role": "consumer",
+  "options": [
+    {
+      "key": "outputPath",
+      "path": ["output", "path"],
+      "label": "Output Path",
+      "description": "Output folder for generated files",
+      "type": "text",
+      "default": "hooks"
+    },
+    {
+      "key": "barrel",
+      "path": ["output", "barrel"],
+      "label": "Barrel",
+      "description": "How index.ts barrel files are generated",
+      "type": "select",
+      "default": {
+        "type": "named"
+      },
+      "choices": [
+        {
+          "label": "named",
+          "value": {
+            "type": "named"
+          }
+        },
+        {
+          "label": "named (nested)",
+          "value": {
+            "type": "named",
+            "nested": true
+          }
+        },
+        {
+          "label": "all",
+          "value": {
+            "type": "all"
+          }
+        },
+        {
+          "label": "all (nested)",
+          "value": {
+            "type": "all",
+            "nested": true
+          }
+        },
+        {
+          "label": "false (disabled)",
+          "value": false
+        }
+      ]
+    },
+    {
+      "key": "outputMode",
+      "path": ["output", "mode"],
+      "label": "Output Mode",
+      "description": "How the plugin consolidates its code into files. File mode writes everything into a single file, so the output path must include a file extension and cannot be grouped.",
+      "type": "select",
+      "default": "directory",
+      "choices": [
+        {
+          "label": "directory (one file per schema)",
+          "value": "directory"
+        },
+        {
+          "label": "file (single file)",
+          "value": "file"
+        }
+      ]
+    },
+    {
+      "key": "client",
+      "path": ["client"],
+      "label": "Client",
+      "description": "HTTP client the generated hooks call. Only needed to disambiguate when both plugin-fetch and plugin-axios are enabled",
+      "type": "select",
+      "default": null,
+      "choices": [
+        {
+          "label": "auto-detect",
+          "value": null
+        },
+        {
+          "label": "fetch",
+          "value": "fetch"
+        },
+        {
+          "label": "axios",
+          "value": "axios"
+        }
+      ]
+    },
+    {
+      "key": "group",
+      "path": ["group"],
+      "label": "Group",
+      "description": "Group generated operations by OpenAPI tag or path",
+      "type": "select",
+      "default": null,
+      "choices": [
+        {
+          "label": "none",
+          "value": null
+        },
+        {
+          "label": "by tag",
+          "value": {
+            "type": "tag"
+          }
+        },
+        {
+          "label": "by path",
+          "value": {
+            "type": "path"
+          }
+        }
+      ]
+    },
+    {
+      "key": "excludeTags",
+      "path": ["exclude"],
+      "label": "Exclude Tags",
+      "description": "Comma-separated OpenAPI tags to exclude from generation",
+      "type": "list",
+      "item": {
+        "type": "tag",
+        "pattern": "$item"
+      }
+    },
+    {
+      "key": "includeTags",
+      "path": ["include"],
+      "label": "Include Tags",
+      "description": "Comma-separated OpenAPI tags to include. Only operations with these tags are generated",
+      "type": "list",
+      "item": {
+        "type": "tag",
+        "pattern": "$item"
+      }
+    },
+    {
+      "key": "hooks",
+      "path": ["hooks"],
+      "label": "Hooks",
+      "description": "Generate use* functions instead of only queryOptions and mutation helpers",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "key": "suspense",
+      "path": ["suspense"],
+      "label": "Suspense",
+      "description": "Add useSuspenseQuery hooks alongside useQuery (TanStack Query v5+)",
+      "type": "boolean",
+      "default": false,
+      "trueValue": {},
+      "falseValue": false
+    },
+    {
+      "key": "infiniteQueryParam",
+      "path": ["infinite", "queryParam"],
+      "label": "Infinite Query Param",
+      "description": "Enable infinite queries, set the pageParam key (e.g. \"id\"). Leave empty to disable.",
+      "type": "text"
+    },
+    {
+      "key": "queryMethods",
+      "path": ["query", "methods"],
+      "label": "Query Methods",
+      "description": "Comma-separated HTTP methods treated as queries (default: GET)",
+      "type": "list",
+      "default": ["GET"],
+      "itemCase": "upper"
+    },
+    {
+      "key": "queryImportPath",
+      "path": ["query", "importPath"],
+      "label": "Query Import Path",
+      "description": "Module specifier the generated query hook imports from",
+      "type": "text",
+      "default": "@tanstack/react-query"
+    },
+    {
+      "key": "mutationMethods",
+      "path": ["mutation", "methods"],
+      "label": "Mutation Methods",
+      "description": "Comma-separated HTTP methods treated as mutations (default: POST, PUT, PATCH, DELETE)",
+      "type": "list",
+      "default": ["POST", "PUT", "PATCH", "DELETE"],
+      "itemCase": "upper"
+    },
+    {
+      "key": "mutationImportPath",
+      "path": ["mutation", "importPath"],
+      "label": "Mutation Import Path",
+      "description": "Module specifier the generated mutation hook imports from",
+      "type": "text",
+      "default": "@tanstack/react-query"
+    }
+  ]
+}

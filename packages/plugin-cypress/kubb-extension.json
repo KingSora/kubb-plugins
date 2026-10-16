@@ -1,0 +1,150 @@
+{
+  "$schema": "https://kubb.dev/schemas/kubb-extension.json",
+  "kind": "plugin",
+  "name": "plugin-cypress",
+  "export": "pluginCypress",
+  "displayName": "Cypress",
+  "description": "Generates a typed cy.request() wrapper per OpenAPI operation so your Cypress tests call the API through generated helpers and catch broken calls at compile time.",
+  "category": "testing",
+  "icon": {
+    "light": "https://kubb.dev/feature/cypress.svg"
+  },
+  "tags": ["cypress", "e2e-testing", "api-testing", "test-generation", "codegen", "openapi"],
+  "docs": "https://kubb.dev/extensions/kubb-labs/plugin-cypress",
+  "maintainers": [
+    {
+      "name": "Stijn Van Hulle",
+      "github": "stijnvanhulle"
+    }
+  ],
+  "dependencies": ["plugin-ts"],
+  "compatibility": {
+    "kubb": ">=5.8.3",
+    "node": ">=22.12"
+  },
+  "options": [
+    {
+      "key": "outputPath",
+      "path": ["output", "path"],
+      "label": "Output Path",
+      "description": "Output folder for generated files",
+      "type": "text",
+      "default": "cypress"
+    },
+    {
+      "key": "barrel",
+      "path": ["output", "barrel"],
+      "label": "Barrel",
+      "description": "How index.ts barrel files are generated",
+      "type": "select",
+      "default": {
+        "type": "named"
+      },
+      "choices": [
+        {
+          "label": "named",
+          "value": {
+            "type": "named"
+          }
+        },
+        {
+          "label": "named (nested)",
+          "value": {
+            "type": "named",
+            "nested": true
+          }
+        },
+        {
+          "label": "all",
+          "value": {
+            "type": "all"
+          }
+        },
+        {
+          "label": "all (nested)",
+          "value": {
+            "type": "all",
+            "nested": true
+          }
+        },
+        {
+          "label": "false (disabled)",
+          "value": false
+        }
+      ]
+    },
+    {
+      "key": "outputMode",
+      "path": ["output", "mode"],
+      "label": "Output Mode",
+      "description": "How the plugin consolidates its code into files. File mode writes everything into a single file, so the output path must include a file extension and cannot be grouped.",
+      "type": "select",
+      "default": "directory",
+      "choices": [
+        {
+          "label": "directory (one file per schema)",
+          "value": "directory"
+        },
+        {
+          "label": "file (single file)",
+          "value": "file"
+        }
+      ]
+    },
+    {
+      "key": "group",
+      "path": ["group"],
+      "label": "Group",
+      "description": "Group generated operations by OpenAPI tag or path",
+      "type": "select",
+      "default": null,
+      "choices": [
+        {
+          "label": "none",
+          "value": null
+        },
+        {
+          "label": "by tag",
+          "value": {
+            "type": "tag"
+          }
+        },
+        {
+          "label": "by path",
+          "value": {
+            "type": "path"
+          }
+        }
+      ]
+    },
+    {
+      "key": "excludeTags",
+      "path": ["exclude"],
+      "label": "Exclude Tags",
+      "description": "Comma-separated OpenAPI tags to exclude from generation",
+      "type": "list",
+      "item": {
+        "type": "tag",
+        "pattern": "$item"
+      }
+    },
+    {
+      "key": "includeTags",
+      "path": ["include"],
+      "label": "Include Tags",
+      "description": "Comma-separated OpenAPI tags to include. Only operations with these tags are generated",
+      "type": "list",
+      "item": {
+        "type": "tag",
+        "pattern": "$item"
+      }
+    },
+    {
+      "key": "baseURL",
+      "path": ["baseURL"],
+      "label": "Base URL",
+      "description": "Custom base URL for generated tests",
+      "type": "text"
+    }
+  ]
+}

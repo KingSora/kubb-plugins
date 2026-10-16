@@ -3,8 +3,8 @@ import type { FunctionParametersNode, ResolverTs } from '@kubb/plugin-ts'
 import { createFunctionParameter, createFunctionParameters, functionPrinter } from '@kubb/plugin-ts'
 import { File, Function, Type } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import { buildCallResultBody, buildGroupedRequestParam, buildClientCall } from '@internals/tanstack-query'
-import { buildRequestConfigType, getComments, resolveErrorNames, resolveSuccessNames } from '../utils.ts'
+import { buildCallResultBody, buildGroupedRequestParam, buildClientCall, buildResponseTypes } from '@internals/tanstack-query'
+import { buildOperationComments as getComments, buildRequestConfigType } from '@internals/shared'
 
 type Props = {
   name: string
@@ -19,7 +19,7 @@ type Props = {
    *
    * @default 'full'
    */
-  returnType?: 'full' | 'data'
+  returnType?: 'full' | 'data' | 'plain'
 }
 
 const declarationPrinter = functionPrinter({ mode: 'declaration' })
@@ -34,12 +34,7 @@ function buildMutationParamsNode(
   },
 ): FunctionParametersNode {
   const { mutationKeyTypeName, mutationArgTypeName, resolver } = options
-  const successNames = resolveSuccessNames(node, resolver)
-  const responseName = successNames.length > 0 ? successNames.join(' | ') : resolver.response.response(node)
-  const errorNames = resolveErrorNames(node, resolver)
-
-  const TData = responseName
-  const TError = `ResponseErrorConfig<${errorNames.length > 0 ? errorNames.join(' | ') : 'Error'}>`
+  const { TData, TError } = buildResponseTypes(node, resolver)
 
   return createFunctionParameters({
     params: [
@@ -66,12 +61,7 @@ export function Mutation({
   tsResolver,
   returnType = 'full',
 }: Props): KubbReactNode {
-  const successNames = resolveSuccessNames(node, tsResolver)
-  const responseName = successNames.length > 0 ? successNames.join(' | ') : tsResolver.response.response(node)
-  const errorNames = resolveErrorNames(node, tsResolver)
-
-  const TData = responseName
-  const TError = `ResponseErrorConfig<${errorNames.length > 0 ? errorNames.join(' | ') : 'Error'}>`
+  const { TData, TError } = buildResponseTypes(node, tsResolver)
 
   const groupedParam = buildGroupedRequestParam(node, { resolver: tsResolver })
   const hasMutationParams = groupedParam !== null

@@ -1,4 +1,4 @@
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 /**
  * Resolver for Cypress that provides naming methods for test functions.
@@ -13,8 +13,8 @@ export type ResolverCypress = Resolver
  */
 export type Options = OutputOptions & {
   /**
-   * Base URL prepended to every request URL. When omitted, falls back to the
-   * adapter's server URL (typically `servers[0].url`).
+   * Base URL prepended to every request URL. When omitted, requests use the operation path
+   * only, so Cypress resolves it against its own `baseUrl`. The adapter's server URL is not used.
    */
   baseURL?: string
   /**
@@ -46,10 +46,9 @@ export type ResolvedOptions = {
   override: Array<Override<ResolvedOptions>>
   group: Group | null
   baseURL: Options['baseURL'] | undefined
-  resolver: ResolverCypress
 }
 
-export type PluginCypress = PluginFactoryOptions<'plugin-cypress', Options, ResolvedOptions, ResolverCypress>
+export type PluginCypress = PluginType<'plugin-cypress', Options, ResolvedOptions, ResolverCypress>
 
 declare global {
   namespace Kubb {

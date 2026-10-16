@@ -1,4 +1,4 @@
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 /**
  * Resolver for MSW that provides naming methods for handler functions.
@@ -27,8 +27,8 @@ export type ResolverMsw = Resolver & {
  */
 export type Options = OutputOptions & {
   /**
-   * Base URL prepended to every handler's request URL. When omitted, falls back
-   * to the adapter's server URL (typically `servers[0].url`).
+   * Base URL prepended to every handler's request URL. When omitted, handlers match the
+   * operation path only (for example `/pets/:petId`). The adapter's server URL is not used.
    */
   baseURL?: string
   /**
@@ -77,10 +77,9 @@ export type ResolvedOptions = {
   parser: NonNullable<Options['parser']>
   baseURL: Options['baseURL'] | undefined
   handlers: boolean
-  resolver: ResolverMsw
 }
 
-export type PluginMsw = PluginFactoryOptions<'plugin-msw', Options, ResolvedOptions, ResolverMsw>
+export type PluginMsw = PluginType<'plugin-msw', Options, ResolvedOptions, ResolverMsw>
 
 declare global {
   namespace Kubb {

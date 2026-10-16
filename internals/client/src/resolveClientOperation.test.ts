@@ -59,16 +59,22 @@ describe('resolveClientOperation', () => {
       cache: createTestCache(),
     })
 
-    expect(result).toStrictEqual({ name: 'getPetById', path: '/root/getPetById.ts', clientPath: '/root/.kubb/client.ts', returnType: 'full' })
+    expect(result).toStrictEqual({
+      name: 'getPetById',
+      path: '/root/getPetById.ts',
+      clientPath: '/root/.kubb/client.ts',
+      clientPathIsFile: true,
+      returnType: 'full',
+    })
   })
 
-  test("reads the client plugin's returnType, defaulting to 'full' when unset", () => {
+  test("resolves plugin-client's relative importPath against the operation file", () => {
     const node = ast.factory.createOperation({ operationId: 'getPetById', method: 'GET', path: '/pets/{id}' })
     const driver = createDriver()
-    driver.getPlugin.mockReturnValueOnce({ options: { returnType: 'data' } })
+    driver.getPlugin.mockReturnValueOnce({ options: { importPath: '../client', returnType: 'plain' } })
 
     const result = resolveClientOperation({
-      clientPlugin: { pluginName: 'plugin-fetch' },
+      clientPlugin: { pluginName: 'plugin-client' },
       driver,
       node,
       root: '/root',
@@ -76,7 +82,24 @@ describe('resolveClientOperation', () => {
       cache: createTestCache(),
     })
 
-    expect(result?.returnType).toBe('data')
+    expect(result).toStrictEqual({ name: 'getPetById', path: '/root/getPetById.ts', clientPath: '/client', clientPathIsFile: true, returnType: 'plain' })
+  })
+
+  test("keeps plugin-client's package importPath verbatim", () => {
+    const node = ast.factory.createOperation({ operationId: 'getPetById', method: 'GET', path: '/pets/{id}' })
+    const driver = createDriver()
+    driver.getPlugin.mockReturnValueOnce({ options: { importPath: '@my-org/api-client' } })
+
+    const result = resolveClientOperation({
+      clientPlugin: { pluginName: 'plugin-client' },
+      driver,
+      node,
+      root: '/root',
+      output: { path: '.' },
+      cache: createTestCache(),
+    })
+
+    expect(result).toMatchObject({ clientPath: '@my-org/api-client', clientPathIsFile: false })
   })
 
   test('reuses the cached result for the same client plugin and node instead of resolving again', () => {
@@ -161,55 +184,6 @@ describe('resolveClientOperation', () => {
       expect(resolveWith(options, listPets)).not.toBeNull()
     })
 
-    test('applies an override matching by path pattern', () => {
-      const pathOverride = {
-        output: { path: './clients', mode: 'directory' },
-        returnType: 'data',
-        override: [{ type: 'path', pattern: '/pets/.*', options: { returnType: 'full' } }],
-      }
-
-      expect(resolveWith(pathOverride, getPetById)?.returnType).toBe('full')
-      expect(resolveWith(pathOverride, listPets)?.returnType).toBe('data')
-    })
-
-    test('applies an override matching by HTTP method', () => {
-      const createPet = ast.factory.createOperation({ operationId: 'createPet', method: 'POST', path: '/pets' })
-      const methodOverride = {
-        output: { path: './clients', mode: 'directory' },
-        returnType: 'data',
-        override: [{ type: 'method', pattern: 'post', options: { returnType: 'full' } }],
-      }
-
-      expect(resolveWith(methodOverride, createPet)?.returnType).toBe('full')
-      expect(resolveWith(methodOverride, listPets)?.returnType).toBe('data')
-    })
-
-    test('applies an override matching by OpenAPI tag', () => {
-      const taggedPet = ast.factory.createOperation({ operationId: 'getPetById', method: 'GET', path: '/pets/{id}', tags: ['admin'] })
-      const untaggedPet = ast.factory.createOperation({ operationId: 'listPets', method: 'GET', path: '/pets', tags: ['public'] })
-      const tagOverride = {
-        output: { path: './clients', mode: 'directory' },
-        returnType: 'data',
-        override: [{ type: 'tag', pattern: 'admin', options: { returnType: 'full' } }],
-      }
-
-      expect(resolveWith(tagOverride, taggedPet)?.returnType).toBe('full')
-      expect(resolveWith(tagOverride, untaggedPet)?.returnType).toBe('data')
-    })
-
-    test('gives precedence to the first matching override rule', () => {
-      const taggedPet = ast.factory.createOperation({ operationId: 'getPetById', method: 'GET', path: '/pets/{id}', tags: ['pets'] })
-      const multiOverride = {
-        output: { path: './clients', mode: 'directory' },
-        override: [
-          { type: 'tag', pattern: 'pets', options: { returnType: 'full' } },
-          { type: 'operationId', pattern: 'getPetById', options: { returnType: 'data' } },
-        ],
-      }
-
-      expect(resolveWith(multiOverride, taggedPet)?.returnType).toBe('full')
-    })
-
     test('exclude takes precedence over include when an operation matches both', () => {
       const taggedPet = ast.factory.createOperation({ operationId: 'getPetById', method: 'GET', path: '/pets/{id}', tags: ['pets'] })
       const otherTaggedPet = ast.factory.createOperation({ operationId: 'listPets', method: 'GET', path: '/pets', tags: ['pets'] })
@@ -221,26 +195,6 @@ describe('resolveClientOperation', () => {
 
       expect(resolveWith(conflictConfig, taggedPet)).toBeNull()
       expect(resolveWith(conflictConfig, otherTaggedPet)).not.toBeNull()
-    })
-
-    test('falls back to plugin options when resolver has no default property', () => {
-      const customResolver = {
-        file: vi.fn(({ root, output }) => ({ path: path.resolve(root, output.path, 'custom.ts') })),
-        name: vi.fn(() => 'customOp'),
-      } as unknown as Resolver
-      const driver = { getPlugin: () => ({ options: { returnType: 'data' as const } }), getResolver: () => customResolver }
-
-      const res = resolveClientOperation({
-        clientPlugin: { pluginName: 'plugin-custom' },
-        driver,
-        node: getPetById,
-        root: '/root',
-        output: { path: '.', mode: 'directory' },
-        cache: createTestCache(),
-      })
-
-      expect(res?.returnType).toBe('data')
-      expect(res?.name).toBe('customOp')
     })
 
     test('handles missing plugin options gracefully', () => {

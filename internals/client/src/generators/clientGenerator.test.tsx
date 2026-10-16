@@ -1,0 +1,284 @@
+import type { Adapter, Config, PluginType } from 'kubb/kit'
+import { ast, memoryStorage } from 'kubb/kit'
+import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation } from 'kubb/kit/testing'
+import type { PluginTs } from '@kubb/plugin-ts'
+import { resolverTs } from '@kubb/plugin-ts'
+import { describe, expect, test } from 'vitest'
+import { matchFiles } from '#mocks'
+import { resolverClient } from '../resolver.ts'
+import type { SecurityDocument } from '../builders/security.ts'
+import type { Options, ResolvedOptions, ResolverClient } from '../types.ts'
+import { createClientGenerator } from './clientGenerator.tsx'
+
+type PluginFetch = PluginType<'plugin-fetch', Options, ResolvedOptions, ResolverClient>
+
+const clientGenerator = createClientGenerator<PluginFetch>('fetch')
+
+type PluginClient = PluginType<'plugin-client', Options, ResolvedOptions & { importPath: string }, ResolverClient>
+
+// What `@kubb/plugin-client` registers: a user-owned client module, imported exactly as configured.
+const customClientGenerator = createClientGenerator<PluginClient>('client', (options) => options.importPath)
+
+const testConfig: Config = {
+  root: '.',
+  input: '',
+  output: { path: 'test' },
+  plugins: [],
+  parsers: [],
+  reporters: [],
+  adapter: createMockedAdapter(),
+  storage: memoryStorage(),
+}
+
+const defaultOptions: PluginFetch['resolvedOptions'] = {
+  output: { path: '.', mode: 'directory', banner: '/* eslint-disable no-alert, no-console */' },
+  exclude: [],
+  include: undefined,
+  override: [],
+  group: null,
+  baseURL: undefined,
+  throwOnErrorDefault: true,
+  validator: false,
+  returnType: 'full',
+  sdk: undefined,
+  resolver: resolverClient,
+}
+
+const mockedTsPlugin = createMockedPlugin<PluginTs>({
+  name: 'plugin-ts',
+  options: { output: { path: '.', mode: 'directory' }, group: null } as PluginTs['resolvedOptions'],
+  resolver: resolverTs,
+})
+
+const findPetsByTagsNode = ast.factory.createOperation({
+  operationId: 'findPetsByTags',
+  method: 'GET',
+  path: '/pet/findByTags',
+  tags: ['pet'],
+  parameters: [
+    ast.factory.createParameter({
+      name: 'tags',
+      in: 'query',
+      schema: ast.factory.createSchema({ type: 'array', items: [ast.factory.createSchema({ type: 'string' })] }),
+      required: true,
+    }),
+  ],
+  responses: [
+    ast.factory.createResponse({
+      statusCode: '200',
+      schema: ast.factory.createSchema({ type: 'object', properties: [] }),
+      description: 'successful operation',
+    }),
+  ],
+})
+
+const getPetByIdNode = ast.factory.createOperation({
+  operationId: 'getPetById',
+  method: 'GET',
+  path: '/pet/{petId}',
+  tags: ['pet'],
+  parameters: [ast.factory.createParameter({ name: 'petId', in: 'path', schema: ast.factory.createSchema({ type: 'integer' }), required: true })],
+  responses: [
+    ast.factory.createResponse({
+      statusCode: '200',
+      schema: ast.factory.createSchema({ type: 'object', properties: [] }),
+      description: 'successful operation',
+    }),
+  ],
+})
+
+const createPetNode = ast.factory.createOperation({
+  operationId: 'addPet',
+  method: 'POST',
+  path: '/pet',
+  tags: ['pet'],
+  requestBody: {
+    required: true,
+    content: [ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'object', properties: [] }) })],
+  },
+  responses: [
+    ast.factory.createResponse({ statusCode: '201', schema: ast.factory.createSchema({ type: 'object', properties: [] }), description: 'Pet created' }),
+    ast.factory.createResponse({ statusCode: '405', schema: ast.factory.createSchema({ type: 'object', properties: [] }), description: 'Invalid input' }),
+  ],
+})
+
+const uploadFileNode = ast.factory.createOperation({
+  operationId: 'uploadFile',
+  method: 'POST',
+  path: '/pet/{petId}/uploadImage',
+  tags: ['pet'],
+  parameters: [ast.factory.createParameter({ name: 'petId', in: 'path', schema: ast.factory.createSchema({ type: 'integer' }), required: true })],
+  requestBody: {
+    required: true,
+    content: [
+      ast.factory.createContent({
+        contentType: 'multipart/form-data',
+        schema: ast.factory.createSchema({ type: 'object', properties: [] }),
+      }),
+    ],
+  },
+  responses: [
+    ast.factory.createResponse({
+      statusCode: '200',
+      schema: ast.factory.createSchema({ type: 'object', properties: [] }),
+      description: 'successful operation',
+    }),
+  ],
+})
+
+const listPetsStyledNode = ast.factory.createOperation({
+  operationId: 'listPetsStyled',
+  method: 'GET',
+  path: '/pets/{petId}',
+  tags: ['pet'],
+  parameters: [
+    ast.factory.createParameter({
+      name: 'petId',
+      in: 'path',
+      schema: ast.factory.createSchema({ type: 'integer' }),
+      required: true,
+      style: 'matrix',
+      explode: true,
+    }),
+    ast.factory.createParameter({
+      name: 'tags',
+      in: 'query',
+      schema: ast.factory.createSchema({ type: 'array', items: [ast.factory.createSchema({ type: 'string' })] }),
+      required: false,
+      style: 'pipeDelimited',
+      explode: false,
+    }),
+  ],
+  responses: [
+    ast.factory.createResponse({
+      statusCode: '200',
+      schema: ast.factory.createSchema({ type: 'object', properties: [] }),
+      description: 'successful operation',
+    }),
+  ],
+})
+
+const streamEventsNode = ast.factory.createOperation({
+  operationId: 'streamEvents',
+  method: 'GET',
+  path: '/events',
+  tags: ['events'],
+  responses: [
+    ast.factory.createResponse({
+      statusCode: '200',
+      mediaType: 'text/event-stream',
+      schema: ast.factory.createSchema({ type: 'object', properties: [] }),
+      description: 'event stream',
+    }),
+  ],
+})
+
+const securityDocument: SecurityDocument = {
+  security: [{ bearerAuth: [] }],
+  components: {
+    securitySchemes: {
+      bearerAuth: { type: 'http', scheme: 'bearer' },
+      petstore_auth: { type: 'oauth2' },
+      api_key: { type: 'apiKey', name: 'api_key', in: 'header' },
+    },
+  },
+  paths: {
+    '/pet': {
+      post: { security: [{ petstore_auth: ['write:pets', 'read:pets'] }] },
+    },
+    '/pet/{petId}': {
+      get: { security: [{ petstore_auth: ['read:pets'] }, { api_key: [] }] },
+    },
+  },
+}
+
+function mockedAdapterWithDocument(document: SecurityDocument): Adapter {
+  return { ...createMockedAdapter(), document } as Adapter
+}
+
+describe('clientGenerator operation', () => {
+  const testData = [
+    { name: 'findPetsByTags', node: findPetsByTagsNode, options: {} },
+    { name: 'getPetById', node: getPetByIdNode, options: {} },
+    { name: 'addPetMultiStatus', node: createPetNode, options: {} },
+    // multipart/form-data request body bakes a `contentType` into the call config.
+    { name: 'uploadFileMultipart', node: uploadFileNode, options: {} },
+    // Parameter style/explode flows from the ParameterNode into a `styles` call-config entry.
+    { name: 'listPetsWithStyles', node: listPetsStyledNode, options: {} },
+    // text/event-stream response returns a typed event stream instead of a one-shot result.
+    { name: 'streamEventsSse', node: streamEventsNode, options: {} },
+    // returnType: 'data' unwraps the resolved call down to the bare success body.
+    { name: 'getPetByIdWithReturnTypeData', node: getPetByIdNode, options: { returnType: 'data' as const } },
+    // Operation-level security overriding the global default, oauth2 reduced to bearer.
+    { name: 'addPetWithSecurity', node: createPetNode, options: {}, adapter: mockedAdapterWithDocument(securityDocument) },
+    // No operation-level security: falls back to the document's global `bearerAuth`.
+    { name: 'findPetsByTagsWithGlobalSecurity', node: findPetsByTagsNode, options: {}, adapter: mockedAdapterWithDocument(securityDocument) },
+    // Two requirements referencing two different schemes (oauth2 bearer + apiKey header).
+    { name: 'getPetByIdWithMultipleSchemes', node: getPetByIdNode, options: {}, adapter: mockedAdapterWithDocument(securityDocument) },
+  ] as const satisfies Array<{ name: string; node: ast.OperationNode; options: Partial<PluginFetch['resolvedOptions']>; adapter?: Adapter }>
+
+  test.each(testData)('$name', async (props) => {
+    const options: PluginFetch['resolvedOptions'] = { ...defaultOptions, ...props.options }
+    const plugin = createMockedPlugin<PluginFetch>({ name: 'plugin-fetch', options, resolver: resolverClient })
+    const driver = createMockedPluginDriver({
+      name: props.name,
+      plugin: mockedTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
+    })
+
+    await renderGeneratorOperation(clientGenerator, props.node, {
+      config: testConfig,
+      adapter: 'adapter' in props ? props.adapter : createMockedAdapter(),
+      driver,
+      plugin,
+      options,
+      resolver: resolverClient,
+    })
+
+    await matchFiles(driver.fileManager.files, props.name)
+  })
+})
+
+describe('clientGenerator with a custom client module', () => {
+  test('getPetByIdPlainCustomClientPath', async () => {
+    const options: PluginClient['resolvedOptions'] = { ...defaultOptions, returnType: 'plain', importPath: '@acme/api-client' }
+    const plugin = createMockedPlugin<PluginClient>({ name: 'plugin-client', options, resolver: resolverClient })
+    const driver = createMockedPluginDriver({
+      name: 'getPetByIdPlainCustomClientPath',
+      plugin: mockedTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
+    })
+
+    await renderGeneratorOperation(customClientGenerator, getPetByIdNode, {
+      config: testConfig,
+      adapter: createMockedAdapter(),
+      driver,
+      plugin,
+      options,
+      resolver: resolverClient,
+    })
+
+    await matchFiles(driver.fileManager.files, 'getPetByIdPlainCustomClientPath')
+  })
+})
+
+describe('clientGenerator without an operation type source', () => {
+  test('throws KUBB_MISSING_DEPENDENCY when neither plugin-ts nor an inferred plugin-zod is registered', async () => {
+    const plugin = createMockedPlugin<PluginFetch>({ name: 'plugin-fetch', options: defaultOptions, resolver: resolverClient })
+
+    await expect(
+      renderGeneratorOperation(clientGenerator, getPetByIdNode, {
+        config: testConfig,
+        adapter: createMockedAdapter(),
+        driver: createMockedPluginDriver({ name: 'missingOperationTypes' }),
+        plugin,
+        options: defaultOptions,
+        resolver: resolverClient,
+      }),
+    ).rejects.toMatchObject({
+      diagnostic: {
+        code: 'KUBB_MISSING_DEPENDENCY',
+        message: 'Plugin "plugin-fetch" has no source for operation types.',
+        help: 'Add `pluginTs()` before "plugin-fetch", or add `pluginZod({ inferred: true })`.',
+      },
+    })
+  })
+})

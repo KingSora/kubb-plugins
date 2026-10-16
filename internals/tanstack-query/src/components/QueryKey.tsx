@@ -17,6 +17,14 @@ type Props = {
    * @default 'query'
    */
   variant?: KeyVariant
+  /**
+   * Wraps each grouped request member type, used by vue-query for `MaybeRefOrGetter`.
+   */
+  memberTypeWrapper?: (type: string) => string
+  /**
+   * Exports and indexes the `typeName` alias too (default `false`).
+   */
+  exportType?: boolean
 }
 
 const declarationPrinter = functionPrinter({ mode: 'declaration' })
@@ -34,13 +42,14 @@ export const queryKeyTransformer: Transformer = ({ node, variant }) => {
 
   const result = [`{ ${urlFields.join(', ')} }`]
   if (query.length > 0) result.push('...(query ? [query] : [])')
-  if (node.requestBody?.content?.[0]?.schema) result.push('...(body ? [body] : [])')
+  // A falsy body (`''`, `0`, `false`, `null`) is still an input, so only an absent one is left out.
+  if (node.requestBody?.content?.[0]?.schema) result.push('...(body !== undefined ? [body] : [])')
 
   return result
 }
 
-export function QueryKey({ name, node, tsResolver, typeName, transformer, variant = 'query' }: Props): KubbReactNode {
-  const paramsNode = buildQueryKeyParams(node, { resolver: tsResolver })
+export function QueryKey({ name, node, tsResolver, typeName, transformer, variant = 'query', memberTypeWrapper, exportType }: Props): KubbReactNode {
+  const paramsNode = buildQueryKeyParams(node, { resolver: tsResolver, memberTypeWrapper })
   const paramsSignature = declarationPrinter.print(paramsNode) ?? ''
   const keys = (transformer ?? queryKeyTransformer)({ node, casing: 'camelcase', variant })
 
@@ -51,8 +60,8 @@ export function QueryKey({ name, node, tsResolver, typeName, transformer, varian
           {`[${keys.join(', ')}] as const`}
         </Function.Arrow>
       </File.Source>
-      <File.Source name={typeName} isTypeOnly>
-        <Type name={typeName}>{`ReturnType<typeof ${name}>`}</Type>
+      <File.Source name={typeName} isExportable={exportType} isIndexable={exportType} isTypeOnly>
+        <Type name={typeName} export={exportType}>{`ReturnType<typeof ${name}>`}</Type>
       </File.Source>
     </>
   )

@@ -1,10 +1,9 @@
-import { operationFileEntry, resolveDependencyOperationFile, resolveOperationTypeNames } from '@internals/shared'
 import { resolveClientOperation } from '@internals/client'
+import { classifyOperation, HookFile, MutationKey, resolveHookFile } from '@internals/tanstack-query'
 import { ast, defineGenerator } from 'kubb/kit'
-import { pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
-import { Mutation, MutationKey, MutationOptions } from '../components'
-import { classifyOperation } from '../utils.ts'
+import { Mutation } from '../components/Mutation.tsx'
+import { MutationOptions } from '../components/MutationOptions.tsx'
 import type { PluginReactQuery } from '../types'
 
 /**
@@ -23,12 +22,8 @@ export const mutationGenerator = defineGenerator<PluginReactQuery>({
   },
   operation(node, ctx) {
     if (!ast.isHttpOperationNode(node)) return null
-    const { config, driver, resolver, root } = ctx
+    const { driver, resolver, root } = ctx
     const { output, mutation, client, group, customOptions, hooks } = ctx.options
-
-    const pluginTs = driver.getPlugin(pluginTsName)
-    if (!pluginTs) return null
-    const tsResolver = driver.getResolver(pluginTsName)
 
     const importPath = mutation ? mutation.importPath : '@tanstack/react-query'
 
@@ -37,52 +32,21 @@ export const mutationGenerator = defineGenerator<PluginReactQuery>({
     if (!contractOp) return null
 
     const mutationHookName = resolver.mutation.name(node)
-    const mutationTypeName = resolver.mutation.typeName(node)
     const mutationOptionsName = resolver.mutation.optionsName(node)
     const mutationKeyName = resolver.mutation.keyName(node)
 
-    const meta = {
-      file: resolver.file({ ...operationFileEntry(node, mutationHookName), root, output, group: group ?? undefined }),
-      fileTs: resolveDependencyOperationFile({
-        cache: ctx.cache,
-        node,
-        resolver: tsResolver,
-        root,
-        output: pluginTs.options?.output ?? output,
-        group: pluginTs.options?.group,
-      }),
-    }
-
-    const importedTypeNames = [
-      tsResolver.response.options(node),
-      ...resolveOperationTypeNames(node, tsResolver, { order: 'body-response-first', includeParams: false }),
-    ].filter((name): name is string => Boolean(name))
-
-    const calledClientName = contractOp.name
+    const hook = resolveHookFile(node, ctx, { name: mutationHookName, output, group, contractOp })
+    const { tsResolver } = hook
 
     return (
-      <File
-        baseName={meta.file.baseName}
-        path={meta.file.path}
-        meta={meta.file.meta}
-        banner={resolver.default.banner(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
-        footer={resolver.default.footer(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
-      >
-        <File.Import name={[contractOp.name]} root={meta.file.path} path={contractOp.path} />
-        <File.Import name={['RequestConfig', 'ResponseErrorConfig']} root={meta.file.path} path={contractOp.clientPath} isTypeOnly />
-
-        {customOptions && <File.Import name={[customOptions.name]} path={customOptions.importPath} />}
-        {meta.fileTs && importedTypeNames.length > 0 && (
-          <File.Import name={Array.from(new Set(importedTypeNames))} root={meta.file.path} path={meta.fileTs.path} isTypeOnly />
-        )}
-
+      <HookFile hook={hook} imports={customOptions && <File.Import name={[customOptions.name]} path={customOptions.importPath} />}>
         <MutationKey name={mutationKeyName} node={node} transformer={ctx.options.mutationKey} />
 
         <File.Import name={['mutationOptions']} path={importPath} />
 
         <MutationOptions
           name={mutationOptionsName}
-          clientName={calledClientName}
+          clientName={contractOp.name}
           mutationKeyName={mutationKeyName}
           node={node}
           tsResolver={tsResolver}
@@ -95,7 +59,6 @@ export const mutationGenerator = defineGenerator<PluginReactQuery>({
             <File.Import name={['UseMutationOptions', 'UseMutationResult', 'QueryClient']} path={importPath} isTypeOnly />
             <Mutation
               name={mutationHookName}
-              typeName={mutationTypeName}
               mutationOptionsName={mutationOptionsName}
               mutationKeyName={mutationKeyName}
               node={node}
@@ -104,7 +67,7 @@ export const mutationGenerator = defineGenerator<PluginReactQuery>({
             />
           </>
         )}
-      </File>
+      </HookFile>
     )
   },
 })

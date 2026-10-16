@@ -1,16 +1,15 @@
 import type { ast } from 'kubb/kit'
 import type { FunctionParametersNode, ResolverTs } from '@kubb/plugin-ts'
-import { createFunctionParameter, createFunctionParameters, functionPrinter } from '@kubb/plugin-ts'
+import { functionPrinter } from '@kubb/plugin-ts'
 import { File, Function } from 'kubb/jsx'
 import type { KubbReactNode } from 'kubb/jsx'
-import { buildGroupedRequestParam } from '@internals/tanstack-query'
+import { buildHookParams, buildResponseTypes, resolveMutationRequestType } from '@internals/tanstack-query'
 import type { PluginReactQuery } from '../types.ts'
-import { buildRequestConfigType, buildResponseTypes, getComments } from '../utils.ts'
+import { buildOperationComments as getComments, buildRequestConfigType } from '@internals/shared'
 import { buildMutationConfigParamsNode } from './MutationOptions.tsx'
 
 type Props = {
   name: string
-  typeName: string
   mutationOptionsName: string
   mutationKeyName: string
   node: ast.OperationNode
@@ -21,34 +20,18 @@ type Props = {
 const declarationPrinter = functionPrinter({ mode: 'declaration' })
 const callPrinter = functionPrinter({ mode: 'call' })
 
-function resolveMutationRequestType(node: ast.OperationNode, resolver: ResolverTs): string {
-  const groupedParam = buildGroupedRequestParam(node, { resolver })
-  return groupedParam ? resolver.response.options(node) : 'undefined'
-}
-
-function buildMutationParamsNode(
-  node: ast.OperationNode,
-  options: {
-    resolver: ResolverTs
-  },
-): FunctionParametersNode {
+function buildMutationParamsNode(node: ast.OperationNode, options: { resolver: ResolverTs }): FunctionParametersNode {
   const { resolver } = options
   const { TData, TError } = buildResponseTypes(node, resolver)
+  const generics = [TData, TError, resolveMutationRequestType(node, resolver), 'TContext'].join(', ')
 
-  const TRequest = resolveMutationRequestType(node, resolver)
-  const generics = [TData, TError, TRequest, 'TContext'].join(', ')
-
-  return createFunctionParameters({
-    params: [
-      createFunctionParameter({
-        name: 'options',
-        type: `{
+  return buildHookParams(node, {
+    resolver,
+    withRequest: false,
+    optionsType: `{
   mutation?: UseMutationOptions<${generics}> & { client?: QueryClient },
   client?: ${buildRequestConfigType(node)},
 }`,
-        default: '{}',
-      }),
-    ],
   })
 }
 

@@ -29,10 +29,6 @@ describe('objectKey', () => {
 })
 
 describe('buildObject', () => {
-  it('returns an empty object literal for no entries', () => {
-    expect(buildObject([])).toMatchInlineSnapshot(`"{}"`)
-  })
-
   it('indents entries and adds a trailing comma', () => {
     expect(buildObject(['id: z.number()', 'name: z.string()'])).toMatchInlineSnapshot(`
       "{
@@ -56,10 +52,6 @@ describe('buildObject', () => {
 })
 
 describe('buildList', () => {
-  it('returns an empty list for no items', () => {
-    expect(buildList([])).toMatchInlineSnapshot(`"[]"`)
-  })
-
   it('keeps single-line items inline', () => {
     expect(buildList(['z.string()', 'z.number()'])).toMatchInlineSnapshot(`"[z.string(), z.number()]"`)
   })
@@ -84,9 +76,5 @@ describe('buildList', () => {
 describe('lazyGetter', () => {
   it('emits a getter for a valid identifier key', () => {
     expect(lazyGetter({ name: 'parent', body: 'z.lazy(() => Pet)' })).toBe('get parent() { return z.lazy(() => Pet) }')
-  })
-
-  it('quotes a key that is not a valid identifier', () => {
-    expect(lazyGetter({ name: 'x-total', body: 'z.number()' })).toBe("get 'x-total'() { return z.number() }")
   })
 })

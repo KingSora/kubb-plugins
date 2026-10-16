@@ -2,9 +2,10 @@ import path from 'node:path'
 import type { AdapterOas } from '@kubb/adapter-oas'
 import { adapterOasName } from '@kubb/adapter-oas'
 
-import { type Adapter, ast, definePlugin } from 'kubb/kit'
+import { type Adapter, ast, defineExtension, Diagnostics, injectFile, useConfig } from 'kubb/kit'
+import { compatibility } from '../kubb-extension.json'
 import { version } from '../package.json'
-import { getPageHTML } from './redoc.tsx'
+import { getPageHTML } from './redoc.ts'
 import type { PluginRedoc } from './types.ts'
 
 /**
@@ -32,56 +33,52 @@ export const pluginRedocName = 'plugin-redoc' satisfies PluginRedoc['name']
  * })
  * ```
  */
-export const pluginRedoc = definePlugin<PluginRedoc>((options) => {
-  const { output = { path: 'docs.html' } } = options
-  const extname = path.extname(output.path)
-  const name = extname ? output.path.slice(0, -extname.length) : output.path
+export const pluginRedoc = defineExtension<PluginRedoc>({
+  kind: 'plugin',
+  meta: { name: pluginRedocName, version, compatibility },
+  async setup(options) {
+    const config = useConfig()
+    const { output = { path: 'docs.html' } } = options
 
-  return {
-    name: pluginRedocName,
-    version,
-    options,
-    hooks: {
-      async 'kubb:plugin:setup'(ctx) {
-        ctx.setOptions({
-          output,
-          name,
-          exclude: [],
-          override: [],
-        })
+    const adapter = config.adapter
 
-        const adapter = ctx.config.adapter
+    if (adapter?.name !== adapterOasName) {
+      throw new Diagnostics.Error({
+        code: Diagnostics.code.adapterRequired,
+        severity: 'error',
+        message: `Plugin "${pluginRedocName}" requires the OpenAPI adapter, but the config uses ${adapter ? `"${adapter.name}"` : 'no adapter'}.`,
+        help: 'Set `adapter: adapterOas()` in kubb.config.ts.',
+        location: { kind: 'config' },
+        plugin: pluginRedocName,
+      })
+    }
 
-        if (adapter?.name !== adapterOasName) {
-          throw new Error(
-            `[${pluginRedocName}] plugin-redoc requires the OpenAPI adapter. Make sure you are using adapterOas (e.g. \`adapter: adapterOas()\`) in your Kubb config.`,
-          )
-        }
+    const document = (adapter as Adapter<AdapterOas>).document
 
-        const document = (adapter as Adapter<AdapterOas>).document
+    if (!document) {
+      throw new Diagnostics.Error({
+        code: Diagnostics.code.pluginFailed,
+        severity: 'error',
+        message: `No OpenAPI document found. \`adapterOas\` did not produce a document before ${pluginRedocName} ran.`,
+        plugin: pluginRedocName,
+      })
+    }
 
-        if (!document) {
-          throw new Error(
-            `[${pluginRedocName}] No OpenAPI document found. The adapterOas did not produce a document — ensure the adapter has run before this plugin.`,
-          )
-        }
+    const pageHTML = getPageHTML(document)
 
-        const root = path.resolve(ctx.config.root, ctx.config.output.path)
-        const pageHTML = await getPageHTML(document)
+    injectFile({
+      baseName: 'docs.html',
+      path: path.resolve(config.root, config.output.path, output.path || './docs.html'),
+      sources: [
+        ast.factory.createSource({
+          name: 'docs.html',
+          nodes: [ast.factory.createText(pageHTML)],
+        }),
+      ],
+    })
 
-        ctx.injectFile({
-          baseName: 'docs.html',
-          path: path.resolve(root, output.path || './docs.html'),
-          sources: [
-            ast.factory.createSource({
-              name: 'docs.html',
-              nodes: [ast.factory.createText(pageHTML)],
-            }),
-          ],
-        })
-      },
-    },
-  }
+    return { output }
+  },
 })
 
 export default pluginRedoc

@@ -1,5 +1,5 @@
 import { resolveClientOperation } from '@internals/client'
-import { resolveDependencyOperationFile } from '@internals/shared'
+import { operationFileEntry, resolveDependencyOperationFile } from '@internals/shared'
 import { ast, defineGenerator } from 'kubb/kit'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
@@ -20,11 +20,7 @@ export const mcpGenerator = defineGenerator<PluginMcp>({
     const { resolver, driver, root, config } = ctx
     const { output, client, group } = ctx.options
 
-    const pluginTs = driver.getPlugin(pluginTsName)
-
-    if (!pluginTs) {
-      return null
-    }
+    const pluginTs = ctx.requirePlugin(pluginTsName)
 
     const tsResolver = driver.getResolver(pluginTsName)
 
@@ -39,7 +35,7 @@ export const mcpGenerator = defineGenerator<PluginMcp>({
 
     const meta = {
       name: resolver.handler.name(node),
-      file: resolver.file({ name: node.operationId, extname: '.ts', tag: node.tags[0] ?? 'default', path: node.path, root, output, group: group ?? undefined }),
+      file: resolver.file({ ...operationFileEntry(node, node.operationId), root, output, group: group ?? undefined }),
       fileTs: resolveDependencyOperationFile({
         cache: ctx.cache,
         node,
@@ -59,8 +55,7 @@ export const mcpGenerator = defineGenerator<PluginMcp>({
         footer={resolver.default.footer(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
       >
         {meta.fileTs && optionsName && <File.Import name={[optionsName]} root={meta.file.path} path={meta.fileTs.path} isTypeOnly />}
-        <File.Import name={['CallToolResult', 'ServerNotification', 'ServerRequest']} path={'@modelcontextprotocol/sdk/types.js'} isTypeOnly />
-        <File.Import name={['RequestHandlerExtra']} path={'@modelcontextprotocol/sdk/shared/protocol.js'} isTypeOnly />
+        <File.Import name={['CallToolResult', 'ServerContext']} path={'@modelcontextprotocol/server'} isTypeOnly />
 
         <File.Import name={[contractOp.name]} root={meta.file.path} path={contractOp.path} />
 

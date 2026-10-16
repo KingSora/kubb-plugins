@@ -5,13 +5,11 @@ import {
   buildOperationComments,
   buildOptionsSchema,
   buildRequestConfigType,
-  findSuccessStatusCode,
   getContentTypeInfo,
   getOperationParameters,
   getOperationSuccessResponses,
   getPrimarySuccessResponse,
   getResponseType,
-  getStatusCodeNumber,
   getSuccessResponses,
   isErrorStatusCode,
   isEventStream,
@@ -129,33 +127,6 @@ describe('buildRequestConfigType', () => {
     )
   })
 
-  test('offers both request and response content types when both are ambiguous', () => {
-    const node = ast.factory.createOperation({
-      operationId: 'updatePet',
-      method: 'PUT',
-      path: '/pets',
-      requestBody: {
-        content: [
-          ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'object' }) }),
-          ast.factory.createContent({ contentType: 'application/xml', schema: ast.factory.createSchema({ type: 'object' }) }),
-        ],
-      },
-      responses: [
-        ast.factory.createResponse({
-          statusCode: '200',
-          content: [
-            ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'object' }) }),
-            ast.factory.createContent({ contentType: 'application/xml', schema: ast.factory.createSchema({ type: 'object' }) }),
-          ],
-        }),
-      ],
-    })
-
-    expect(buildRequestConfigType(node)).toBe(
-      `Partial<Omit<RequestConfig, 'path' | 'query' | 'body' | 'headers' | 'url'>> & { contentType?: { request?: "application/json" | "application/xml"; response?: "application/json" | "application/xml" } }`,
-    )
-  })
-
   test('uses the untyped request config when no request schema exists', () => {
     const node = ast.factory.createOperation({ operationId: 'listPets', method: 'GET', path: '/pets' })
 
@@ -207,11 +178,6 @@ describe('response status helpers', () => {
     ],
   })
 
-  test('parses numeric status codes', () => {
-    expect(getStatusCodeNumber('201')).toBe(201)
-    expect(getStatusCodeNumber('default')).toBeNull()
-  })
-
   test('detects success and error status codes', () => {
     expect(isSuccessStatusCode('201')).toBe(true)
     expect(isSuccessStatusCode('400')).toBe(false)
@@ -225,19 +191,9 @@ describe('response status helpers', () => {
     expect(getPrimarySuccessResponse(node)?.statusCode).toBe('201')
   })
 
-  test('finds the first success status code', () => {
-    expect(findSuccessStatusCode(node.responses)).toBe('201')
-  })
-
-  test('resolves error response names', () => {
+  test('resolves error, success, and all response status names', () => {
     expect(resolveErrorNames(node, resolver)).toStrictEqual(['Status400'])
-  })
-
-  test('resolves success response names', () => {
     expect(resolveSuccessNames(node, resolver)).toStrictEqual(['Status201'])
-  })
-
-  test('resolves all response status names', () => {
     expect(resolveStatusCodeNames(node, resolver)).toStrictEqual(['Status201', 'Status400', 'Statusdefault'])
   })
 
@@ -272,6 +228,18 @@ describe('getOperationParameters', () => {
     expect(grouped.cookie.map((param) => param.name)).toStrictEqual(['session-id'])
   })
 
+  test('drops parameters that share a name within one location, keeping the first', () => {
+    const query = (name: string) => ast.factory.createParameter({ name, in: 'query', schema: ast.factory.createSchema({ type: 'string' }) })
+    const node = ast.factory.createOperation({
+      operationId: 'listUploads',
+      method: 'GET',
+      path: '/uploads',
+      parameters: [query('max-uploads'), query('prefix'), query('max-uploads'), query('MaxUploads')],
+    })
+
+    expect(getOperationParameters(node).query.map((param) => param.name)).toStrictEqual(['max-uploads', 'prefix', 'MaxUploads'])
+  })
+
   test('caches the grouped result per node so repeat calls for the same operation skip re-grouping', () => {
     const node = ast.factory.createOperation({
       operationId: 'showPet',
@@ -282,28 +250,13 @@ describe('getOperationParameters', () => {
 
     expect(getOperationParameters(node)).toBe(getOperationParameters(node))
   })
-
-  test('does not share cached results between distinct, structurally identical nodes', () => {
-    const buildNode = () =>
-      ast.factory.createOperation({
-        operationId: 'showPet',
-        method: 'GET',
-        path: '/pets/{petId}',
-        parameters: [ast.factory.createParameter({ name: 'petId', in: 'path', schema: ast.factory.createSchema({ type: 'string' }) })],
-      })
-
-    const grouped = getOperationParameters(buildNode())
-
-    expect(getOperationParameters(buildNode())).not.toBe(grouped)
-    expect(getOperationParameters(buildNode())).toStrictEqual(grouped)
-  })
 })
 
 describe('buildOptionsSchema', () => {
   test('marks body, path, query, and headers as never when the operation has none of them', () => {
     const node = ast.factory.createOperation({ operationId: 'listPets', method: 'GET', path: '/pets' })
 
-    const schema = buildOptionsSchema(node, resolver)
+    const schema = ast.narrowSchema(buildOptionsSchema(node, resolver), 'object')!
 
     expect(schema.type).toBe('object')
     expect(schema.primitive).toBe('object')
@@ -328,7 +281,7 @@ describe('buildOptionsSchema', () => {
       requestBody: { content: [ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'object' }) })] },
     })
 
-    const schema = buildOptionsSchema(node, resolver)
+    const schema = ast.narrowSchema(buildOptionsSchema(node, resolver), 'object')!
 
     expect(
       schema.properties?.map((property) => ({
@@ -400,12 +353,9 @@ describe('getResponseType / isEventStream', () => {
     })
   }
 
-  test('maps text/event-stream to a stream responseType', () => {
+  test('maps text/event-stream to a stream responseType, ignoring a charset suffix', () => {
     expect(getResponseType(nodeWithResponseContentType('text/event-stream'))).toBe('stream')
     expect(isEventStream(nodeWithResponseContentType('text/event-stream'))).toBe(true)
-  })
-
-  test('ignores a charset suffix on the content type', () => {
     expect(getResponseType(nodeWithResponseContentType('text/event-stream; charset=utf-8'))).toBe('stream')
     expect(isEventStream(nodeWithResponseContentType('text/event-stream; charset=utf-8'))).toBe(true)
   })
@@ -447,14 +397,6 @@ describe('resolveDependencyOperationFile', () => {
   }
 
   const node = ast.factory.createOperation({ operationId: 'getPetById', method: 'GET', path: '/pets/{id}' })
-
-  test('resolves the dependency plugin file for the operation', () => {
-    const dependencyResolver = createFileResolver('plugin-ts')
-
-    const file = resolveDependencyOperationFile({ cache: createTestCache(), node, resolver: dependencyResolver, root: '/root', output: { path: '.' } })
-
-    expect(file.path).toBe('/root/getPetById.ts')
-  })
 
   test('reuses the cached file for the same dependency plugin and node instead of resolving again', () => {
     const dependencyResolver = createFileResolver('plugin-ts')

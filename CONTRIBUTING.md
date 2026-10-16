@@ -10,7 +10,7 @@ Please read our [Code of Conduct](https://github.com/kubb-labs/.github/blob/main
 
 ## Prerequisites
 
-- Node.js 22 or newer
+- Node.js 22.12 or newer
 - pnpm 11 or newer. The repo pins a version in `packageManager`, so the easiest way to match it is `corepack enable` and let Corepack pick the right pnpm
 - Git
 
@@ -111,10 +111,15 @@ pnpm vitest run --config ./configs/vitest.config.ts -u packages/plugin-ts   # up
 
 ## Plugin options and docs
 
-A plugin's options are documented in the docs repo ([kubb-labs/docs](https://github.com/kubb-labs/docs)):
+A plugin's docs ship inside its package, in `packages/<name>/docs/`. The registry reads the folder from the npm tarball, and kubb.dev renders it at `https://kubb.dev/extensions/kubb-labs/<name>`:
 
-- Each plugin has a hand-written page at `plugins/<name>/index.md` whose frontmatter carries the registry metadata (name, category, npm package, maintainers, compatibility). Options live in the body of that page and its `reference/` subpages.
-- When a change here adds, removes, or alters an option, update the matching page in the same release cycle. It reaches kubb.dev through the platform fetch pipeline.
+- `docs/overview.md` (required) opens with a short lead on what the plugin does, then has `## Setup`, `## Options worth knowing`, and `## Example` with a `kubb.config.ts`. It has no `## See also` section and no install commands, because kubb.dev adds the install steps and the dependency list to the page.
+- `docs/options.md` documents every option. It opens with an "Options overview" table with "Option", "Purpose", and "Default" columns. It lists nested settings too. Each row uses the full option path and links to its detail heading. Rows for the shared options (`output`, `group`, `include`, `exclude`, `override`, `resolver`, `macros`) link to `https://kubb.dev/docs/5.x/reference/plugin-options#<option>` and give only the plugin's default.
+- "Option details" follows the table and covers only the plugin's own options. Keep existing heading anchors. Under each heading, a table lists the type, whether the option is required, and the default when there is one. Keep long types out of the overview table, escape `|` in table cells, and keep usage examples and generated output below the table.
+- `docs/guides/<id>.md` holds one how-to guide per file, listed in file name order.
+- Each file starts with a `# Title` and a one-paragraph description, with no frontmatter. Links are absolute (`https://kubb.dev/...`) and there is no raw HTML.
+- Registry metadata (display name, category, icon, maintainers, dependencies, compatibility) lives in `kubb-extension.json`.
+- When a change here adds, removes, or alters an option, update `docs/options.md` in the same PR.
 - A documented option must exist in the plugin's `src/types.ts` `Options` type and be honored in `src/plugin.ts`. Keep documented defaults in step with the destructuring defaults in `plugin.ts`.
 
 ## Adding a plugin
@@ -129,6 +134,8 @@ packages/plugin-<name>/
 │   ├── components/     # JSX components
 │   ├── generators/     # Code generation logic
 │   └── *.test.ts(x)    # Unit tests
+├── docs/               # kubb.dev pages: overview.md, options.md, guides/
+├── kubb-extension.json # Registry metadata
 ├── package.json
 ├── tsconfig.json       # extends ../../tsconfig.json
 ├── tsdown.config.ts

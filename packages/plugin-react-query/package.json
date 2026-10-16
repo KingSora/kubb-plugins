@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-react-query",
-  "version": "5.2.0",
+  "version": "5.5.3",
   "description": "Generate type-safe TanStack Query (React Query) hooks with Kubb. Covers useQuery, useMutation, useInfiniteQuery, and queryOptions with full TypeScript support.",
   "keywords": [
     "code-generation",
@@ -17,7 +17,7 @@
     "use-mutation",
     "use-query"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-react-query",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-react-query",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -41,6 +41,8 @@
   ],
   "files": [
     "dist",
+    "kubb-extension.json",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -62,11 +64,17 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json"
   },
   "publishConfig": {
     "access": "public",
@@ -86,11 +94,11 @@
     "@internals/shared": "workspace:*",
     "@internals/tanstack-query": "workspace:*",
     "@internals/utils": "workspace:*",
-    "@tanstack/react-query": "^5.104.1",
+    "@tanstack/react-query": "^5.104.2",
     "kubb": "catalog:"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-query": "^5.82.0",
     "kubb": "catalog:"
   },
   "peerDependenciesMeta": {
@@ -99,6 +107,6 @@
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

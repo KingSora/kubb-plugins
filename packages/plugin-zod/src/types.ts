@@ -1,4 +1,4 @@
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 import type { PrinterZodNodes } from './printers/printerZod.ts'
 import type { PrinterZodMiniNodes } from './printers/printerZodMini.ts'
 
@@ -296,7 +296,7 @@ export type ResolvedOptions = {
   printer: Options['printer']
 }
 
-export type PluginZod = PluginFactoryOptions<'plugin-zod', Options, ResolvedOptions, ResolverZod>
+export type PluginZod = PluginType<'plugin-zod', Options, ResolvedOptions, ResolverZod>
 
 declare global {
   namespace Kubb {

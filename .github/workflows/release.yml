@@ -125,3 +125,17 @@ jobs:
           repository: kubb-labs/platform
           event-type: content-updated
           client-payload: '{"source": "plugins", "tag": "${{ github.ref_name }}"}'
+
+  bump-registry:
+    name: Dispatch plugins-released to registry
+    needs: [release, promote]
+    if: ${{ needs.promote.outputs.approved == 'true' }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      # The registry's Bump workflow moves the kubb-labs/plugins records to the new npm `latest` versions.
+      - uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
+        with:
+          token: ${{ secrets.PLATFORM_DISPATCH_TOKEN }}
+          repository: kubb-labs/registry
+          event-type: plugins-released

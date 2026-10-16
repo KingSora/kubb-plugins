@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-vue-query",
-  "version": "5.2.0",
+  "version": "5.5.3",
   "description": "Generate type-safe TanStack Query (Vue Query) composables with Kubb. Covers useQuery, useMutation, useInfiniteQuery, and queryOptions with Vue 3 Composition API support.",
   "keywords": [
     "code-generation",
@@ -19,7 +19,7 @@
     "vue-query",
     "vue3"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-vue-query",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-vue-query",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -43,6 +43,8 @@
   ],
   "files": [
     "dist",
+    "kubb-extension.json",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -64,11 +66,17 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json"
   },
   "publishConfig": {
     "access": "public",
@@ -88,19 +96,24 @@
     "@internals/shared": "workspace:*",
     "@internals/tanstack-query": "workspace:*",
     "@internals/utils": "workspace:*",
-    "@tanstack/vue-query": "^5.104.1",
-    "kubb": "catalog:"
+    "@tanstack/vue-query": "^5.104.2",
+    "kubb": "catalog:",
+    "vue": "^3.5.43"
   },
   "peerDependencies": {
-    "@tanstack/vue-query": "^5.0.0",
-    "kubb": "catalog:"
+    "@tanstack/vue-query": "^5.41.0",
+    "kubb": "catalog:",
+    "vue": ">=3.3.0"
   },
   "peerDependenciesMeta": {
     "@tanstack/vue-query": {
       "optional": true
+    },
+    "vue": {
+      "optional": true
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

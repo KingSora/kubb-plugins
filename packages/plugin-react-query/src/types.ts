@@ -1,6 +1,6 @@
 import type { ClientSelector, ResolvedContractClient } from '@internals/client'
 import type { Infinite, Mutation, Query, Transformer } from '@internals/tanstack-query'
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 export type { Infinite, Transformer } from '@internals/tanstack-query'
 
@@ -222,8 +222,8 @@ export type Options = OutputOptions & {
    * Selects the HTTP client the generated hooks call. Every client plugin speaks the `RequestResult`
    * contract, so the hooks call a contract `<op>` that takes one grouped `options` object.
    *
-   * `'fetch'` / `'axios'` calls the `@kubb/plugin-fetch` / `@kubb/plugin-axios` functions. When a
-   * single client plugin (plugin-fetch or plugin-axios) is registered it is
+   * `'fetch'` / `'axios'` / `'client'` calls the `@kubb/plugin-fetch` / `@kubb/plugin-axios` /
+   * `@kubb/plugin-client` functions. When a single client plugin is registered it is
    * auto-detected, so the string is only needed to disambiguate several client plugins.
    *
    * A client plugin must be registered. The hooks always call its `<op>`.
@@ -332,7 +332,7 @@ export type ResolvedOptions = {
   resolver: ResolverReactQuery
 }
 
-export type PluginReactQuery = PluginFactoryOptions<'plugin-react-query', Options, ResolvedOptions, ResolverReactQuery>
+export type PluginReactQuery = PluginType<'plugin-react-query', Options, ResolvedOptions, ResolverReactQuery>
 
 declare global {
   namespace Kubb {

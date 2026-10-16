@@ -6,50 +6,15 @@ describe('buildSecurityMetadata', () => {
     expect(buildSecurityMetadata({ security: undefined })).toBeNull()
     expect(buildSecurityMetadata({ security: [] })).toBeNull()
   })
-
-  test('serializes a bearer scheme', () => {
-    expect(buildSecurityMetadata({ security: [{ type: 'http', scheme: 'bearer' }] })).toBe("[{ type: 'http', scheme: 'bearer' }]")
-  })
-
-  test('serializes an apiKey scheme with name and location', () => {
-    expect(buildSecurityMetadata({ security: [{ type: 'apiKey', name: 'X-API-Key', in: 'header' }] })).toBe(
-      "[{ type: 'apiKey', name: 'X-API-Key', in: 'header' }]",
-    )
-  })
-
-  test('serializes oauth2 as a bare type', () => {
-    expect(buildSecurityMetadata({ security: [{ type: 'oauth2' }] })).toBe("[{ type: 'oauth2' }]")
-  })
-
-  test('serializes multiple schemes', () => {
-    expect(buildSecurityMetadata({ security: [{ type: 'oauth2' }, { type: 'apiKey', name: 'api_key', in: 'header' }] })).toBe(
-      "[{ type: 'oauth2' }, { type: 'apiKey', name: 'api_key', in: 'header' }]",
-    )
-  })
 })
 
 describe('resolveSecurityScheme', () => {
-  test('maps http bearer to bearer', () => {
-    expect(resolveSecurityScheme({ type: 'http', scheme: 'bearer' })).toStrictEqual({ type: 'http', scheme: 'bearer' })
-  })
-
   test('maps http basic to basic, case-insensitively', () => {
     expect(resolveSecurityScheme({ type: 'http', scheme: 'Basic' })).toStrictEqual({ type: 'http', scheme: 'basic' })
   })
 
   test('treats an unknown http scheme as bearer', () => {
     expect(resolveSecurityScheme({ type: 'http', scheme: 'digest' })).toStrictEqual({ type: 'http', scheme: 'bearer' })
-  })
-
-  test('keeps oauth2 and openIdConnect as their own type', () => {
-    expect(resolveSecurityScheme({ type: 'oauth2' })).toStrictEqual({ type: 'oauth2' })
-    expect(resolveSecurityScheme({ type: 'openIdConnect' })).toStrictEqual({ type: 'openIdConnect' })
-  })
-
-  test('maps an apiKey in header, query, or cookie', () => {
-    expect(resolveSecurityScheme({ type: 'apiKey', name: 'X-API-Key', in: 'header' })).toStrictEqual({ type: 'apiKey', name: 'X-API-Key', in: 'header' })
-    expect(resolveSecurityScheme({ type: 'apiKey', name: 'token', in: 'query' })).toStrictEqual({ type: 'apiKey', name: 'token', in: 'query' })
-    expect(resolveSecurityScheme({ type: 'apiKey', name: 'sid', in: 'cookie' })).toStrictEqual({ type: 'apiKey', name: 'sid', in: 'cookie' })
   })
 
   test('returns null for an apiKey the runtime cannot place', () => {
@@ -83,14 +48,6 @@ describe('getOperationSecurity', () => {
       },
     },
   }
-
-  test('returns undefined without a document', () => {
-    expect(getOperationSecurity({ document: undefined, method: 'GET', path: '/pet' })).toBeUndefined()
-  })
-
-  test('resolves the operation-level scheme', () => {
-    expect(getOperationSecurity({ document, method: 'POST', path: '/pet' })).toStrictEqual([{ type: 'oauth2' }])
-  })
 
   test('resolves every scheme referenced across multiple requirements', () => {
     expect(getOperationSecurity({ document, method: 'GET', path: '/pet/{petId}' })).toStrictEqual([

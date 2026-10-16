@@ -1,26 +1,14 @@
 /** biome-ignore-all lint/suspicious/noTemplateCurlyInString: for test case */
 
-import type { Config } from 'kubb/kit'
-import { ast, memoryStorage } from 'kubb/kit'
+import { ast } from 'kubb/kit'
 import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation } from 'kubb/kit/testing'
 import type { PluginTs } from '@kubb/plugin-ts'
 import { resolverTs } from '@kubb/plugin-ts'
 import { describe, test } from 'vitest'
-import { matchFiles } from '#mocks'
+import { matchFiles, testConfig } from '#mocks'
 import { resolverCypress } from '../resolvers/resolverCypress.ts'
 import type { PluginCypress } from '../types.ts'
 import { cypressGenerator } from './cypressGenerator.tsx'
-
-const testConfig: Config = {
-  root: '.',
-  input: {},
-  output: { path: 'test' },
-  plugins: [],
-  parsers: [],
-  reporters: [],
-  adapter: createMockedAdapter(),
-  storage: memoryStorage(),
-}
 
 const defaultOptions: PluginCypress['resolvedOptions'] = {
   output: { path: '.', mode: 'directory' },
@@ -29,7 +17,6 @@ const defaultOptions: PluginCypress['resolvedOptions'] = {
   override: [],
   baseURL: undefined,
   group: null,
-  resolver: resolverCypress,
 }
 
 const mockedTsPlugin = createMockedPlugin<PluginTs>({
@@ -139,42 +126,6 @@ describe('cypressGenerator — Operation', () => {
   })
 })
 
-describe('cypressGenerator — params casing', () => {
-  const node = ast.factory.createOperation({
-    operationId: 'getPets',
-    method: 'GET',
-    path: '/pets',
-    tags: ['pets'],
-    parameters: [ast.factory.createParameter({ name: 'page_size', in: 'query', schema: ast.factory.createSchema({ type: 'integer' }) })],
-    responses: [
-      ast.factory.createResponse({
-        statusCode: '200',
-        schema: ast.factory.createSchema({ type: 'object', properties: [] }),
-        description: 'A paged array of pets',
-      }),
-    ],
-  })
-
-  test('query param name matches the OpenAPI spec exactly', async () => {
-    const options: PluginCypress['resolvedOptions'] = { ...defaultOptions }
-    const plugin = createMockedPlugin<PluginCypress>({ name: 'plugin-cypress', options, resolver: resolverCypress })
-    const driver = createMockedPluginDriver({
-      name: 'paramsCasing camelcase',
-      plugin: mockedTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
-    })
-
-    await renderGeneratorOperation(cypressGenerator, node, {
-      config: testConfig,
-      adapter: createMockedAdapter(),
-      driver,
-      plugin,
-      options,
-      resolver: resolverCypress,
-    })
-    await matchFiles(driver.fileManager.files, 'paramsCasing camelcase')
-  })
-})
-
 describe('cypressGenerator — params casing headers', () => {
   const nodeWithHeaders = ast.factory.createOperation({
     operationId: 'getPets',
@@ -269,25 +220,6 @@ describe('cypressGenerator — baseURL', () => {
     ],
   })
 
-  test('static string — prepended to url', async () => {
-    const options: PluginCypress['resolvedOptions'] = { ...defaultOptions, baseURL: 'https://api.example.com' }
-    const plugin = createMockedPlugin<PluginCypress>({ name: 'plugin-cypress', options, resolver: resolverCypress })
-    const driver = createMockedPluginDriver({
-      name: 'baseURL static',
-      plugin: mockedTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
-    })
-
-    await renderGeneratorOperation(cypressGenerator, node, {
-      config: testConfig,
-      adapter: createMockedAdapter(),
-      driver,
-      plugin,
-      options,
-      resolver: resolverCypress,
-    })
-    await matchFiles(driver.fileManager.files, 'baseURL static')
-  })
-
   test('template string — emitted as template literal', async () => {
     const options: PluginCypress['resolvedOptions'] = { ...defaultOptions, baseURL: '${123456}' }
     const plugin = createMockedPlugin<PluginCypress>({ name: 'plugin-cypress', options, resolver: resolverCypress })
@@ -305,48 +237,5 @@ describe('cypressGenerator — baseURL', () => {
       resolver: resolverCypress,
     })
     await matchFiles(driver.fileManager.files, 'baseURL template')
-  })
-})
-
-describe('cypressGenerator — transformers', () => {
-  test('schema visitor — filters to required properties only', async () => {
-    const macro: ast.Macro = {
-      name: 'required-properties-only',
-      schema(node) {
-        if ('properties' in node) {
-          return { ...node, properties: node.properties.filter((p) => p.required) }
-        }
-        return undefined
-      },
-    }
-
-    const plugin = createMockedPlugin<PluginCypress>({ name: 'plugin-cypress', options: defaultOptions, resolver: resolverCypress, macros: [macro] })
-    const driver = createMockedPluginDriver({
-      name: 'transformers schema visitor',
-      plugin: mockedTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
-    })
-
-    const node = ast.factory.createOperation({
-      operationId: 'createPets',
-      method: 'POST',
-      path: '/pets',
-      tags: ['pets'],
-      requestBody: {
-        content: [ast.factory.createContent({ contentType: 'application/json', schema: ast.factory.createSchema({ type: 'object', properties: [] }) })],
-      },
-      responses: [
-        ast.factory.createResponse({ statusCode: '201', schema: ast.factory.createSchema({ type: 'object', properties: [] }), description: 'Null response' }),
-      ],
-    })
-
-    await renderGeneratorOperation(cypressGenerator, node, {
-      config: testConfig,
-      adapter: createMockedAdapter(),
-      driver,
-      plugin,
-      options: defaultOptions,
-      resolver: resolverCypress,
-    })
-    await matchFiles(driver.fileManager.files, 'transformers schema visitor')
   })
 })

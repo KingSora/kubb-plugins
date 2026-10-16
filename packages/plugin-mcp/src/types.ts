@@ -1,5 +1,5 @@
-import type { ClientSelector } from '@internals/client'
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ClientSelector, ResolvedContractClient } from '@internals/client'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 /**
  * Resolver for MCP that provides naming methods for handler functions.
@@ -31,10 +31,10 @@ export type Options = OutputOptions & {
    * contract, so each handler calls a contract `<op>` that takes one grouped `{ path, query, headers,
    * body }` object.
    *
-   * `'fetch'` / `'axios'` calls the `@kubb/plugin-fetch` / `@kubb/plugin-axios` functions. When a
-   * single client plugin (plugin-fetch or plugin-axios) is registered it is auto-detected, so the
+   * `'fetch'` / `'axios'` / `'client'` calls the `@kubb/plugin-fetch` / `@kubb/plugin-axios` /
+   * `@kubb/plugin-client` functions. When a single client plugin is registered it is auto-detected, so the
    * string is only needed to disambiguate several client plugins. Register one of those plugins.
-   * Options such as `baseURL` live there.
+   * Options such as `baseURL` live there, or in your own module with `@kubb/plugin-client`.
    */
   client?: ClientSelector
   /**
@@ -60,12 +60,6 @@ export type Options = OutputOptions & {
   macros?: Array<ast.Macro>
 }
 
-/**
- * The resolved client strategy for the generated handlers, computed once during setup. The handlers
- * always import and call a registered contract client plugin's `<op>`.
- */
-export type ResolvedClient = { kind: 'contract'; pluginName: string }
-
 export type ResolvedOptions = {
   output: Output
   exclude: Array<Exclude>
@@ -75,11 +69,11 @@ export type ResolvedOptions = {
   /**
    * The resolved client strategy the generators branch on.
    */
-  client: ResolvedClient
+  client: ResolvedContractClient
   resolver: ResolverMcp
 }
 
-export type PluginMcp = PluginFactoryOptions<'plugin-mcp', Options, ResolvedOptions, ResolverMcp>
+export type PluginMcp = PluginType<'plugin-mcp', Options, ResolvedOptions, ResolverMcp>
 
 declare global {
   namespace Kubb {

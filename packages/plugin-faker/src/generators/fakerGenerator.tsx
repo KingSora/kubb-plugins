@@ -1,7 +1,7 @@
-import { collectRefNames, getOperationParameters, getPerContentTypeName, resolveContentTypeVariants, resolveDependencyOperationFile } from '@internals/shared'
-import { aliasConflictingImports, filterUsedImports, rewriteAliasedImports } from '@internals/utils'
+import { getOperationParameters, getPerContentTypeName, resolveContentTypeVariants, resolveDependencyOperationFile } from '@internals/shared'
+import { aliasConflictingImports, filterUsedImports, rewriteAliasedImports } from '../utils/imports.ts'
 import { ast, defineGenerator } from 'kubb/kit'
-import { buildParams, pluginTsName } from '@kubb/plugin-ts'
+import { buildParams, enumTypeName, pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
 import { Faker } from '../components/Faker.tsx'
 import { printerFaker } from '../printers/printerFaker.ts'
@@ -20,9 +20,9 @@ export const fakerGenerator = defineGenerator<PluginFaker>({
   schema(node, ctx) {
     const { config, resolver, root } = ctx
     const { output, group, dateParser, regexGenerator, seed, locale, printer, typeMode } = ctx.options
-    const pluginTs = ctx.driver.getPlugin(pluginTsName)
+    const pluginTs = ctx.requirePlugin(pluginTsName)
 
-    if (!node.name || !pluginTs) {
+    if (!node.name) {
       return
     }
 
@@ -30,10 +30,7 @@ export const fakerGenerator = defineGenerator<PluginFaker>({
 
     const schemaName = node.name
     const isEnumSchema = !!ast.narrowSchema(node, ast.schemaTypes.enum)
-    const tsEnumType = pluginTs.options?.enum?.type
-    const tsEnumTypeSuffix = pluginTs.options?.enum?.typeSuffix ?? 'Key'
-    const schemaTypeName =
-      isEnumSchema && tsEnumType === 'asConst' ? tsResolver.enum.keyName({ name: schemaName }, tsEnumTypeSuffix) : tsResolver.name(schemaName)
+    const schemaTypeName = enumTypeName({ resolver: tsResolver, name: schemaName, enumOptions: pluginTs.options?.enum, isEnum: isEnumSchema })
     const meta = {
       name: resolver.name(schemaName),
       file: resolver.file({ name: schemaName, extname: '.ts', root, output, group: group ?? undefined }),
@@ -101,11 +98,7 @@ export const fakerGenerator = defineGenerator<PluginFaker>({
   operation(node, ctx) {
     const { config, resolver, root } = ctx
     const { output, group, dateParser, regexGenerator, seed, locale, printer, typeMode } = ctx.options
-    const pluginTs = ctx.driver.getPlugin(pluginTsName)
-
-    if (!pluginTs) {
-      return
-    }
+    const pluginTs = ctx.requirePlugin(pluginTsName)
 
     const tsResolver = ctx.driver.getResolver(pluginTsName)
 
@@ -175,7 +168,7 @@ export const fakerGenerator = defineGenerator<PluginFaker>({
     const responseName = resolver.response.response(node)
     const importedResponseNames = new Set(
       node.responses.flatMap((response) =>
-        (response.content ?? []).flatMap((entry) => (entry.schema ? collectRefNames(entry.schema).map((name) => resolver.name(name)) : [])),
+        (response.content ?? []).flatMap((entry) => (entry.schema ? ast.collectImportedRefNames(entry.schema).map((name) => resolver.name(name)) : [])),
       ),
     )
     const hasResponseNameCollision = importedResponseNames.has(responseName)
@@ -275,24 +268,8 @@ export const fakerGenerator = defineGenerator<PluginFaker>({
         {dateParser !== 'faker' && <File.Import path={dateParser} name={dateParser} />}
         {seed ? <File.Source name="faker-seed">{`faker.seed(${JSON.stringify(seed)})`}</File.Source> : undefined}
         {paramGroups.map((group) => renderEntry(group))}
-        {responseUnits.map((unit) =>
-          renderEntry({
-            schema: unit.schema,
-            name: unit.name,
-            typeName: unit.typeName,
-            description: unit.description,
-            skipImportNames: unit.skipImportNames,
-          }),
-        )}
-        {dataUnits.map((unit) =>
-          renderEntry({
-            schema: unit.schema,
-            name: unit.name,
-            typeName: unit.typeName,
-            description: unit.description,
-            skipImportNames: unit.skipImportNames,
-          }),
-        )}
+        {responseUnits.map((unit) => renderEntry(unit))}
+        {dataUnits.map((unit) => renderEntry(unit))}
         {!hasResponseNameCollision &&
           renderEntry({
             schema: buildResponseUnionSchema(node, resolver),

@@ -1,11 +1,12 @@
-import { collectRefNames, getOperationSuccessResponses, resolveDependencyOperationFile, resolveResponseTypes } from '@internals/shared'
+import { getOperationSuccessResponses, resolveDependencyOperationFile, resolveResponseTypes } from '@internals/shared'
 import { ast, defineGenerator } from 'kubb/kit'
 import { pluginFakerName } from '@kubb/plugin-faker'
-import { pluginTsName } from '@kubb/plugin-ts'
+import { enumTypeName, pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
-import { Mock, Response } from '../components'
+import { Mock } from '../components/Mock.tsx'
+import { Response } from '../components/Response.tsx'
 import type { PluginMsw } from '../types'
-import { hasResponseSchema, resolveFakerMeta } from '../utils.ts'
+import { hasResponseSchema } from '../utils.ts'
 
 /**
  * Built-in operation generator for `@kubb/plugin-msw`. Emits one MSW handler
@@ -27,19 +28,25 @@ export const mswGenerator = defineGenerator<PluginMsw>({
       file: resolver.file({ name: fileName, extname: '.ts', tag: node.tags[0] ?? 'default', path: node.path, root, output, group: group ?? undefined }),
     }
 
-    const fakerPlugin = parser === 'faker' ? driver.getPlugin(pluginFakerName) : null
+    const fakerPlugin = parser === 'faker' ? ctx.requirePlugin(pluginFakerName) : null
+    const fakerResolver = fakerPlugin ? driver.getResolver(pluginFakerName) : null
     const faker =
-      parser === 'faker' && fakerPlugin
-        ? resolveFakerMeta(node, {
-            root,
-            fakerResolver: driver.getResolver(pluginFakerName),
-            fakerOutput: fakerPlugin.options?.output ?? output,
-            fakerGroup: fakerPlugin.options?.group ?? null,
-          })
+      fakerPlugin && fakerResolver
+        ? {
+            name: fakerResolver.response.response(node),
+            file: fakerResolver.file({
+              name: node.operationId,
+              extname: '.ts',
+              tag: node.tags[0] ?? 'default',
+              path: node.path,
+              root,
+              output: fakerPlugin.options?.output ?? output,
+              group: fakerPlugin.options?.group ?? undefined,
+            }),
+          }
         : null
 
-    const pluginTs = driver.getPlugin(pluginTsName)
-    if (!pluginTs) return null
+    const pluginTs = ctx.requirePlugin(pluginTsName)
     const tsResolver = driver.getResolver(pluginTsName)
 
     const type = {
@@ -56,16 +63,12 @@ export const mswGenerator = defineGenerator<PluginMsw>({
 
     const successResponses = getOperationSuccessResponses(node)
     const referencedNames = node.responses.flatMap((response) =>
-      (response.content ?? []).flatMap((entry) => (entry.schema ? collectRefNames(entry.schema) : [])),
+      (response.content ?? []).flatMap((entry) => (entry.schema ? ast.collectImportedRefNames(entry.schema) : [])),
     )
     const enumOptions = pluginTs.options?.enum
     const enumNames = new Set(ctx.meta.enumNames)
     const hasResponseNameCollision = referencedNames.some((name) => {
-      const importName =
-        enumOptions?.type === 'asConst' && enumOptions.typeSuffix && enumNames.has(name)
-          ? tsResolver.enum.keyName({ name }, enumOptions.typeSuffix)
-          : tsResolver.name(name)
-      return importName === type.responseName
+      return enumTypeName({ resolver: tsResolver, name, enumOptions, isEnum: enumNames.has(name) }) === type.responseName
     })
     const types = resolveResponseTypes(node, tsResolver).map(([code, typeName]) => {
       const successResponse = successResponses.find((response) => response.statusCode === String(code))
@@ -94,7 +97,7 @@ export const mswGenerator = defineGenerator<PluginMsw>({
           root={mock.file.path}
           isTypeOnly
         />
-        {parser === 'faker' && faker && hasSuccessSchema && <File.Import name={[faker.name]} root={mock.file.path} path={faker.file.path} />}
+        {faker && hasSuccessSchema && <File.Import name={[faker.name]} root={mock.file.path} path={faker.file.path} />}
 
         {types
           .filter(([code]) => code !== 'default')
@@ -104,11 +107,14 @@ export const mswGenerator = defineGenerator<PluginMsw>({
             return <Response key={typeName} typeName={typeName} response={response} name={mock.name} />
           })}
 
-        {parser === 'faker' && faker && hasSuccessSchema ? (
-          <Mock name={mock.name} typeName={mockResponseName} requestTypeName={requestName} fakerName={faker.name} node={node} baseURL={baseURL} />
-        ) : (
-          <Mock name={mock.name} typeName={mockResponseName} requestTypeName={requestName} node={node} baseURL={baseURL} />
-        )}
+        <Mock
+          name={mock.name}
+          typeName={mockResponseName}
+          requestTypeName={requestName}
+          fakerName={faker && hasSuccessSchema ? faker.name : undefined}
+          node={node}
+          baseURL={baseURL}
+        />
       </File>
     )
   },

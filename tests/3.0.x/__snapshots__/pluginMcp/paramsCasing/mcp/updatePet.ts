@@ -4,15 +4,14 @@
 */
 
 import type { UpdatePetOptions } from '../types/UpdatePet'
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolResult, ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ServerContext } from '@modelcontextprotocol/server'
 import { updatePet } from '../clients/updatePet'
 
 /**
  * {@link /pets/:pet_id}
  */
-export async function updatePetHandler({ path, query, body, headers }: UpdatePetOptions, request: RequestHandlerExtra<ServerRequest, ServerNotification>): Promise<CallToolResult> {
-  const res = await updatePet({ path, query, headers, body, signal: request.signal, throwOnError: true })
+export async function updatePetHandler({ path, query, body, headers }: UpdatePetOptions, ctx: ServerContext): Promise<CallToolResult> {
+  const res = await updatePet({ path, query, headers, body, signal: ctx.mcpReq.signal, throwOnError: true })
 
   return {
     content: [

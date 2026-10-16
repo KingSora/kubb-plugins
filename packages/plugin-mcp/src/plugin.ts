@@ -1,7 +1,9 @@
 import { createGroupConfig } from '@internals/shared'
 
 import { resolveContractClient } from '@internals/client'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, defineExtension, Resolver, setMacros, setResolver, useConfig } from 'kubb/kit'
+import { compatibility } from '../kubb-extension.json'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { pluginZodName } from '@kubb/plugin-zod'
 import { mcpGenerator } from './generators/mcpGenerator.tsx'
@@ -20,12 +22,15 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  * operation becomes a typed MCP tool that AI assistants (Claude Desktop, Claude
  * Code, MCP-compatible clients) can call directly. Each handler calls a contract
  * client `<op>` from a registered `@kubb/plugin-axios` or `@kubb/plugin-fetch`.
+ * Next to the handlers it writes `server.ts`, a `start.ts` entry that serves the
+ * tools over stdio, and a `.mcp.json` that runs `start.ts` with `tsx`.
  *
  * @example
  * ```ts
  * import { defineConfig } from 'kubb/config'
  * import { pluginTs } from '@kubb/plugin-ts'
  * import { pluginZod } from '@kubb/plugin-zod'
+ * import { pluginFetch } from '@kubb/plugin-fetch'
  * import { pluginMcp } from '@kubb/plugin-mcp'
  *
  * export default defineConfig({
@@ -34,53 +39,46 @@ export const pluginMcpName = 'plugin-mcp' satisfies PluginMcp['name']
  *   plugins: [
  *     pluginTs(),
  *     pluginZod(),
- *     pluginMcp({
- *       output: { path: './mcp' },
- *       baseURL: 'https://petstore.swagger.io/v2',
- *     }),
+ *     pluginFetch({ baseURL: 'https://petstore.swagger.io/v2' }),
+ *     pluginMcp({ output: { path: 'mcp' } }),
  *   ],
  * })
  * ```
  */
-export const pluginMcp = definePlugin<PluginMcp>((options) => {
-  const {
-    output = { path: 'mcp', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    client,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginMcp = defineExtension<PluginMcp>({
+  kind: 'plugin',
+  meta: { name: pluginMcpName, version, compatibility },
+  dependencies: { [pluginTsName]: {}, [pluginZodName]: {} },
+  setup(options) {
+    const {
+      output = { path: 'mcp', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      client,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
 
-  return {
-    name: pluginMcpName,
-    options,
-    dependencies: [pluginTsName, pluginZodName],
-    hooks: {
-      'kubb:plugin:setup'(ctx) {
-        const resolver = userResolver ? Resolver.merge<ResolverMcp>(resolverMcp, userResolver) : resolverMcp
+    setResolver(resolver)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
+    addGenerator(mcpGenerator, serverGenerator)
 
-        ctx.setOptions({
-          output,
-          exclude,
-          include,
-          override,
-          group: groupConfig,
-          client: resolveContractClient({ client, plugins: ctx.config.plugins }),
-          resolver,
-        })
-        ctx.setResolver(resolver)
-        if (userMacros?.length) {
-          ctx.setMacros(userMacros)
-        }
-        ctx.addGenerator(mcpGenerator, serverGenerator)
-      },
-    },
-  }
+    return {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      client: resolveContractClient({ plugin: pluginMcpName, client, plugins: useConfig().plugins }),
+      resolver,
+    }
+  },
 })
 
 export default pluginMcp

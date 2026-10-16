@@ -12,20 +12,6 @@ const node = ast.factory.createOperation({
 })
 
 describe('buildReturnStatement', () => {
-  test('casts to RequestResult first, then wraps the call in withUnwrap', () => {
-    const callConfig = "{ method: 'POST', url: '/pet', ...config }"
-    expect(buildReturnStatement({ node, types: resolverTs, callConfig, returnType: 'full', throwOnErrorDefault: true })).toBe(
-      "return withUnwrap(request({ method: 'POST', url: '/pet', ...config }) as Promise<RequestResult<AddPetResponses, ThrowOnError>>)",
-    )
-  })
-
-  test.each([true, false])('uses the plugin default %s when returnType is data', (throwOnErrorDefault) => {
-    const callConfig = "{ method: 'POST', url: '/pet', ...config }"
-    expect(buildReturnStatement({ node, types: resolverTs, callConfig, returnType: 'data', throwOnErrorDefault })).toBe(
-      `return unwrapResult(request({ method: 'POST', url: '/pet', ...config }), config.throwOnError ?? ${throwOnErrorDefault}) as Promise<UnwrappedResult<AddPetResponses, ThrowOnError>>`,
-    )
-  })
-
   test('returns the client call cast to RequestResult with no helper when returnType is plain', () => {
     const callConfig = "{ method: 'POST', url: '/pet', ...config }"
     expect(buildReturnStatement({ node, types: resolverTs, callConfig, returnType: 'plain', throwOnErrorDefault: true })).toBe(

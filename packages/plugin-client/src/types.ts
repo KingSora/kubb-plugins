@@ -1,4 +1,4 @@
-import type { Override, PluginFactoryOptions } from 'kubb/kit'
+import type { Override, PluginType } from 'kubb/kit'
 import type { Options as ClientOptions, ResolvedOptions as ClientResolvedOptions, ResolverClient } from '@internals/client'
 
 export type { ResolverClient } from '@internals/client'
@@ -43,7 +43,7 @@ export type ResolvedOptions = ClientResolvedOptions & { importPath: string }
 /**
  * Plugin type of `@kubb/plugin-client`, registered in the Kubb plugin registry.
  */
-export type PluginClient = PluginFactoryOptions<'plugin-client', Options, ResolvedOptions, ResolverClient>
+export type PluginClient = PluginType<'plugin-client', Options, ResolvedOptions, ResolverClient>
 
 declare global {
   namespace Kubb {

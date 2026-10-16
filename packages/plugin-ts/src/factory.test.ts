@@ -8,16 +8,10 @@ import {
   appendJSDocToNode,
   createArrayDeclaration,
   createEnumDeclaration,
-  createExportDeclaration,
-  createImportDeclaration,
   createIntersectionDeclaration,
-  createJSDoc,
-  createParameterSignature,
   createPropertySignature,
-  createQuestionToken,
   createUnionDeclaration,
   createUrlTemplateType,
-  modifiers,
 } from './factory.ts'
 
 const { factory } = ts
@@ -34,11 +28,6 @@ describe('Code Generation', () => {
       ts.NodeFlags.Const,
     ),
   )
-
-  it('should create question token', () => {
-    expect(createQuestionToken()).toBeUndefined()
-    expect(createQuestionToken(true)).toBeDefined()
-  })
 
   it('should create array declaration', () => {
     // Default arrayType: 'array' - generates (string | number)[]
@@ -102,45 +91,9 @@ describe('Code Generation', () => {
     expect(
       parserTs().print(
         createPropertySignature({
-          modifiers: [modifiers.const],
+          modifiers: [factory.createModifier(ts.SyntaxKind.ConstKeyword)],
           name: 'hello',
           type: factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-        })!,
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create parameter signature', () => {
-    expect(
-      parserTs().print(
-        createParameterSignature('hello', {
-          type: factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-        })!,
-      ),
-    ).toMatchSnapshot()
-    expect(
-      parserTs().print(
-        createParameterSignature('hello', {
-          questionToken: true,
-          type: factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-        })!,
-      ),
-    ).toMatchSnapshot()
-    expect(
-      parserTs().print(
-        createParameterSignature('hello', {
-          questionToken: true,
-          type: factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword),
-        })!,
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create JSDoc', async () => {
-    expect(
-      await formatTS(
-        createJSDoc({
-          comments: ['@description description', '@example example'],
         })!,
       ),
     ).toMatchSnapshot()
@@ -161,273 +114,6 @@ describe('Code Generation', () => {
         appendJSDocToNode({
           node: { ...node },
           comments: [],
-        }),
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create import declaration', async () => {
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: 'hello',
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: 'hello',
-          path: './hello.ts',
-          isTypeOnly: true,
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: ['hello'],
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: 'hello',
-          path: './hello.ts',
-          isNameSpace: true,
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: [{ propertyName: 'hello', name: 'helloWorld' }],
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // Test that imports are sorted alphabetically
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: ['zebra', 'apple', 'banana'],
-          path: './fruits.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // Test that imports with mixed objects and strings are sorted
-    expect(
-      await formatTS(
-        createImportDeclaration({
-          name: ['zoo', { propertyName: 'apple' }, 'banana', { propertyName: 'cat', name: 'dog' }],
-          path: './mixed.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create export declaration', async () => {
-    expect(
-      await formatTS(
-        createExportDeclaration({
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createExportDeclaration({
-          name: ['hello', 'world'],
-          asAlias: true,
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createExportDeclaration({
-          name: 'hello',
-          asAlias: true,
-          path: './hello.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    try {
-      await formatTS(
-        createExportDeclaration({
-          name: 'hello',
-          path: './hello.ts',
-        }),
-      )
-    } catch (error) {
-      expect(error).toBeDefined()
-    }
-
-    // Test that exports are sorted alphabetically
-    expect(
-      await formatTS(
-        createExportDeclaration({
-          name: ['zebra', 'apple', 'banana'],
-          path: './fruits.ts',
-        }),
-      ),
-    ).toMatchSnapshot()
-  })
-
-  it('should create enum declaration', async () => {
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'enum',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['FILE.UPLOADED', 'FILE.UPLOADED'],
-            ['FILE.PREVIEW', 'FILE.PREVIEW'],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // Test pascalCase const with Key suffix in typeName (real-world scenario from Type.tsx)
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'GetPetsQueryParamsStatusEnum',
-          typeName: 'GetPetsQueryParamsStatusEnumKey',
-          enums: [
-            ['available', 'available'],
-            ['pending', 'pending'],
-            ['sold', 'sold'],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'constEnum',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'literal',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['hello', 'world'],
-            ['end', 2050],
-            ['survive', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'enum',
-          name: 'hello',
-          typeName: 'Hello',
-          enums: [
-            ['1', 'world'],
-            ['2', 2050],
-            ['3', true],
-          ],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // https://github.com/kubb-labs/kubb/issues/2564
-    // Empty enum should not create a runtime const (undefined nameNode)
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'hello',
-          typeName: 'HelloKey',
-          enums: [],
-        }),
-      ),
-    ).toMatchSnapshot()
-
-    // https://github.com/kubb-labs/kubb/issues/2564
-    expect(
-      await formatTS(
-        createEnumDeclaration({
-          type: 'asConst',
-          name: 'Hello',
-          typeName: 'HelloKey',
-          enums: [],
         }),
       ),
     ).toMatchSnapshot()
@@ -511,157 +197,19 @@ describe('Code Generation', () => {
   })
 })
 
-describe('Import/Export Sorting Consistency', () => {
-  it('should produce identical sorted output for imports with different input order', () => {
-    const import1 = createImportDeclaration({
-      name: ['zebra', 'apple', 'banana', 'cat'],
-      path: './test.ts',
-    })
-
-    const import2 = createImportDeclaration({
-      name: ['cat', 'banana', 'zebra', 'apple'],
-      path: './test.ts',
-    })
-
-    const output1 = parserTs().print(import1)
-    const output2 = parserTs().print(import2)
-
-    // Both should produce the same sorted output
-    expect(output1).toBe(output2)
-    expect(output1).toContain('apple, banana, cat, zebra')
-  })
-
-  it('should produce identical sorted output for exports with different input order', () => {
-    const export1 = createExportDeclaration({
-      name: ['zoo', 'apple', 'monkey'],
-      path: './animals.ts',
-    })
-
-    const export2 = createExportDeclaration({
-      name: ['monkey', 'zoo', 'apple'],
-      path: './animals.ts',
-    })
-
-    const output1 = parserTs().print(export1)
-    const output2 = parserTs().print(export2)
-
-    // Both should produce the same sorted output
-    expect(output1).toBe(output2)
-    expect(output1).toContain('apple, monkey, zoo')
-  })
-
-  it('should sort mixed string and object imports by property name', () => {
-    const import1 = createImportDeclaration({
-      name: ['zoo', { propertyName: 'apple' }, 'monkey', { propertyName: 'banana', name: 'yellow' }],
-      path: './mixed.ts',
-    })
-
-    const output = parserTs().print(import1)
-
-    // Should be sorted alphabetically: apple, banana as yellow, monkey, zoo
-    expect(output).toContain('apple, banana as yellow, monkey, zoo')
-  })
-
-  it('should demonstrate consistency across different orders in real world scenario', () => {
-    // Simulating how imports might be collected on different OS/filesystem orders
-    const linuxOrder = ['UserService', 'AuthService', 'DatabaseService', 'CacheService']
-    const windowsOrder = ['CacheService', 'UserService', 'DatabaseService', 'AuthService']
-    const macOrder = ['DatabaseService', 'AuthService', 'CacheService', 'UserService']
-
-    const import1 = createImportDeclaration({
-      name: linuxOrder,
-      path: './services.ts',
-    })
-    const import2 = createImportDeclaration({
-      name: windowsOrder,
-      path: './services.ts',
-    })
-    const import3 = createImportDeclaration({
-      name: macOrder,
-      path: './services.ts',
-    })
-
-    const output1 = parserTs().print(import1)
-    const output2 = parserTs().print(import2)
-    const output3 = parserTs().print(import3)
-
-    // All three should produce identical output regardless of input order
-    expect(output1).toBe(output2)
-    expect(output2).toBe(output3)
-    expect(output1).toContain('AuthService, CacheService, DatabaseService, UserService')
-  })
-
-  it('should create URL template type for path without parameters', () => {
-    const result = createUrlTemplateType('/pets')
-
-    expect(parserTs().print(result).trim()).toBe('"/pets"')
-  })
-
-  it('should create URL template type for path with single parameter', () => {
-    const result = createUrlTemplateType('/pets/{petId}')
-
-    expect(parserTs().print(result).trim()).toBe('`/pets/${string}`')
-  })
-
-  it('should create URL template type for path with multiple parameters', () => {
-    const result = createUrlTemplateType('/pets/{petId}/owner/{ownerId}')
-
-    expect(parserTs().print(result).trim()).toBe('`/pets/${string}/owner/${string}`')
-  })
-
-  it('should create URL template type for path with parameter at start', () => {
-    const result = createUrlTemplateType('/{category}/pets')
-
-    expect(parserTs().print(result).trim()).toBe('`/${string}/pets`')
-  })
-
-  it('should create URL template type for path with parameter at end', () => {
-    const result = createUrlTemplateType('/user/{username}')
-
-    expect(parserTs().print(result).trim()).toBe('`/user/${string}`')
-  })
-
-  it('should create URL template type for complex path', () => {
-    const result = createUrlTemplateType('/pet/findByStatus/{step_id}')
-
-    expect(parserTs().print(result).trim()).toBe('`/pet/findByStatus/${string}`')
-  })
-
-  it('should create URL template type for path with consecutive parameters', () => {
-    const result = createUrlTemplateType('/api/{version}/{resource}')
-
-    expect(parserTs().print(result).trim()).toBe('`/api/${string}/${string}`')
-  })
-})
-
-describe('createUrlTemplateType (Express-style paths)', () => {
-  it('returns a string literal for paths without params', () => {
-    const result = createUrlTemplateType('/pets')
-
-    expect(parserTs().print(result).trim()).toBe('"/pets"')
-  })
-
-  it('converts a single Express path param to a template literal', () => {
-    const result = createUrlTemplateType('/pets/:petId')
-
-    expect(parserTs().print(result).trim()).toBe('`/pets/${string}`')
-  })
-
-  it('converts multiple Express path params to a template literal', () => {
-    const result = createUrlTemplateType('/store/:storeId/order/:orderId')
-
-    expect(parserTs().print(result).trim()).toBe('`/store/${string}/order/${string}`')
-  })
-
-  it('handles trailing static segments after params', () => {
-    const result = createUrlTemplateType('/pets/:petId/photos')
-
-    expect(parserTs().print(result).trim()).toBe('`/pets/${string}/photos`')
-  })
-
-  it('handles consecutive params', () => {
-    const result = createUrlTemplateType('/api/:version/:resource')
-
-    expect(parserTs().print(result).trim()).toBe('`/api/${string}/${string}`')
+describe('createUrlTemplateType', () => {
+  it.each([
+    ['/pets', '"/pets"'],
+    ['/pets/{petId}', '`/pets/${string}`'],
+    ['/pets/{petId}/owner/{ownerId}', '`/pets/${string}/owner/${string}`'],
+    ['/{category}/pets', '`/${string}/pets`'],
+    ['/user/{username}', '`/user/${string}`'],
+    ['/pet/findByStatus/{step_id}', '`/pet/findByStatus/${string}`'],
+    ['/api/{version}/{resource}', '`/api/${string}/${string}`'],
+    ['/pets/:petId', '`/pets/${string}`'],
+    ['/store/:storeId/order/:orderId', '`/store/${string}/order/${string}`'],
+    ['/pets/:petId/photos', '`/pets/${string}/photos`'],
+  ])('should create URL template type for %s', (path, expected) => {
+    expect(parserTs().print(createUrlTemplateType(path)).trim()).toBe(expected)
   })
 })

@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-redoc",
-  "version": "5.0.4",
+  "version": "5.0.12",
   "description": "Generate a ReDoc API reference page with Kubb. Produces a standalone HTML file you can host without a build step.",
   "keywords": [
     "api-docs",
@@ -13,7 +13,7 @@
     "redoc",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-redoc",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-redoc",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -37,6 +37,8 @@
   ],
   "files": [
     "dist",
+    "kubb-extension.json",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -51,11 +53,17 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json"
   },
   "publishConfig": {
     "access": "public",
@@ -77,6 +85,6 @@
     "kubb": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

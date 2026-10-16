@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-axios",
-  "version": "5.5.7",
+  "version": "5.6.5",
   "description": "Generate a slim, type-safe HTTP client with Kubb based on axios.",
   "keywords": [
     "api-client",
@@ -13,7 +13,7 @@
     "swagger",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-axios",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-axios",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -39,6 +39,8 @@
     "src",
     "dist",
     "templates",
+    "kubb-extension.json",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -53,11 +55,24 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json",
+    "./templates/*.ts": {
+      "types": "./dist/templates/*.d.ts",
+      "default": "./templates/*.ts"
+    },
+    "./templates/*.js": {
+      "types": "./dist/templates/*.d.ts"
+    },
     "./templates/*": "./templates/*"
   },
   "publishConfig": {
@@ -91,6 +106,6 @@
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

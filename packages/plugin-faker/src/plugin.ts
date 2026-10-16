@@ -1,5 +1,7 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, assertPluginOption, defineExtension, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { compatibility } from '../kubb-extension.json'
+import { version } from '../package.json'
 import { pluginTsName } from '@kubb/plugin-ts'
 import { fakerGenerator } from './generators/fakerGenerator.tsx'
 import { resolverFaker } from './resolvers/resolverFaker.ts'
@@ -35,52 +37,60 @@ export const pluginFakerName = 'plugin-faker' satisfies PluginFaker['name']
  * })
  * ```
  */
-export const pluginFaker = definePlugin<PluginFaker>((options) => {
-  const {
-    output = { path: 'mocks', barrel: { type: 'named' } },
-    seed,
-    locale = 'en',
-    group,
-    exclude = [],
-    include,
-    override = [],
-    typeMode = 'inferred',
-    dateParser = 'faker',
-    regexGenerator = 'faker',
-    printer,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginFaker = defineExtension<PluginFaker>({
+  kind: 'plugin',
+  meta: { name: pluginFakerName, version, compatibility },
+  dependencies: { [pluginTsName]: {} },
+  setup(options) {
+    const {
+      output = { path: 'mocks', barrel: { type: 'named' } },
+      seed,
+      locale = 'en',
+      group,
+      exclude = [],
+      include,
+      override = [],
+      typeMode = 'inferred',
+      dateParser = 'faker',
+      regexGenerator = 'faker',
+      printer,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    assertPluginOption({
+      plugin: pluginFakerName,
+      option: 'typeMode',
+      value: typeMode,
+      allowed: ['inferred', 'schema'] satisfies Array<PluginFaker['resolvedOptions']['typeMode']>,
+    })
+    assertPluginOption({
+      plugin: pluginFakerName,
+      option: 'regexGenerator',
+      value: regexGenerator,
+      allowed: ['faker', 'randexp'] satisfies Array<PluginFaker['resolvedOptions']['regexGenerator']>,
+    })
 
-  return {
-    name: pluginFakerName,
-    options,
-    dependencies: [pluginTsName],
-    hooks: {
-      'kubb:plugin:setup'(ctx) {
-        ctx.setOptions({
-          output,
-          seed,
-          locale,
-          exclude,
-          include,
-          override,
-          typeMode,
-          group: groupConfig,
-          dateParser,
-          regexGenerator,
-          printer,
-        })
-        ctx.setResolver(userResolver ? Resolver.merge(resolverFaker, userResolver) : resolverFaker)
-        if (userMacros?.length) {
-          ctx.setMacros(userMacros)
-        }
-        ctx.addGenerator(fakerGenerator)
-      },
-    },
-  }
+    setResolver(userResolver ? Resolver.merge(resolverFaker, userResolver) : resolverFaker)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
+    addGenerator(fakerGenerator)
+
+    return {
+      output,
+      seed,
+      locale,
+      exclude,
+      include,
+      override,
+      typeMode,
+      group: createGroupConfig(group),
+      dateParser,
+      regexGenerator,
+      printer,
+    }
+  },
 })
 
 export default pluginFaker

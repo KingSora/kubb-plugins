@@ -27,7 +27,7 @@ export function placeOrderHandler(data?: PlaceOrderResponse | HttpResponseResolv
   return http.post<Record<string, string>, PlaceOrderBody>('/store/order', function handler(info) {
       if(typeof data === 'function') return data(info)
 
-      return new Response(JSON.stringify(data || createPlaceOrderResponse(data)), {
+      return new Response(JSON.stringify(data ?? createPlaceOrderResponse(data)), {
         status: 200,
         headers: {
           'Content-Type': 'application/json'

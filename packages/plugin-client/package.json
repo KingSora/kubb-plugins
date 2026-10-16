@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-client",
-  "version": "5.5.4",
+  "version": "5.5.15",
   "description": "Generate typed API operations against your own client module.",
   "keywords": [
     "api-client",
@@ -11,7 +11,7 @@
     "swagger",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-client",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-client",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -22,6 +22,8 @@
   "files": [
     "src",
     "dist",
+    "kubb-extension.json",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -33,11 +35,17 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json"
   },
   "publishConfig": {
     "access": "public",
@@ -63,6 +71,6 @@
     "kubb": "catalog:"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

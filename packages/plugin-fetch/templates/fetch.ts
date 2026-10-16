@@ -218,7 +218,7 @@ export type FetchOptions = RequestInit & { next?: Record<string, unknown> }
 export type RequestConfig<TBody = unknown, TRequest = Request, TResponse = Response> = {
   baseURL?: string
   url?: string
-  method?: 'GET' | 'PUT' | 'PATCH' | 'POST' | 'DELETE' | 'OPTIONS' | 'HEAD'
+  method?: 'GET' | 'PUT' | 'PATCH' | 'POST' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'QUERY'
   path?: unknown
   query?: unknown
   params?: unknown

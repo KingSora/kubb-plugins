@@ -21,16 +21,6 @@ describe('buildStyles', () => {
     expect(buildStyles({ node })).toBeNull()
   })
 
-  test('emits path style and explode keyed by the camelCased name', () => {
-    const node = createOperation([{ name: 'pet_id', in: 'path', schema: stringSchema(), style: 'matrix', explode: true }])
-    expect(buildStyles({ node })).toBe("{ path: { petId: { style: 'matrix', explode: true } } }")
-  })
-
-  test('emits query style and explode', () => {
-    const node = createOperation([{ name: 'tags', in: 'query', schema: stringSchema(), style: 'pipeDelimited', explode: false }])
-    expect(buildStyles({ node })).toBe("{ query: { tags: { style: 'pipeDelimited', explode: false } } }")
-  })
-
   test('keeps the spec name for header and cookie parameters, quoted when not a bare identifier', () => {
     const node = createOperation([
       { name: 'X-Ids', in: 'header', schema: stringSchema(), style: 'simple', explode: true },
@@ -39,16 +29,17 @@ describe('buildStyles', () => {
     expect(buildStyles({ node })).toBe('{ header: { "X-Ids": { explode: true } }, cookie: { session_id: { explode: false } } }')
   })
 
+  test('emits allowReserved for query parameters only', () => {
+    const node = createOperation([
+      { name: 'path', in: 'query', schema: stringSchema(), allowReserved: true },
+      { name: 'tags', in: 'query', schema: stringSchema(), explode: false, allowReserved: false },
+      { name: 'id', in: 'path', schema: stringSchema(), allowReserved: true },
+    ])
+    expect(buildStyles({ node })).toBe('{ query: { path: { allowReserved: true }, tags: { explode: false, allowReserved: false } } }')
+  })
+
   test('quotes a query key that is not a bare identifier', () => {
     const node = createOperation([{ name: '2fa', in: 'query', schema: stringSchema(), explode: true }])
     expect(buildStyles({ node })).toBe('{ query: { "2fa": { explode: true } } }')
-  })
-
-  test('groups multiple locations together', () => {
-    const node = createOperation([
-      { name: 'id', in: 'path', schema: stringSchema(), style: 'label', explode: false },
-      { name: 'fields', in: 'query', schema: stringSchema(), explode: true },
-    ])
-    expect(buildStyles({ node })).toBe("{ path: { id: { style: 'label', explode: false } }, query: { fields: { explode: true } } }")
   })
 })

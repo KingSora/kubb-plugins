@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-mcp",
-  "version": "5.0.8",
+  "version": "5.2.3",
   "description": "Generate Model Context Protocol (MCP) tool definitions with Kubb. Expose your REST APIs as AI-callable tools for LLMs, Claude, ChatGPT, and other AI assistants.",
   "keywords": [
     "ai",
@@ -14,7 +14,7 @@
     "model-context-protocol",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-mcp",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-mcp",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -38,6 +38,8 @@
   ],
   "files": [
     "dist",
+    "kubb-extension.json",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -49,11 +51,17 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json"
   },
   "publishConfig": {
     "access": "public",
@@ -73,17 +81,17 @@
     "@internals/client": "workspace:*",
     "@internals/shared": "workspace:*",
     "@internals/utils": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@modelcontextprotocol/server": "^2.3.1",
     "kubb": "catalog:",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "peerDependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
     "kubb": "catalog:",
-    "zod": "^4.0.0"
+    "zod": "^4.2.0"
   },
   "peerDependenciesMeta": {
-    "@modelcontextprotocol/sdk": {
+    "@modelcontextprotocol/server": {
       "optional": true
     },
     "zod": {
@@ -91,6 +99,6 @@
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

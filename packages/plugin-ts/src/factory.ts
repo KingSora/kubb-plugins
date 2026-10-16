@@ -3,7 +3,6 @@ import { camelCase, pascalCase, screamingSnakeCase, snakeCase } from '@internals
 import { syncSchemaRef } from 'kubb/kit'
 import type { ast } from 'kubb/kit'
 import type ts from 'typescript'
-import { OPTIONAL_ADDS_UNDEFINED } from './constants.ts'
 
 /**
  * Loaded with `require`, not `import`. When ESM imports a CommonJS package, Node keeps a second
@@ -13,16 +12,6 @@ const typescript: typeof ts = createRequire(import.meta.url)('typescript')
 
 const { SyntaxKind, factory } = typescript
 
-/**
- * Compares two strings by UTF-16 code unit, keeping sorted output identical across platforms
- * regardless of locale.
- */
-function compareStrings(a: string, b: string): number {
-  if (a < b) return -1
-  if (a > b) return 1
-  return 0
-}
-
 function isNumber(value: unknown): value is number {
   return typeof value === 'number' && !Number.isNaN(value)
 }
@@ -30,23 +19,13 @@ function isNumber(value: unknown): value is number {
 // https://ts-ast-viewer.com/
 
 /**
- * TypeScript AST modifiers for common keywords (async, export, const, static).
+ * TypeScript AST modifiers for the `export` keyword.
  */
 export const modifiers = {
-  async: factory.createModifier(typescript.SyntaxKind.AsyncKeyword),
   export: factory.createModifier(typescript.SyntaxKind.ExportKeyword),
-  const: factory.createModifier(typescript.SyntaxKind.ConstKeyword),
-  static: factory.createModifier(typescript.SyntaxKind.StaticKeyword),
 } as const
 
-/**
- * TypeScript syntax kind constants for union, literal, and string types.
- */
-export const syntaxKind = {
-  union: SyntaxKind.UnionType as 192,
-  literalType: SyntaxKind.LiteralType,
-  stringLiteral: SyntaxKind.StringLiteral,
-} as const
+export const isUnionTypeNode = typescript.isUnionTypeNode
 
 export function isNonNullable<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined
@@ -88,7 +67,7 @@ const questionToken = factory.createToken(typescript.SyntaxKind.QuestionToken)
  * Creates a question token for optional type annotations.
  * Pass `true` to use the cached token, or provide a pre-created token.
  */
-export function createQuestionToken(token?: boolean | ts.QuestionToken) {
+function createQuestionToken(token?: boolean | ts.QuestionToken) {
   if (!token) {
     return undefined
   }
@@ -130,16 +109,13 @@ export function createIntersectionDeclaration({ nodes, withParentheses }: { node
  * @example Generic Array syntax
  * `createArrayDeclaration({ nodes: [stringType], arrayType: 'generic' }) // → Array<string>`
  */
-export function createArrayDeclaration({ nodes, arrayType = 'array' }: { nodes: Array<ts.TypeNode>; arrayType?: 'array' | 'generic' }): ts.TypeNode | null {
+export function createArrayDeclaration({ nodes, arrayType = 'array' }: { nodes: Array<ts.TypeNode>; arrayType?: 'array' | 'generic' }): ts.TypeNode {
   if (!nodes.length) {
     return factory.createTupleTypeNode([])
   }
 
   if (nodes.length === 1) {
-    const node = nodes[0]
-    if (!node) {
-      return null
-    }
+    const node = nodes[0]!
     if (arrayType === 'generic') {
       return factory.createTypeReferenceNode(factory.createIdentifier('Array'), [node])
     }
@@ -206,50 +182,6 @@ export function createPropertySignature({
 }
 
 /**
- * Creates a function parameter declaration with optional markers, rest parameters, and type annotations.
- */
-export function createParameterSignature(
-  name: string | ts.BindingName,
-  {
-    modifiers,
-    dotDotDotToken,
-    questionToken,
-    type,
-    initializer,
-  }: {
-    decorators?: Array<ts.Decorator>
-    modifiers?: Array<ts.Modifier>
-    dotDotDotToken?: ts.DotDotDotToken
-    questionToken?: ts.QuestionToken | boolean
-    type?: ts.TypeNode
-    initializer?: ts.Expression
-  },
-): ts.ParameterDeclaration {
-  return factory.createParameterDeclaration(modifiers, dotDotDotToken, name, createQuestionToken(questionToken), type, initializer)
-}
-
-/**
- * Creates a JSDoc comment node from an array of comment strings.
- * Returns null if no comments are provided.
- */
-export function createJSDoc({ comments }: { comments: Array<string> }) {
-  if (!comments.length) {
-    return null
-  }
-  return factory.createJSDocComment(
-    factory.createNodeArray(
-      comments.map((comment, i) => {
-        if (i === comments.length - 1) {
-          return factory.createJSDocText(comment)
-        }
-
-        return factory.createJSDocText(`${comment}\n`)
-      }),
-    ),
-  )
-}
-
-/**
  * Attaches JSDoc comments to an AST node as synthetic leading comments.
  * Filters out undefined comments before attaching.
  *
@@ -288,41 +220,7 @@ function createIndexSignature(
     modifiers?: Array<ts.Modifier>
   } = {},
 ) {
-  return factory.createIndexSignature(modifiers, [createParameterSignature(indexName, { type: indexType })], type)
-}
-
-/**
- * Creates a TypeScript type alias declaration with optional modifiers and type parameters.
- */
-function createTypeAliasDeclaration({
-  modifiers,
-  name,
-  typeParameters,
-  type,
-}: {
-  modifiers?: Array<ts.Modifier>
-  name: string | ts.Identifier
-  typeParameters?: Array<ts.TypeParameterDeclaration>
-  type: ts.TypeNode
-}) {
-  return factory.createTypeAliasDeclaration(modifiers, name, typeParameters, type)
-}
-
-/**
- * Creates a TypeScript interface declaration with optional modifiers, type parameters, and members.
- */
-function createInterfaceDeclaration({
-  modifiers,
-  name,
-  typeParameters,
-  members,
-}: {
-  modifiers?: Array<ts.Modifier>
-  name: string | ts.Identifier
-  typeParameters?: Array<ts.TypeParameterDeclaration>
-  members: Array<ts.TypeElement>
-}) {
-  return factory.createInterfaceDeclaration(modifiers, name, typeParameters, undefined, members)
+  return factory.createIndexSignature(modifiers, [factory.createParameterDeclaration(undefined, undefined, indexName, undefined, indexType)], type)
 }
 
 /**
@@ -343,12 +241,7 @@ export function createTypeDeclaration({
   type: ts.TypeNode
 }) {
   if (syntax === 'interface' && typescript.isTypeLiteralNode(type)) {
-    const node = createInterfaceDeclaration({
-      members: [...type.members],
-      modifiers: isExportable ? [modifiers.export] : [],
-      name,
-      typeParameters: undefined,
-    })
+    const node = factory.createInterfaceDeclaration(isExportable ? [modifiers.export] : [], name, undefined, undefined, [...type.members])
 
     return appendJSDocToNode({
       node,
@@ -356,12 +249,7 @@ export function createTypeDeclaration({
     })
   }
 
-  const node = createTypeAliasDeclaration({
-    type,
-    modifiers: isExportable ? [modifiers.export] : [],
-    name,
-    typeParameters: undefined,
-  })
+  const node = factory.createTypeAliasDeclaration(isExportable ? [modifiers.export] : [], name, undefined, type)
 
   return appendJSDocToNode({
     node,
@@ -370,114 +258,19 @@ export function createTypeDeclaration({
 }
 
 /**
- * Creates an import declaration with support for default imports, named imports, namespace imports, and type-only imports.
- * Optionally rename imported members with `propertyName` and `name` pairs.
- *
- * @example Default import
- * `import Pet from './Pet'`
- *
- * @example Named imports with rename
- * `import { Pet as Cat } from './Pet'`
- *
- * @example Namespace import
- * `import * as Pet from './Pet'`
+ * Converts an enum member value to a literal expression. Numbers become numeric literals (negatives use a prefix
+ * minus, as `createNumericLiteral` rejects them) unless `asNumber` is `false`, which emits the string form.
  */
-export function createImportDeclaration({
-  name,
-  path,
-  isTypeOnly = false,
-  isNameSpace = false,
-}: {
-  name: string | Array<string | { propertyName: string; name?: string }>
-  path: string
-  isTypeOnly?: boolean
-  isNameSpace?: boolean
-}) {
-  if (!Array.isArray(name)) {
-    const importPropertyName = isNameSpace ? undefined : factory.createIdentifier(name)
-    const importName = isNameSpace ? factory.createNamespaceImport(factory.createIdentifier(name)) : undefined
-
-    return factory.createImportDeclaration(
-      undefined,
-      factory.createImportClause(isTypeOnly, importPropertyName, importName),
-      factory.createStringLiteral(path),
-      undefined,
-    )
+function valueToExpression(value: string | number | boolean, asNumber = isNumber(value)): ts.Expression {
+  if (typeof value === 'boolean') {
+    return value ? factory.createTrue() : factory.createFalse()
   }
-
-  // Sort the imports alphabetically for consistent output across platforms
-  const sortedName = name.toSorted((a, b) => compareStrings(typeof a === 'object' ? a.propertyName : a, typeof b === 'object' ? b.propertyName : b))
-
-  return factory.createImportDeclaration(
-    undefined,
-    factory.createImportClause(
-      isTypeOnly,
-      undefined,
-      factory.createNamedImports(
-        sortedName.map((item) => {
-          if (typeof item === 'object') {
-            const obj = item as { propertyName: string; name?: string }
-            if (obj.name) {
-              return factory.createImportSpecifier(false, factory.createIdentifier(obj.propertyName), factory.createIdentifier(obj.name))
-            }
-
-            return factory.createImportSpecifier(false, undefined, factory.createIdentifier(obj.propertyName))
-          }
-
-          return factory.createImportSpecifier(false, undefined, factory.createIdentifier(item))
-        }),
-      ),
-    ),
-    factory.createStringLiteral(path),
-    undefined,
-  )
-}
-
-/**
- * Creates an export declaration with support for named exports, namespace exports, and type-only exports.
- * Sorts export names alphabetically for consistent output across platforms.
- */
-export function createExportDeclaration({
-  path,
-  asAlias,
-  isTypeOnly = false,
-  name,
-}: {
-  path: string
-  asAlias?: boolean
-  isTypeOnly?: boolean
-  name?: string | Array<ts.Identifier | string>
-}) {
-  if (name && !Array.isArray(name) && !asAlias) {
-    console.warn(`When using name as string, asAlias should be true ${name}`)
+  if (asNumber && isNumber(value)) {
+    return value < 0
+      ? factory.createPrefixUnaryExpression(SyntaxKind.MinusToken, factory.createNumericLiteral(Math.abs(value)))
+      : factory.createNumericLiteral(value)
   }
-
-  if (!Array.isArray(name)) {
-    const parsedName = name?.match(/^\d/) ? `_${name?.slice(1)}` : name
-
-    return factory.createExportDeclaration(
-      undefined,
-      isTypeOnly,
-      asAlias && parsedName ? factory.createNamespaceExport(factory.createIdentifier(parsedName)) : undefined,
-      factory.createStringLiteral(path),
-      undefined,
-    )
-  }
-
-  // Sort the exports alphabetically for consistent output across platforms
-  const sortedName = name.toSorted((a, b) => compareStrings(typeof a === 'string' ? a : a.text, typeof b === 'string' ? b : b.text))
-
-  return factory.createExportDeclaration(
-    undefined,
-    isTypeOnly,
-    factory.createNamedExports(
-      sortedName.map((propertyName) => {
-        return factory.createExportSpecifier(false, undefined, typeof propertyName === 'string' ? factory.createIdentifier(propertyName) : propertyName)
-      }),
-    ),
-    factory.createStringLiteral(path),
-    undefined,
-  )
+  return factory.createStringLiteral(value.toString())
 }
 
 /**
@@ -594,20 +387,7 @@ export function createEnumDeclaration({
         factory.createIdentifier(typeName),
         enums
           .map(([key, value, description]) => {
-            let initializer: ts.Expression = factory.createStringLiteral(value?.toString())
-            const isExactNumber = Number.parseInt(value.toString(), 10) === value
-
-            if (isExactNumber && isNumber(value)) {
-              if (value < 0) {
-                initializer = factory.createPrefixUnaryExpression(typescript.SyntaxKind.MinusToken, factory.createNumericLiteral(Math.abs(value)))
-              } else {
-                initializer = factory.createNumericLiteral(value)
-              }
-            }
-
-            if (typeof value === 'boolean') {
-              initializer = value ? factory.createTrue() : factory.createFalse()
-            }
+            const initializer = valueToExpression(value, Number.parseInt(value.toString(), 10) === value)
 
             if (isNumber(Number.parseInt(key.toString(), 10))) {
               const casingKey = applyEnumKeyCasing(`${typeName}_${key}`, enumKeyCasing)
@@ -659,23 +439,7 @@ export function createEnumDeclaration({
               factory.createObjectLiteralExpression(
                 enums
                   .map(([key, value, description]) => {
-                    let initializer: ts.Expression = factory.createStringLiteral(value?.toString())
-
-                    if (isNumber(value)) {
-                      // Error: Negative numbers should be created in combination with createPrefixUnaryExpression factory.
-                      // The method createNumericLiteral only accepts positive numbers
-                      // or those combined with createPrefixUnaryExpression.
-                      // Therefore, we need to ensure that the number is not negative.
-                      if (value < 0) {
-                        initializer = factory.createPrefixUnaryExpression(typescript.SyntaxKind.MinusToken, factory.createNumericLiteral(Math.abs(value)))
-                      } else {
-                        initializer = factory.createNumericLiteral(value)
-                      }
-                    }
-
-                    if (typeof value === 'boolean') {
-                      initializer = value ? factory.createTrue() : factory.createFalse()
-                    }
+                    const initializer = valueToExpression(value)
 
                     if (key !== null && key !== undefined) {
                       const casingKey = applyEnumKeyCasing(key.toString(), enumKeyCasing)
@@ -799,61 +563,6 @@ export const createTypeLiteralNode = factory.createTypeLiteralNode
  */
 export const createTypeReferenceNode = factory.createTypeReferenceNode
 
-/**
- * Creates a numeric literal type node.
- */
-const createNumericLiteral = factory.createNumericLiteral
-
-/**
- * Creates a string literal type node.
- */
-const createStringLiteral = factory.createStringLiteral
-
-/**
- * Creates an array type node (e.g., `T[]`).
- */
-const createArrayTypeNode = factory.createArrayTypeNode
-
-/**
- * Creates a literal type node (e.g., `'hello'`, `42`, `true`).
- */
-const createLiteralTypeNode = factory.createLiteralTypeNode
-
-/**
- * Creates an identifier node.
- */
-const createIdentifier = factory.createIdentifier
-
-/**
- * Creates an optional type node (e.g., `T | undefined`).
- */
-const createOptionalTypeNode = factory.createOptionalTypeNode
-
-/**
- * Creates a tuple type node (e.g., `[string, number]`).
- */
-const createTupleTypeNode = factory.createTupleTypeNode
-
-/**
- * Creates a rest type node for variadic tuple elements (e.g., `...T[]`).
- */
-const createRestTypeNode = factory.createRestTypeNode
-
-/**
- * Creates a boolean true literal type node.
- */
-const createTrue = factory.createTrue
-
-/**
- * Creates a boolean false literal type node.
- */
-const createFalse = factory.createFalse
-
-/**
- * Creates a prefix unary expression (e.g., negative numbers, logical not).
- */
-const createPrefixUnaryExpression = factory.createPrefixUnaryExpression
-
 // ─── Printer helpers ──────────────────────────────────────────────────────────
 
 /**
@@ -862,22 +571,17 @@ const createPrefixUnaryExpression = factory.createPrefixUnaryExpression
  */
 export function constToTypeNode(value: string | number | boolean, format: 'string' | 'number' | 'boolean'): ts.TypeNode | undefined {
   if (format === 'boolean') {
-    return createLiteralTypeNode(value === true ? createTrue() : createFalse())
+    return factory.createLiteralTypeNode(value === true ? factory.createTrue() : factory.createFalse())
   }
-  if (format === 'number' && typeof value === 'number') {
-    if (value < 0) {
-      return createLiteralTypeNode(createPrefixUnaryExpression(SyntaxKind.MinusToken, createNumericLiteral(Math.abs(value))))
-    }
-    return createLiteralTypeNode(createNumericLiteral(value))
-  }
-  return createLiteralTypeNode(createStringLiteral(String(value)))
+  const literal = format === 'number' && typeof value === 'number' ? value : String(value)
+  return factory.createLiteralTypeNode(valueToExpression(literal) as ts.LiteralTypeNode['literal'])
 }
 
 /**
  * Returns a `Date` reference type node when `representation` is `'date'`, otherwise falls back to `string`.
  */
 export function dateOrStringNode(node: { representation?: string }): ts.TypeNode {
-  return node.representation === 'date' ? createTypeReferenceNode(createIdentifier('Date')) : keywordTypeNodes.string
+  return node.representation === 'date' ? createTypeReferenceNode(factory.createIdentifier('Date')) : keywordTypeNodes.string
 }
 
 /**
@@ -894,7 +598,7 @@ export function buildMemberNodes(
  * Builds a TypeScript tuple type node from an array schema's `items`,
  * applying min/max slice and optional/rest element rules.
  */
-export function buildTupleNode(node: ast.ArraySchemaNode, print: (node: ast.SchemaNode) => ts.TypeNode | null | undefined): ts.TypeNode | undefined {
+export function buildTupleNode(node: ast.ArraySchemaNode, print: (node: ast.SchemaNode) => ts.TypeNode | null | undefined): ts.TypeNode {
   let items = (node.items ?? []).map(print).filter(isNonNullable)
 
   const restNode = node.rest ? (print(node.rest) ?? undefined) : undefined
@@ -908,14 +612,22 @@ export function buildTupleNode(node: ast.ArraySchemaNode, print: (node: ast.Sche
   }
 
   if (min !== undefined) {
-    items = items.map((item, i) => (i >= min ? createOptionalTypeNode(item) : item))
+    items = items.map((item, i) => (i >= min ? factory.createOptionalTypeNode(item) : item))
   }
 
   if (max === undefined && restNode) {
-    items.push(createRestTypeNode(createArrayTypeNode(restNode)))
+    items.push(factory.createRestTypeNode(factory.createArrayTypeNode(restNode)))
   }
 
-  return createTupleTypeNode(items)
+  return factory.createTupleTypeNode(items)
+}
+
+/**
+ * Appends `| null` and then `| undefined` to a type when requested.
+ */
+export function wrapNullableOptional(type: ts.TypeNode, nullable: boolean, addsUndefined: boolean): ts.TypeNode {
+  const withNullable = nullable ? createUnionDeclaration({ nodes: [type, keywordTypeNodes.null] }) : type
+  return addsUndefined ? createUnionDeclaration({ nodes: [withNullable, keywordTypeNodes.undefined] }) : withNullable
 }
 
 /**
@@ -927,20 +639,10 @@ export function buildPropertyType(
   optionalType: 'questionToken' | 'undefined' | 'questionTokenAndUndefined',
   optional?: boolean,
 ): ts.TypeNode {
-  const addsUndefined = OPTIONAL_ADDS_UNDEFINED.has(optionalType)
+  const addsUndefined = optionalType === 'undefined' || optionalType === 'questionTokenAndUndefined'
   const meta = syncSchemaRef(schema)
 
-  let type = baseType
-
-  if (meta.nullable) {
-    type = createUnionDeclaration({ nodes: [type, keywordTypeNodes.null] })
-  }
-
-  if ((optional || meta.nullish || meta.optional) && addsUndefined) {
-    type = createUnionDeclaration({ nodes: [type, keywordTypeNodes.undefined] })
-  }
-
-  return type
+  return wrapNullableOptional(baseType, !!meta.nullable, addsUndefined && !!(optional || meta.nullish || meta.optional))
 }
 
 const indexSignaturePrinter = typescript.createPrinter()

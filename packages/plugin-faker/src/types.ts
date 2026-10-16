@@ -1,4 +1,4 @@
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 import type { PrinterFakerNodes } from './printers/printerFaker.ts'
 
 /**
@@ -111,7 +111,8 @@ export type Options = OutputOptions & {
   dateParser?: 'faker' | 'dayjs' | 'moment' | (string & {})
   /**
    * Library used to generate strings that satisfy a regex `pattern` keyword.
-   * - `'faker'` uses `faker.helpers.fromRegExp`. No extra dependency.
+   * - `'faker'` uses `faker.helpers.fromRegExp`. No extra dependency. Faker does not support
+   *   shorthand classes such as `\d`, `\w`, or `\s`; use `'randexp'` for those patterns.
    * - `'randexp'` uses the `randexp` package. Supports a wider regex grammar.
    *
    * @default 'faker'
@@ -166,7 +167,7 @@ export type ResolvedOptions = {
   printer: Options['printer']
 }
 
-export type PluginFaker = PluginFactoryOptions<'plugin-faker', Options, ResolvedOptions, ResolverFaker>
+export type PluginFaker = PluginType<'plugin-faker', Options, ResolvedOptions, ResolverFaker>
 
 declare global {
   namespace Kubb {

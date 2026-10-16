@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-cypress",
-  "version": "5.0.5",
+  "version": "5.0.14",
   "description": "Generate Cypress request commands and e2e test fixtures with Kubb for automated API testing.",
   "keywords": [
     "code-generation",
@@ -13,7 +13,7 @@
     "testing",
     "typescript"
   ],
-  "homepage": "https://kubb.dev/plugins/plugin-cypress",
+  "homepage": "https://kubb.dev/extensions/kubb-labs/plugin-cypress",
   "license": "MIT",
   "author": "stijnvanhulle",
   "repository": {
@@ -37,6 +37,8 @@
   ],
   "files": [
     "dist",
+    "kubb-extension.json",
+    "docs",
     "!/**/**.test.**",
     "!/**/__tests__/**",
     "!/**/__snapshots__/**"
@@ -49,11 +51,17 @@
   "typesVersions": {},
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./kubb-extension.json": "./kubb-extension.json"
   },
   "publishConfig": {
     "access": "public",
@@ -84,6 +92,6 @@
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

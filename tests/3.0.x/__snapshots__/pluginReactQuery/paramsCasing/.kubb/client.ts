@@ -223,7 +223,7 @@ export type AxiosOptions = AxiosRequestConfig
 export type RequestConfig<TBody = unknown, TRequest = AxiosRequestConfig, TResponse = AxiosResponse> = {
   baseURL?: string
   url?: string
-  method?: 'GET' | 'PUT' | 'PATCH' | 'POST' | 'DELETE' | 'OPTIONS' | 'HEAD'
+  method?: 'GET' | 'PUT' | 'PATCH' | 'POST' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'QUERY'
   path?: unknown
   query?: unknown
   params?: unknown

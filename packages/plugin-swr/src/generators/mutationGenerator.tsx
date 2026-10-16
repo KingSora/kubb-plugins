@@ -1,10 +1,8 @@
-import { resolveDependencyOperationFile, resolveOperationTypeNames } from '@internals/shared'
 import { resolveClientOperation } from '@internals/client'
-import { classifyOperation } from '@internals/tanstack-query'
+import { classifyOperation, HookFile, MutationKey, resolveHookFile } from '@internals/tanstack-query'
 import { ast, defineGenerator } from 'kubb/kit'
-import { pluginTsName } from '@kubb/plugin-ts'
 import { File, jsxRenderer } from 'kubb/jsx'
-import { Mutation, MutationKey } from '../components'
+import { Mutation } from '../components/Mutation.tsx'
 import type { PluginSwr } from '../types'
 
 /**
@@ -17,12 +15,8 @@ export const mutationGenerator = defineGenerator<PluginSwr>({
   renderer: jsxRenderer,
   operation(node, ctx) {
     if (!ast.isHttpOperationNode(node)) return null
-    const { config, driver, resolver, root } = ctx
+    const { driver, resolver, root } = ctx
     const { output, query, mutation, client, group } = ctx.options
-
-    const pluginTs = driver.getPlugin(pluginTsName)
-    if (!pluginTs) return null
-    const tsResolver = driver.getResolver(pluginTsName)
 
     const { isMutation } = classifyOperation(node, { query, mutation })
 
@@ -39,40 +33,10 @@ export const mutationGenerator = defineGenerator<PluginSwr>({
     const mutationKeyTypeName = resolver.mutation.keyTypeName(node)
     const mutationArgTypeName = resolver.mutation.argTypeName(node)
 
-    const meta = {
-      file: resolver.file({ name: mutationHookName, extname: '.ts', tag: node.tags[0] ?? 'default', path: node.path, root, output, group }),
-      fileTs: resolveDependencyOperationFile({
-        cache: ctx.cache,
-        node,
-        resolver: tsResolver,
-        root,
-        output: pluginTs.options?.output ?? output,
-        group: pluginTs.options?.group,
-      }),
-    }
-
-    const importedTypeNames = [
-      tsResolver.response.options(node),
-      ...resolveOperationTypeNames(node, tsResolver, { order: 'body-response-first', includeParams: false }),
-    ].filter((name): name is string => Boolean(name))
-
-    const calledClientName = contractOp.name
+    const hook = resolveHookFile(node, ctx, { name: mutationHookName, output, group, contractOp })
 
     return (
-      <File
-        baseName={meta.file.baseName}
-        path={meta.file.path}
-        meta={meta.file.meta}
-        banner={resolver.default.banner(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
-        footer={resolver.default.footer(ctx.meta, { output, config, file: { path: meta.file.path, baseName: meta.file.baseName } })}
-      >
-        <File.Import name={[contractOp.name]} root={meta.file.path} path={contractOp.path} />
-        <File.Import name={['RequestConfig', 'ResponseErrorConfig']} root={meta.file.path} path={contractOp.clientPath} isTypeOnly />
-
-        {meta.fileTs && importedTypeNames.length > 0 && (
-          <File.Import name={Array.from(new Set(importedTypeNames))} root={meta.file.path} path={meta.fileTs.path} isTypeOnly />
-        )}
-
+      <HookFile hook={hook}>
         <MutationKey name={mutationKeyName} typeName={mutationKeyTypeName} node={node} transformer={ctx.options.mutationKey} />
 
         {mutation && (
@@ -81,17 +45,17 @@ export const mutationGenerator = defineGenerator<PluginSwr>({
             <File.Import name={['SWRMutationConfiguration']} path={importPath} isTypeOnly />
             <Mutation
               name={mutationHookName}
-              clientName={calledClientName}
+              clientName={contractOp.name}
               mutationKeyName={mutationKeyName}
               mutationKeyTypeName={mutationKeyTypeName}
               mutationArgTypeName={mutationArgTypeName}
               node={node}
-              tsResolver={tsResolver}
+              tsResolver={hook.tsResolver}
               returnType={contractOp.returnType}
             />
           </>
         )}
-      </File>
+      </HookFile>
     )
   },
 })

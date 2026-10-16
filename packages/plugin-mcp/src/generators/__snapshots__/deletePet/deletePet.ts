@@ -4,15 +4,14 @@
  */
 
 import type { DeletePetOptions } from './DeletePet'
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
-import type { CallToolResult, ServerNotification, ServerRequest } from '@modelcontextprotocol/sdk/types.js'
+import type { CallToolResult, ServerContext } from '@modelcontextprotocol/server'
 import { deletePet } from './clients/deletePet'
 
 /**
  * {@link /pets/:petId}
  */
-export async function deletePetHandler({ path }: DeletePetOptions, request: RequestHandlerExtra<ServerRequest, ServerNotification>): Promise<CallToolResult> {
-  const res = await deletePet({ path, signal: request.signal, throwOnError: true })
+export async function deletePetHandler({ path }: DeletePetOptions, ctx: ServerContext): Promise<CallToolResult> {
+  const res = await deletePet({ path, signal: ctx.mcpReq.signal, throwOnError: true })
 
   return {
     content: [

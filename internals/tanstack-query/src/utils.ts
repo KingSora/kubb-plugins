@@ -1,8 +1,15 @@
-import { getOperationParameters, getRequestGroupOptionality, getRequestGroups, resolveErrorNames, resolveSuccessNames } from '@internals/shared'
+import {
+  getOperationParameters,
+  getPrimarySuccessResponse,
+  getRequestGroupOptionality,
+  getRequestGroups,
+  resolveErrorNames,
+  resolveSuccessNames,
+} from '@internals/shared'
 import type { ast } from 'kubb/kit'
 import { createFunctionParameter, createFunctionParameters, createObjectBindingPattern, createTypeLiteral } from '@kubb/plugin-ts'
 import type { FunctionParameterNode, FunctionParametersNode, PluginTs, ResolverTs } from '@kubb/plugin-ts'
-import type { Infinite, Mutation, Query } from './types.ts'
+import type { Infinite, Mutation, PageParamFn, Query } from './types.ts'
 
 /**
  * The grouped request options, ordered for both the destructured signature and the
@@ -155,7 +162,8 @@ export function buildClientCall(node: ast.OperationNode, options: { clientName: 
  * success body. `returnType` mirrors the registered client plugin's own `returnType` option: with
  * `'data'` the call already resolves to the bare body, so it is returned directly; with `'full'`
  * (the default) the call carries `unwrap()`, so the body calls it instead of destructuring `data`
- * off the full result by hand.
+ * off the full result by hand. With `'plain'` (plugin-client) the call resolves to the user's
+ * `RequestResult`, so the body awaits it and reads `data`.
  *
  * @example
  * ```ts
@@ -163,10 +171,13 @@ export function buildClientCall(node: ast.OperationNode, options: { clientName: 
  * // return getPetById({ ...config, throwOnError: true }).unwrap()
  * ```
  */
-export function buildCallResultBody(call: string, options: { returnType?: 'full' | 'data' } = {}): string {
+export function buildCallResultBody(call: string, options: { returnType?: 'full' | 'data' | 'plain' } = {}): string {
   const { returnType = 'full' } = options
   if (returnType === 'data') {
     return `return await ${call}`
+  }
+  if (returnType === 'plain') {
+    return `return (await ${call}).data`
   }
   return `return ${call}.unwrap()`
 }
@@ -236,11 +247,12 @@ export function resolvePageParamType(node: ast.OperationNode, { resolver, initia
 
 /**
  * Applies the shared query defaults during plugin setup: `false` disables query generation, and an
- * object merges over `methods: ['GET']` and the plugin's runtime `importPath`.
+ * object merges over `methods: ['GET', 'QUERY']` and the plugin's runtime `importPath`. QUERY
+ * (RFC 10008) is a safe, idempotent read that carries its input in the body, so it is a query too.
  */
 export function resolveQueryConfig(query: Partial<Query> | false, options: { importPath: string }): Required<Query> | false {
   if (query === false) return false
-  return { importPath: options.importPath, methods: ['GET'], ...query }
+  return { importPath: options.importPath, methods: ['GET', 'QUERY'], ...query }
 }
 
 /**
@@ -280,17 +292,85 @@ export function classifyOperation(node: ast.HttpOperationNode, { query, mutation
 }
 
 /**
+ * Helper to define a typed page param function for `infinite.getNextPageParam` or
+ * `infinite.getPreviousPageParam`. Serializes the function to a string for inlining in generated code.
+ *
+ * Note: Because the function is inlined verbatim into the generated file via `.toString()`,
+ * it must be self-contained and cannot reference local closures or external variables from
+ * the config file.
+ */
+export function definePageParam<TPage = any, TParam = any>(fn: PageParamFn<TPage, TParam>): string {
+  return fn.toString()
+}
+
+/**
  * Applies the shared infinite-query defaults during plugin setup: a falsy value disables infinite
  * queries, and an object merges over `queryParam: 'id'` and `initialPageParam: 0` with the cursor
  * paths cleared.
  */
 export function resolveInfiniteConfig(infinite: Partial<Infinite> | false): Required<Infinite> | false {
   if (!infinite) return false
-  return { queryParam: 'id', initialPageParam: 0, cursorParam: null, nextParam: null, previousParam: null, ...infinite }
+  const hasExplicitInitialPageParam = infinite.hasExplicitInitialPageParam ?? infinite.initialPageParam !== undefined
+  const getNextPageParam = infinite.getNextPageParam
+    ? typeof infinite.getNextPageParam === 'function'
+      ? infinite.getNextPageParam.toString()
+      : infinite.getNextPageParam
+    : null
+  const getPreviousPageParam = infinite.getPreviousPageParam
+    ? typeof infinite.getPreviousPageParam === 'function'
+      ? infinite.getPreviousPageParam.toString()
+      : infinite.getPreviousPageParam
+    : null
+
+  return {
+    queryParam: 'id',
+    initialPageParam: 0,
+    hasExplicitInitialPageParam,
+    cursorParam: null,
+    nextParam: null,
+    previousParam: null,
+    getNextPageParam,
+    getPreviousPageParam,
+    ...infinite,
+    ...(getNextPageParam ? { getNextPageParam } : {}),
+    ...(getPreviousPageParam ? { getPreviousPageParam } : {}),
+  }
 }
 
-export function transformName(name: string, type: string, transformers?: { name?: (name: string, type?: string) => string }): string {
-  return transformers?.name?.(name, type) || name
+/**
+ * Whether the infinite hook for `node` should be generated: the operation takes the configured
+ * `queryParam`.
+ */
+export function matchesInfinite(node: ast.OperationNode, infinite: Infinite): boolean {
+  if (!infinite.queryParam) return false
+  // Strip trailing '?' which OpenAPI specs sometimes append to parameter names to denote optionality
+  return getOperationParameters(node).query.some((param) => param.name.replace(/\?$/, '') === infinite.queryParam)
+}
+
+/**
+ * Warning for an infinite hook that falls back to the built-in page params on a response that
+ * isn't an array. Those params only stop on an empty array, so `hasNextPage` never turns false.
+ */
+export function getDefaultPageParamsWarning(node: ast.OperationNode, infinite: Infinite): string | null {
+  const usesDefault =
+    infinite.getNextPageParam == null &&
+    infinite.getPreviousPageParam == null &&
+    infinite.nextParam == null &&
+    infinite.previousParam == null &&
+    !infinite.cursorParam
+  if (!usesDefault) return null
+
+  const content = getPrimarySuccessResponse(node)?.content
+  const jsonContent = content?.find((item) => item.contentType?.includes('json')) ?? content?.[0]
+  const schema = jsonContent?.schema
+
+  let resolved: ast.SchemaNode | null | undefined = schema
+  while (resolved?.type === 'ref' || (resolved?.type === 'intersection' && resolved.members?.length === 1)) {
+    resolved = resolved.type === 'ref' ? resolved.schema : resolved.members?.[0]
+  }
+  if (!resolved || resolved.type === 'array') return null
+
+  return `${node.operationId}: the default infinite page params expect an array response and never end for this one. Set \`infinite.getNextPageParam\` (or \`nextParam\`) to read the next page from the response.`
 }
 
 type OverrideEntry<TOptions> = {
@@ -324,67 +404,6 @@ export function resolveOperationOverrides<TOptions>(node: ast.OperationNode, ove
   return match?.options ?? {}
 }
 
-type ZodSchemaNameResolverLike = {
-  response?: {
-    response?: (node: ast.OperationNode) => string | undefined
-    body?: (node: ast.OperationNode) => string | undefined
-  }
-  param?: {
-    query?: (node: ast.OperationNode, param: ast.ParameterNode) => string | undefined
-  }
-}
-
-type ParserOption = false | 'zod' | { request?: 'zod'; response?: 'zod' } | undefined
-
-/**
- * Returns `'zod'` when response-direction parsing is enabled.
- * The string shorthand `'zod'` also enables response parsing.
- */
-export function resolveResponseParser(parser: ParserOption): 'zod' | null {
-  if (!parser) return null
-  if (parser === 'zod') return 'zod'
-  return parser.response ?? null
-}
-
-/**
- * Returns `'zod'` when request body parsing is enabled.
- * The string shorthand `'zod'` also enables request body parsing (existing behavior).
- */
-export function resolveRequestParser(parser: ParserOption): 'zod' | null {
-  if (!parser) return null
-  if (parser === 'zod') return 'zod'
-  return parser.request ?? null
-}
-
-/**
- * Returns `'zod'` when query-params parsing is enabled.
- * Only the object form `{ request: 'zod' }` enables this. `parser: 'zod'` does not.
- */
-export function resolveQueryParamsParser(parser: ParserOption): 'zod' | null {
-  if (!parser || parser === 'zod') return null
-  return parser.request ?? null
-}
-
-/**
- * Collects the Zod schema import names for an operation based on the active parser directions.
- *
- * - `parser: 'zod'`: response and request body names (backward-compatible behavior).
- * - `parser: { request: 'zod' }`: request body and query params names.
- * - `parser: { response: 'zod' }`: response name only.
- * - `parser: { request: 'zod', response: 'zod' }`: all three.
- *
- * Returns an empty array when no resolver is provided or `parser` is falsy.
- */
-export function resolveZodSchemaNames(node: ast.OperationNode, zodResolver: ZodSchemaNameResolverLike | null | undefined, parser: ParserOption): Array<string> {
-  if (!zodResolver || !parser) return []
-  const { query: queryParams } = getOperationParameters(node)
-  return [
-    resolveResponseParser(parser) === 'zod' ? zodResolver.response?.response?.(node) : null,
-    resolveRequestParser(parser) === 'zod' && node.requestBody?.content?.[0]?.schema ? zodResolver.response?.body?.(node) : null,
-    resolveQueryParamsParser(parser) === 'zod' && queryParams.length > 0 ? zodResolver.param?.query?.(node, queryParams[0]!) : null,
-  ].filter((n): n is string => Boolean(n))
-}
-
 /**
  * The request groups a query key is built from, matching `buildQueryKeyParams`. Headers are
  * deliberately absent: they do not identify a cache entry, so the key factory takes no parameter
@@ -406,9 +425,43 @@ export function hasQueryKeyParams(node: ast.OperationNode): boolean {
  * typed from the operation's `Options` minus `url`. The query key transformer reads the
  * grouped `path`/`query`/`body` bindings.
  */
-export function buildQueryKeyParams(node: ast.OperationNode, options: { resolver: PluginTs['resolver'] }): FunctionParametersNode {
-  const { resolver } = options
-  const groupedParam = buildGroupedRequestParam(node, { resolver, keys: queryKeyGroupOrder })
+export function buildQueryKeyParams(
+  node: ast.OperationNode,
+  options: { resolver: PluginTs['resolver']; memberTypeWrapper?: (type: string) => string },
+): FunctionParametersNode {
+  const { resolver, memberTypeWrapper } = options
+  const groupedParam = buildGroupedRequestParam(node, { resolver, keys: queryKeyGroupOrder, memberTypeWrapper })
 
   return createFunctionParameters({ params: groupedParam ? [groupedParam] : [] })
+}
+
+/**
+ * Builds the hook parameter list: the grouped request param (omitted when `withRequest` is `false`) then `options` typed as `optionsType`.
+ */
+export function buildHookParams(
+  node: ast.OperationNode,
+  options: { resolver: ResolverTs; optionsType: string; memberTypeWrapper?: (type: string) => string; withRequest?: boolean },
+): FunctionParametersNode {
+  const { resolver, optionsType, memberTypeWrapper, withRequest = true } = options
+  const optionsParam = createFunctionParameter({ name: 'options', type: optionsType, default: '{}' })
+  const groupedParam = withRequest ? buildGroupedRequestParam(node, { resolver, memberTypeWrapper }) : null
+
+  return createFunctionParameters({ params: [groupedParam, optionsParam].filter((param): param is FunctionParameterNode => param !== null) })
+}
+
+/**
+ * The `TRequest` type argument of a mutation hook: the options type when the operation takes a request, else `undefined`.
+ */
+export function resolveMutationRequestType(node: ast.OperationNode, resolver: ResolverTs): string {
+  return buildGroupedRequestParam(node, { resolver }) ? resolver.response.options(node) : 'undefined'
+}
+
+/**
+ * Builds the object literal that unwraps each request group's getter before it reaches `queryKey`/`queryOptions`; `null` without a request group.
+ */
+export function buildResolvedRequestParams(node: ast.OperationNode): string | null {
+  const groups = getRequestGroups(node)
+  const names = requestGroupOrder.filter((key) => groups[key])
+  if (names.length === 0) return null
+  return `{ ${names.map((name) => `${name}: typeof ${name} === 'function' ? ${name}() : ${name}`).join(', ')} }`
 }

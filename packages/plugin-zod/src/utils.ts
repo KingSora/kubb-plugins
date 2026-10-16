@@ -1,5 +1,6 @@
-import { stringify, toRegExpString } from '@internals/utils'
-import { ast, syncSchemaRef } from 'kubb/kit'
+import { buildObject, lazyGetter, objectKey, stringify, toRegExpString } from '@internals/utils'
+import { mapSchemaProperties } from '@internals/shared'
+import { ast, containsCircularRef, syncSchemaRef } from 'kubb/kit'
 import type { PluginZod } from './types.ts'
 
 /**
@@ -12,8 +13,8 @@ export function shouldCoerce(coercion: PluginZod['resolvedOptions']['coercion'] 
   return !!coercion[type]
 }
 
-function hasPropertyNames(node: ast.SchemaNode): boolean {
-  return 'propertyNames' in node && Boolean((node as { propertyNames?: ast.SchemaNode }).propertyNames)
+export function propertyNamesOf(node: ast.SchemaNode): ast.SchemaNode | undefined {
+  return 'propertyNames' in node ? (node as { propertyNames?: ast.SchemaNode }).propertyNames : undefined
 }
 
 /**
@@ -47,7 +48,7 @@ export function isPlainInlineObject(node: ast.SchemaNode): boolean {
   const hasAdditionalProperties = node.additionalProperties !== undefined
   const hasPatternProperties = Boolean(node.patternProperties)
 
-  return !hasAdditionalProperties && !hasPatternProperties && !hasPropertyNames(node)
+  return !hasAdditionalProperties && !hasPatternProperties && !propertyNamesOf(node)
 }
 
 /**
@@ -64,7 +65,7 @@ export function isObjectSchemaNode(node: ast.SchemaNode, cyclicSchemas?: Readonl
     const hasTypedAdditionalProperties = Boolean(node.additionalProperties && node.additionalProperties !== true)
     const hasPatternProperties = Boolean(node.patternProperties)
 
-    const isRecord = !hasProperties && (hasTypedAdditionalProperties || hasPatternProperties || hasPropertyNames(node))
+    const isRecord = !hasProperties && (hasTypedAdditionalProperties || hasPatternProperties || propertyNamesOf(node))
 
     return !isRecord
   }
@@ -139,20 +140,10 @@ export function defaultLiteral(node: ast.SchemaNode | undefined, value: unknown)
     const values = enumNode.namedEnumValues?.map((member) => member.value) ?? enumNode.enumValues ?? []
     if (values.length) {
       const match = values.find((member) => member === value || String(member) === String(value))
-      return match != null ? formatLiteral(match) : null
+      return match != null ? formatDefault(match) : null
     }
   }
   return formatDefault(value)
-}
-
-/**
- * Format a primitive enum/literal value.
- * Strings are quoted; numbers and booleans are emitted raw.
- */
-export function formatLiteral(v: string | number | boolean): string {
-  if (typeof v === 'string') return stringify(v)
-
-  return String(v)
 }
 
 /**
@@ -163,9 +154,9 @@ export function formatLiteral(v: string | number | boolean): string {
  */
 export function buildEnum(values: Array<string | number | boolean>): string {
   const allStrings = values.every((v) => typeof v === 'string')
-  if (allStrings) return `z.enum([${values.map(formatLiteral).join(', ')}])`
+  if (allStrings) return `z.enum([${values.map((v) => formatDefault(v)).join(', ')}])`
 
-  const literals = values.map((v) => `z.literal(${formatLiteral(v)})`)
+  const literals = values.map((v) => `z.literal(${formatDefault(v)})`)
   if (literals.length === 1) return literals[0]!
 
   return `z.union([${literals.join(', ')}])`
@@ -216,31 +207,29 @@ export function integerFormatPattern(format: string | undefined): string | undef
 }
 
 /**
- * Map a `regexType` to the `func` argument of `toRegExpString`: `'constructor'` emits
- * `new RegExp(...)`, while `'literal'` (the default) emits a regex literal.
+ * Renders a `pattern` as a regex literal, or as `new RegExp(...)` when `regexType` is `'constructor'`.
  */
-function regexFunc(regexType: PluginZod['resolvedOptions']['regexType'] | undefined): string | null {
-  return regexType === 'constructor' ? 'RegExp' : null
+function regexSource(pattern: string, regexType: PluginZod['resolvedOptions']['regexType'] | undefined): string {
+  return toRegExpString(pattern, regexType === 'constructor' ? 'RegExp' : null)
+}
+
+function joinPatterns(patterns: Array<string>): string {
+  return patterns.length === 1 ? patterns[0]! : patterns.map((pattern) => `(${pattern})`).join('|')
 }
 
 /**
  * Builds a Zod record key schema that enforces the `patternProperties` regexes a plain
- * `.catchall()` would drop. Several patterns combine into one alternation (`(^a)|(^b)`).
+ * `.catchall()` would drop.
  */
 export function patternKeySchema({ patterns, regexType }: { patterns: Array<string>; regexType?: PluginZod['resolvedOptions']['regexType'] }): string {
-  return `z.string().regex(${patternKeySource({ patterns, regexType })})`
+  return `z.string().regex(${regexSource(joinPatterns(patterns), regexType)})`
 }
 
 /**
  * `zod/mini` variant of {@link patternKeySchema}, wrapping the regex in `.check(z.regex(...))`.
  */
 export function patternKeySchemaMini({ patterns, regexType }: { patterns: Array<string>; regexType?: PluginZod['resolvedOptions']['regexType'] }): string {
-  return `z.string().check(z.regex(${patternKeySource({ patterns, regexType })}))`
-}
-
-function patternKeySource({ patterns, regexType }: { patterns: Array<string>; regexType?: PluginZod['resolvedOptions']['regexType'] }): string {
-  const source = patterns.length === 1 ? patterns[0]! : patterns.map((pattern) => `(${pattern})`).join('|')
-  return toRegExpString(source, regexFunc(regexType))
+  return `z.string().check(z.regex(${regexSource(joinPatterns(patterns), regexType)}))`
 }
 
 /**
@@ -279,7 +268,7 @@ export function lengthConstraints({ min, max, pattern, regexType }: LengthConstr
   return [
     min !== undefined ? `.min(${min})` : '',
     max !== undefined ? `.max(${max})` : '',
-    pattern !== undefined ? `.regex(${toRegExpString(pattern, regexFunc(regexType))})` : '',
+    pattern !== undefined ? `.regex(${regexSource(pattern, regexType)})` : '',
   ].join('')
 }
 
@@ -303,7 +292,7 @@ export function lengthChecksMini({ min, max, pattern, regexType }: LengthConstra
   const checks: Array<string> = []
   if (min !== undefined) checks.push(`z.minLength(${min})`)
   if (max !== undefined) checks.push(`z.maxLength(${max})`)
-  if (pattern !== undefined) checks.push(`z.regex(${toRegExpString(pattern, regexFunc(regexType))})`)
+  if (pattern !== undefined) checks.push(`z.regex(${regexSource(pattern, regexType)})`)
   return checks.length ? `.check(${checks.join(', ')})` : ''
 }
 
@@ -362,26 +351,109 @@ export function applyMiniModifiers({ value, schema, nullable, optional, nullish,
   return literal !== null ? `z._default(${withModifier}, ${literal})` : withModifier
 }
 
-type BuildGroupedParamsSchemaOptions = {
-  params: Array<ast.ParameterNode>
-  optional?: boolean
+/**
+ * Calls for string `format`s with a dedicated Zod constructor; a `Map` so `constructor` cannot hit `Object.prototype`.
+ */
+export const STRING_FORMAT_CALLS = new Map<string | undefined, string>([
+  ['byte', 'z.base64()'],
+  ['base64', 'z.base64()'],
+  ['base64url', 'z.base64url()'],
+  ['jwt', 'z.jwt()'],
+  ['ulid', 'z.ulid()'],
+  ['iban', 'z.iban()'],
+  ['duration', 'z.iso.duration()'],
+])
+
+/**
+ * Marks an inline `oneOf` object strict, so `object()` builds `z.strictObject(...)` and no eager `.shape` read hits a deferred getter.
+ */
+export function strictOneOfNode(node: ast.SchemaNode): ast.SchemaNode {
+  return node.type === 'object' && node.additionalProperties === undefined ? { ...node, additionalProperties: false } : node
 }
 
 /**
- * Builds an `object` schema node grouping the given parameter nodes.
- * The `primitive: 'object'` marker ensures the Zod printer emits `z.object(…)` rather than a record.
+ * The constraint chain an `allOf` member adds to a bare string, number or array; each printer passes its own renderers.
  */
-export function buildGroupedParamsSchema({ params, optional }: BuildGroupedParamsSchemaOptions): ast.SchemaNode {
-  return ast.factory.createSchema({
-    type: 'object',
-    optional,
-    primitive: 'object',
-    properties: params.map((param) =>
-      ast.factory.createProperty({
-        name: param.name,
-        required: param.required,
-        schema: param.schema,
-      }),
-    ),
+export function getMemberConstraint({
+  member,
+  regexType,
+  lengths,
+  numbers,
+}: {
+  member: ast.SchemaNode
+  regexType?: LengthConstraints['regexType']
+  lengths: (constraints: LengthConstraints) => string
+  numbers: (constraints: NumericConstraints) => string
+}): string | undefined {
+  if (member.primitive === 'string') return lengths({ ...(ast.narrowSchema(member, 'string') ?? {}), regexType }) || undefined
+  if (member.primitive === 'number' || member.primitive === 'integer')
+    return numbers(ast.narrowSchema(member, 'number') ?? ast.narrowSchema(member, 'integer') ?? {}) || undefined
+  if (member.primitive === 'array') return lengths({ ...(ast.narrowSchema(member, 'array') ?? {}), regexType }) || undefined
+}
+
+type PrinterContext = {
+  transform: (node: ast.SchemaNode) => string | null
+  options: { cyclicSchemas?: ReadonlySet<string> }
+}
+
+/**
+ * Builds the `{ key: value, … }` shape shared by the `z.object(...)` and `.extend(...)` renderings.
+ */
+export function buildObjectShape(
+  ctx: PrinterContext,
+  node: ast.SchemaNode,
+  modify: (args: { value: string; schema: ast.SchemaNode; required?: boolean; meta: ReturnType<typeof syncSchemaRef> }) => string,
+): string {
+  const objectNode = ast.narrowSchema(node, 'object')
+  if (!objectNode) return '{}'
+
+  const isCyclic = (schema: ast.SchemaNode): boolean =>
+    ctx.options.cyclicSchemas != null && containsCircularRef(schema, { circularSchemas: ctx.options.cyclicSchemas })
+
+  const entries = mapSchemaProperties(objectNode, (schema) => {
+    // A getter defers evaluation, so clear cyclicSchemas to skip z.lazy() on nested refs.
+    const hasSelfRef = isCyclic(schema)
+    const savedCyclicSchemas = ctx.options.cyclicSchemas
+    if (hasSelfRef) ctx.options.cyclicSchemas = undefined
+    const baseOutput = ctx.transform(schema) ?? ctx.transform(ast.factory.createSchema({ type: 'unknown' }))!
+    if (hasSelfRef) ctx.options.cyclicSchemas = savedCyclicSchemas
+    return baseOutput
+  }).map(({ name: propName, property, output: baseOutput }) => {
+    const { schema } = property
+    const value = modify({ value: baseOutput, schema, required: property.required, meta: syncSchemaRef(schema) })
+
+    return isCyclic(schema) ? lazyGetter({ name: propName, body: value }) : `${objectKey(propName)}: ${value}`
   })
+
+  return buildObject(entries)
+}
+
+/**
+ * Shared `print` body: transforms the node, applies `keysToOmit` as `.omit(...)`, then `modify` adds the modifiers.
+ */
+export function printWithOmit(
+  ctx: { transform: (node: ast.SchemaNode) => string | null; options: { keysToOmit?: Array<string> | null } },
+  node: ast.SchemaNode,
+  modify: (value: string, meta: ReturnType<typeof syncSchemaRef>) => string,
+): string | null {
+  const { keysToOmit } = ctx.options
+
+  const transformed = ctx.transform(node)
+  if (!transformed) return null
+
+  const meta = syncSchemaRef(node)
+
+  const base = (() => {
+    if (!keysToOmit?.length || meta.primitive !== 'object' || (meta.type === 'union' && meta.discriminatorPropertyName)) return transformed
+
+    // A ref resolves to a wrapper variable; unwrap to the inner object before .omit().
+    const unwrap = omitUnwrapChain(node)
+    const omit = `.omit({ ${keysToOmit.map((k: string) => `"${k}": true`).join(', ')} })`
+
+    const lazyMatch = transformed.match(/^z\.lazy\(\(\)\s*=>\s*(.+)\)$/)
+    if (lazyMatch) return `z.lazy(() => ${lazyMatch[1]}${unwrap}${omit})`
+    return `${transformed}${unwrap}${omit}`
+  })()
+
+  return modify(base, meta)
 }

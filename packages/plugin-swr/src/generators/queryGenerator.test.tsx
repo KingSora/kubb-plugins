@@ -1,29 +1,17 @@
 /** biome-ignore-all lint/suspicious/noTemplateCurlyInString: for test case */
 
-import type { Config } from 'kubb/kit'
-import { ast, memoryStorage } from 'kubb/kit'
-import { createMockedAdapter, createMockedPlugin, createMockedPluginDriver, renderGeneratorOperation } from 'kubb/kit/testing'
+import { ast } from 'kubb/kit'
+import { createMockedAdapter, createMockedPlugin, renderGeneratorOperation } from 'kubb/kit/testing'
 import type { PluginTs } from '@kubb/plugin-ts'
 import { resolverTs } from '@kubb/plugin-ts'
 import { resolverClient } from '@internals/client'
 import { describe, expect, test, vi } from 'vitest'
-import { matchFiles } from '#mocks'
+import { createMultiPluginDriver, matchFiles, testConfig } from '#mocks'
 import { mutationKeyTransformer, queryKeyTransformer } from '@internals/tanstack-query'
 import type { Transformer } from '@internals/tanstack-query'
 import { resolverSwr } from '../resolvers/resolverSwr.ts'
 import type { PluginSwr } from '../types.ts'
 import { queryGenerator } from './queryGenerator.tsx'
-
-const testConfig: Config = {
-  root: '.',
-  input: {},
-  output: { path: 'test' },
-  plugins: [],
-  parsers: [],
-  reporters: [],
-  adapter: createMockedAdapter(),
-  storage: memoryStorage(),
-}
 
 const defaultOptions: PluginSwr['resolvedOptions'] = {
   client: { kind: 'contract', pluginName: 'plugin-axios' },
@@ -57,20 +45,7 @@ const mockedAxiosPlugin = createMockedPlugin({
   resolver: resolverClient,
 })
 
-// The generator looks plugins up by name: plugin-ts for the request types, plugin-axios for the
-// contract <op>. The built-in mock is name-agnostic, so dispatch on the name here.
-function createMultiPluginDriver(name: string) {
-  const driver = createMockedPluginDriver({
-    name,
-    plugin: mockedTsPlugin as unknown as NonNullable<Parameters<typeof createMockedPluginDriver>[0]>['plugin'],
-  })
-  const byName = { 'plugin-ts': mockedTsPlugin, 'plugin-axios': mockedAxiosPlugin } as Record<string, { resolver?: unknown }>
-  return {
-    ...driver,
-    getPlugin: (pluginName: string) => byName[pluginName] ?? mockedTsPlugin,
-    getResolver: (pluginName: string) => byName[pluginName]?.resolver ?? resolverTs,
-  } as typeof driver
-}
+const plugins = { 'plugin-ts': mockedTsPlugin, 'plugin-axios': mockedAxiosPlugin }
 
 const findByTagsNode = ast.factory.createOperation({
   operationId: 'findPetsByTags',
@@ -139,7 +114,7 @@ describe('queryGenerator operation', () => {
       ...props.options,
     }
     const plugin = createMockedPlugin<PluginSwr>({ name: 'plugin-swr', options, resolver: resolverSwr })
-    const driver = createMultiPluginDriver(props.name)
+    const driver = createMultiPluginDriver(props.name, plugins)
 
     await renderGeneratorOperation(queryGenerator, props.node, {
       config: testConfig,
@@ -159,7 +134,7 @@ describe('queryGenerator queryKey', () => {
     const queryKey = vi.fn<Transformer>(queryKeyTransformer)
     const options: PluginSwr['resolvedOptions'] = { ...defaultOptions, queryKey }
     const plugin = createMockedPlugin<PluginSwr>({ name: 'plugin-swr', options, resolver: resolverSwr })
-    const driver = createMultiPluginDriver('customQueryKey')
+    const driver = createMultiPluginDriver('customQueryKey', plugins)
 
     await renderGeneratorOperation(queryGenerator, findByTagsNode, {
       config: testConfig,

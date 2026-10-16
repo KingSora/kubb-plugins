@@ -1,5 +1,7 @@
 import { createGroupConfig } from '@internals/shared'
-import { definePlugin, Resolver } from 'kubb/kit'
+import { addGenerator, assertPluginOption, defineExtension, Resolver, setMacros, setResolver } from 'kubb/kit'
+import { compatibility } from '../kubb-extension.json'
+import { version } from '../package.json'
 import { zodGenerator } from './generators/zodGenerator.tsx'
 import { resolverZod } from './resolvers/resolverZod.ts'
 import type { PluginZod } from './types.ts'
@@ -36,57 +38,65 @@ export const pluginZodName = 'plugin-zod' satisfies PluginZod['name']
  * })
  * ```
  */
-export const pluginZod = definePlugin<PluginZod>((options) => {
-  const {
-    output = { path: 'zod', barrel: { type: 'named' } },
-    group,
-    exclude = [],
-    include,
-    override = [],
-    compile = false,
-    mini = false,
-    guidType = 'uuid',
-    regexType = 'literal',
-    importPath = mini ? 'zod/mini' : 'zod',
-    coercion = false,
-    inferred = false,
-    typeGuards = false,
-    printer,
-    resolver: userResolver,
-    macros: userMacros,
-  } = options
+export const pluginZod = defineExtension<PluginZod>({
+  kind: 'plugin',
+  meta: { name: pluginZodName, version, compatibility },
+  setup(options) {
+    const {
+      output = { path: 'zod', barrel: { type: 'named' } },
+      group,
+      exclude = [],
+      include,
+      override = [],
+      compile = false,
+      mini = false,
+      guidType = 'uuid',
+      regexType = 'literal',
+      importPath = mini ? 'zod/mini' : 'zod',
+      coercion = false,
+      inferred = false,
+      typeGuards = false,
+      printer,
+      resolver: userResolver,
+      macros: userMacros,
+    } = options
 
-  const groupConfig = createGroupConfig(group)
+    assertPluginOption({
+      plugin: pluginZodName,
+      option: 'guidType',
+      value: guidType,
+      allowed: ['uuid', 'guid'] satisfies Array<PluginZod['resolvedOptions']['guidType']>,
+    })
+    assertPluginOption({
+      plugin: pluginZodName,
+      option: 'regexType',
+      value: regexType,
+      allowed: ['literal', 'constructor'] satisfies Array<PluginZod['resolvedOptions']['regexType']>,
+    })
 
-  return {
-    name: pluginZodName,
-    options,
-    hooks: {
-      'kubb:plugin:setup'(ctx) {
-        ctx.setOptions({
-          output,
-          exclude,
-          include,
-          override,
-          group: groupConfig,
-          importPath,
-          coercion,
-          inferred,
-          guidType,
-          regexType,
-          compile,
-          mini,
-          typeGuards,
-          printer,
-        })
-        ctx.setResolver(userResolver ? Resolver.merge(resolverZod, userResolver) : resolverZod)
-        if (userMacros?.length) {
-          ctx.setMacros(userMacros)
-        }
-        ctx.addGenerator(zodGenerator)
-      },
-    },
-  }
+    setResolver(userResolver ? Resolver.merge(resolverZod, userResolver) : resolverZod)
+    if (userMacros?.length) {
+      setMacros(userMacros)
+    }
+    addGenerator(zodGenerator)
+
+    return {
+      output,
+      exclude,
+      include,
+      override,
+      group: createGroupConfig(group),
+      importPath,
+      coercion,
+      inferred,
+      guidType,
+      regexType,
+      compile,
+      mini,
+      typeGuards,
+      printer,
+    }
+  },
 })
 
 export default pluginZod

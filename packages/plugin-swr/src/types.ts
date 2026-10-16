@@ -1,6 +1,6 @@
-import type { ClientSelector } from '@internals/client'
+import type { ClientSelector, ResolvedContractClient } from '@internals/client'
 import type { Transformer } from '@internals/tanstack-query'
-import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginFactoryOptions, Resolver } from 'kubb/kit'
+import type { ast, ResolverPatch, Exclude, Group, Include, Output, OutputOptions, Override, PluginType, Resolver } from 'kubb/kit'
 
 export type { Transformer } from '@internals/tanstack-query'
 
@@ -100,7 +100,7 @@ type Query = {
   /**
    * HTTP methods to use for queries.
    *
-   * @default ['GET']
+   * @default ['GET', 'QUERY']
    */
   methods?: Array<string>
   /**
@@ -141,8 +141,8 @@ export type Options = OutputOptions & {
    * Selects the HTTP client the generated hooks call. Every client plugin speaks the `RequestResult`
    * contract, so the hooks call a contract `<op>` that takes one grouped `options` object.
    *
-   * - `'fetch'` / `'axios'` calls the `@kubb/plugin-fetch` / `@kubb/plugin-axios` functions. When a
-   *   single client plugin (plugin-fetch or plugin-axios) is registered it is
+   * - `'fetch'` / `'axios'` / `'client'` calls the `@kubb/plugin-fetch` / `@kubb/plugin-axios` /
+   *   `@kubb/plugin-client` functions. When a single client plugin is registered it is
    *   auto-detected, so the string is only needed to disambiguate several client plugins.
    *
    * A client plugin must be registered. The hooks always call its `<op>`.
@@ -188,12 +188,6 @@ export type Options = OutputOptions & {
   macros?: Array<ast.Macro>
 }
 
-/**
- * The resolved client strategy for the generated hooks, computed once during setup. The hooks always
- * import and call a registered contract client plugin's `<op>`.
- */
-export type ResolvedClient = { kind: 'contract'; pluginName: string }
-
 export type ResolvedOptions = {
   output: Output
   group: Group | undefined
@@ -203,7 +197,7 @@ export type ResolvedOptions = {
   /**
    * The resolved contract client the generators import and call.
    */
-  client: ResolvedClient
+  client: ResolvedContractClient
   queryKey: QueryKey | undefined
   query: NonNullable<Required<Query>> | false
   mutationKey: MutationKey | undefined
@@ -211,7 +205,7 @@ export type ResolvedOptions = {
   resolver: ResolverSwr
 }
 
-export type PluginSwr = PluginFactoryOptions<'plugin-swr', Options, ResolvedOptions, ResolverSwr>
+export type PluginSwr = PluginType<'plugin-swr', Options, ResolvedOptions, ResolverSwr>
 
 declare global {
   namespace Kubb {
