@@ -63,3 +63,15 @@ Pass the isolated client per operation or to a query plugin.
 ## Where to set it
 
 Use `client.setConfig({ transport })` for shared configuration, `createClient({ transport })` for an isolated instance, or pass `transport` on an operation to override it for one call.
+
+## Wrap the default transport
+
+The generated client exports `defaultTransport`, the `fetch`-based send it uses when no transport is set. Wrap it to add tracing, timing, or headers and keep the built-in request and response handling:
+
+```typescript
+import { client, defaultTransport } from './gen/.kubb/client'
+
+client.setConfig({
+  transport: (request) => withSpan(request, () => defaultTransport(request)),
+})
+```
