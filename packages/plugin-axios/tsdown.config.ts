@@ -22,14 +22,16 @@ export default defineConfig([
   {
     entry,
     format: 'esm',
-    dts: true,
+    dts: false,
     ...shared,
   },
   {
+    // Also builds the CJS JavaScript. `keepNames` stays off the declaration passes: it leaks an untyped `__name` helper into .d.ts/.d.cts files.
     entry,
-    format: 'cjs',
-    dts: false,
+    format: ['esm', 'cjs'],
     ...shared,
+    outputOptions: (options, format, { cjsDts }) => ({ ...options, keepNames: format === 'cjs' && !cjsDts }),
+    dts: { emitDtsOnly: true, compilerOptions: { baseUrl: '../..' } },
   },
   {
     // Declarations for the raw templates so consumers can import their types without `allowImportingTsExtensions`.
@@ -40,6 +42,6 @@ export default defineConfig([
     },
     format: 'esm',
     fixedExtension: false,
-    dts: { emitDtsOnly: true },
+    dts: { emitDtsOnly: true, compilerOptions: { baseUrl: '../..' } },
   },
 ])

@@ -91,7 +91,7 @@ export const pluginReactQuery = defineExtension<PluginReactQuery>({
 
     return {
       output,
-      client: resolveContractClient({ client, plugins: useConfig().plugins }),
+      client: resolveContractClient({ plugin: pluginReactQueryName, client, plugins: useConfig().plugins }),
       queryKey,
       query: resolveQueryConfig(query, { importPath: '@tanstack/react-query' }),
       mutationKey,

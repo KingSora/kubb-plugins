@@ -1,5 +1,28 @@
 # @kubb/plugin-redoc
 
+## 5.0.12
+
+### Patch Changes
+
+- [#1139](https://github.com/kubb-labs/plugins/pull/1139) [`cd003f2`](https://github.com/kubb-labs/plugins/commit/cd003f29b011cc911f8946f9e7627b0ae460a414) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Require Node.js 22.12 or higher.
+
+## 5.0.11
+
+### Patch Changes
+
+- [#1135](https://github.com/kubb-labs/plugins/pull/1135) [`214b224`](https://github.com/kubb-labs/plugins/commit/214b224036c69c70cb6279e77b4379dc783eee19) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Ship separate CommonJS type declarations, so `require` consumers get correct types under `moduleResolution: node16` and `nodenext`.
+  
+  - Points the `require` condition at new `.d.cts` files. It used to reuse the ESM `.d.ts`, which TypeScript then read as ESM.
+  - Removes the untyped `rolldown-runtime` import from the published declarations, which failed under `skipLibCheck: false`.
+
+## 5.0.10
+
+### Patch Changes
+
+- [#1131](https://github.com/kubb-labs/plugins/pull/1131) [`5c9ae77`](https://github.com/kubb-labs/plugins/commit/5c9ae772af531103fd2584cdac0475dbf9c7dea6) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Config mistakes now fail with a diagnostic code and a fix instead of a plugin crash. A client plugin without `pluginTs()` or `pluginZod({ inferred: true })` now fails instead of generating nothing.
+
+- [#1122](https://github.com/kubb-labs/plugins/pull/1122) [`94dcb86`](https://github.com/kubb-labs/plugins/commit/94dcb86a6625f98305da7bbbd747ac36ff460673) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Internal cleanup: remove unused code. Generated output is unchanged.
+
 ## 5.0.9
 
 ### Patch Changes

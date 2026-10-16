@@ -1,5 +1,30 @@
 # @kubb/plugin-ts
 
+## 5.0.14
+
+### Patch Changes
+
+- [#1139](https://github.com/kubb-labs/plugins/pull/1139) [`cd003f2`](https://github.com/kubb-labs/plugins/commit/cd003f29b011cc911f8946f9e7627b0ae460a414) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Require Node.js 22.12 or higher.
+
+## 5.0.13
+
+### Patch Changes
+
+- [#1135](https://github.com/kubb-labs/plugins/pull/1135) [`214b224`](https://github.com/kubb-labs/plugins/commit/214b224036c69c70cb6279e77b4379dc783eee19) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Ship separate CommonJS type declarations, so `require` consumers get correct types under `moduleResolution: node16` and `nodenext`.
+  
+  - Points the `require` condition at new `.d.cts` files. It used to reuse the ESM `.d.ts`, which TypeScript then read as ESM.
+  - Removes the untyped `rolldown-runtime` import from the published declarations, which failed under `skipLibCheck: false`.
+
+## 5.0.12
+
+### Patch Changes
+
+- [#1122](https://github.com/kubb-labs/plugins/pull/1122) [`d333749`](https://github.com/kubb-labs/plugins/commit/d33374925860b5b3dfe0762eb4b3926c4f9fef59) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Add the `enumTypeName` helper export. Generated output is unchanged.
+
+- [#1122](https://github.com/kubb-labs/plugins/pull/1122) [`94dcb86`](https://github.com/kubb-labs/plugins/commit/94dcb86a6625f98305da7bbbd747ac36ff460673) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Remove `createOperationParams` and `CreateOperationParamsOptions`. Nothing in this repo or the documented API uses them.
+
+- [#1122](https://github.com/kubb-labs/plugins/pull/1122) [`be793ae`](https://github.com/kubb-labs/plugins/commit/be793ae1f9c73c3a3a6723733564c8f0cb2c0cf2) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Internal cleanup. Generated output is unchanged.
+
 ## 5.0.11
 
 ### Patch Changes

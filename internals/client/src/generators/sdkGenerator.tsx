@@ -10,7 +10,7 @@ import { isValidatorEnabled, resolveRequestValidator, resolveResponseValidator }
 import { type Auth, getOperationSecurity, type SecurityDocument } from '../builders/security.ts'
 import { SdkClient } from '../components/SdkClient.tsx'
 import { SdkFacade } from '../components/SdkFacade.tsx'
-import { MISSING_OPERATION_TYPES_WARNING, type OperationTypeNames, type OperationTypeSource, resolveOperationTypes } from '../resolveOperationTypes.ts'
+import { type OperationTypeNames, type OperationTypeSource, resolveOperationTypes } from '../resolveOperationTypes.ts'
 import type { ContractClientFactory, ValidatorOptions } from '../types.ts'
 
 type GeneratorContext = Parameters<NonNullable<Generator<ContractClientFactory>['operations']>>[1]
@@ -147,11 +147,7 @@ export function createSdkGenerator<TFactory extends ContractClientFactory>(): Ge
         })
       }
 
-      const types = resolveOperationTypes(ctx.driver)
-      if (!types) {
-        ctx.warn(MISSING_OPERATION_TYPES_WARNING)
-        return null
-      }
+      const types = resolveOperationTypes(ctx.driver, ctx.plugin.name)
 
       const controllers = buildControllers(nodes, ctx, types)
       const clientPath = path.resolve(root, '.kubb/client.ts')

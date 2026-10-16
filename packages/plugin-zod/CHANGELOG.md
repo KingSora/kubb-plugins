@@ -1,5 +1,30 @@
 # @kubb/plugin-zod
 
+## 5.4.12
+
+### Patch Changes
+
+- [#1139](https://github.com/kubb-labs/plugins/pull/1139) [`cd003f2`](https://github.com/kubb-labs/plugins/commit/cd003f29b011cc911f8946f9e7627b0ae460a414) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Require Node.js 22.12 or higher.
+
+## 5.4.11
+
+### Patch Changes
+
+- [#1135](https://github.com/kubb-labs/plugins/pull/1135) [`214b224`](https://github.com/kubb-labs/plugins/commit/214b224036c69c70cb6279e77b4379dc783eee19) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Ship separate CommonJS type declarations, so `require` consumers get correct types under `moduleResolution: node16` and `nodenext`.
+  
+  - Points the `require` condition at new `.d.cts` files. It used to reuse the ESM `.d.ts`, which TypeScript then read as ESM.
+  - Removes the untyped `rolldown-runtime` import from the published declarations, which failed under `skipLibCheck: false`.
+
+## 5.4.10
+
+### Patch Changes
+
+- [#1131](https://github.com/kubb-labs/plugins/pull/1131) [`5c9ae77`](https://github.com/kubb-labs/plugins/commit/5c9ae772af531103fd2584cdac0475dbf9c7dea6) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Config mistakes now fail with a diagnostic code and a fix instead of a plugin crash. A client plugin without `pluginTs()` or `pluginZod({ inferred: true })` now fails instead of generating nothing.
+
+- [#1122](https://github.com/kubb-labs/plugins/pull/1122) [`be793ae`](https://github.com/kubb-labs/plugins/commit/be793ae1f9c73c3a3a6723733564c8f0cb2c0cf2) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Internal cleanup. Generated output is unchanged.
+
+- [#1133](https://github.com/kubb-labs/plugins/pull/1133) [`e69f6db`](https://github.com/kubb-labs/plugins/commit/e69f6db78c460f5cf1abe25acd560c3e00901485) Thanks [@stijnvanhulle](https://github.com/stijnvanhulle)! - Type the printer's `dateType` option with `ast.ParserOptions` from `kubb/kit`. The published types no longer import `@kubb/adapter-oas`, which this package doesn't depend on, so they resolve under pnpm and other strict installers.
+
 ## 5.4.9
 
 ### Patch Changes

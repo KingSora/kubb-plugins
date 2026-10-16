@@ -1,6 +1,6 @@
 {
   "name": "@kubb/plugin-axios",
-  "version": "5.6.1",
+  "version": "5.6.4",
   "description": "Generate a slim, type-safe HTTP client with Kubb based on axios.",
   "keywords": [
     "api-client",
@@ -55,9 +55,14 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./package.json": "./package.json",
     "./kubb-extension.json": "./kubb-extension.json",
@@ -101,6 +106,6 @@
     }
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   }
 }

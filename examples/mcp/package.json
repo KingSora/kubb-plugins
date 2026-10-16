@@ -25,13 +25,13 @@
     "@modelcontextprotocol/server": "^2.3.1",
     "axios": "^1.20.0",
     "kubb": "catalog:",
-    "zod": "^4.6.5"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "typescript": "catalog:"
   },
   "engines": {
-    "node": ">=22",
+    "node": ">=22.12",
     "pnpm": ">=11.0.0"
   },
   "packageManager": "pnpm@12.3.4"
