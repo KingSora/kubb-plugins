@@ -187,7 +187,7 @@ export type Options = OutputOptions & {
   /**
    * Export a type alias next to every generated schema, so the Zod schema acts as the single source of truth.
    * - `true`: the alias is `z.infer<typeof schema>`.
-   * - `'direction'`: request & params schemas use `z.input`, response & error schemas use `z.output`.
+   * - `'direction'`: request and params schemas use `z.input`, response and error schemas use `z.output`.
    */
   inferred?: boolean | 'direction'
   /**
