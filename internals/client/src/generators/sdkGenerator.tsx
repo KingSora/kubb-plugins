@@ -24,7 +24,7 @@ type OperationData = {
   typeFile: ast.FileNode
   zodFile: ast.FileNode | null
   /**
-   * The operation's validator hooks, computed once and shared by the zod imports and the helper import.
+   * The operation's validator hooks, computed once and shared by the zod imports, the helper import, and the SDK methods.
    * `null` without a zod resolver.
    */
   validatorHooks: ValidatorHooks | null
@@ -196,7 +196,7 @@ export function createSdkGenerator<TFactory extends ContractClientFactory>(): Ge
 
             {ops.some((op) => op.validatorHooks?.headers) && <File.Import name={['toHeadersStandardSchema']} root={file.path} path={standardSchemaPath} />}
 
-            <SdkClient name={className} operations={ops} validator={validator} returnType={returnType} throwOnErrorDefault={throwOnErrorDefault} />
+            <SdkClient name={className} operations={ops} returnType={returnType} throwOnErrorDefault={throwOnErrorDefault} />
           </File>
         )
       }
