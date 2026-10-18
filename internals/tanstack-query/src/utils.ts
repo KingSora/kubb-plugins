@@ -373,13 +373,18 @@ export function getDefaultPageParamsWarning(node: ast.OperationNode, infinite: I
   return `${node.operationId}: the default infinite page params expect an array response and never end for this one. Set \`infinite.getNextPageParam\` (or \`nextParam\`) to read the next page from the response.`
 }
 
-type OverrideEntry<TOptions> = {
-  type: string
-  pattern: string | RegExp
+type OverrideFilter = { type: string; pattern: string | RegExp } | { type: 'extension'; key: `x-${string}`; value?: unknown }
+
+type OverrideEntry<TOptions> = OverrideFilter & {
   options?: Partial<TOptions>
 }
 
-function matchesPattern(node: ast.OperationNode, ov: { type: string; pattern: string | RegExp }): boolean {
+function matchesPattern(node: ast.OperationNode, ov: OverrideFilter): boolean {
+  if ('key' in ov) {
+    const extensions = node.extensions
+    if (!extensions || !(ov.key in extensions)) return false
+    return ov.value === undefined || extensions[ov.key] === ov.value
+  }
   const { type, pattern } = ov
   const matches = (value: string) => (typeof pattern === 'string' ? value === pattern : pattern.test(value))
   if (type === 'operationId') return matches(node.operationId)

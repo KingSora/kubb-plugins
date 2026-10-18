@@ -22,9 +22,9 @@
     "@kubb/plugin-zod": "workspace:*",
     "axios": "^1.20.0",
     "kubb": "catalog:",
-    "react": "^19.3.0",
+    "react": "^19.3.1",
     "typescript": "catalog:",
-    "zod": "^4.6.6"
+    "zod": "^4.6.7"
   },
   "engines": {
     "node": ">=22.12",
