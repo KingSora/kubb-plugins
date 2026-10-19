@@ -766,11 +766,14 @@ async function settleResponse<TRequest, TResponse>({
 }
 
 /**
- * Builds the shared client core bound to an axios instance (defaulting to `axios.create()`), with `throwOnError` riding axios's `validateStatus`.
+ * Builds the shared client core bound to an axios instance (defaulting to `defaultTransport`, else `axios.create()`), with `throwOnError` riding axios's `validateStatus`.
  */
-export function createClientCore<TRequest = AxiosRequestConfig, TResponse = AxiosResponse>(options: ClientConfig = {}): ClientInstance<TRequest, TResponse> {
-  let config: ClientConfig = { ...options }
-  const baseInstance = config.transport ?? axios.create()
+export function createClientCore<TRequest = AxiosRequestConfig, TResponse = AxiosResponse>(
+  options: { defaultTransport?: AxiosInstance } & ClientConfig = {},
+): ClientInstance<TRequest, TResponse> {
+  const { defaultTransport, ...initialConfig } = options
+  let config: ClientConfig = initialConfig
+  const baseInstance = config.transport ?? defaultTransport ?? axios.create()
   let instance = baseInstance
   const requestContexts = new Map<number, RequestConfig<unknown, TRequest, TResponse>>()
   let requestContextId = 0
@@ -905,6 +908,11 @@ export function createClientCore<TRequest = AxiosRequestConfig, TResponse = Axio
 }
 
 /**
+ * The axios instance the generated `client` sends through. Register axios interceptors on it or reuse it inside your own transport.
+ */
+export const defaultTransport = axios.create()
+
+/**
  * One decoded Server-Sent Event, with `data` parsed as JSON when valid and kept as the raw string otherwise.
  */
 export type ServerSentEvent<TData = unknown> = {
@@ -1006,6 +1014,6 @@ export async function toEventStream<TData = unknown>(result: Promise<{ data: unk
   }
 }
 
-export const client = createClientCore()
+export const client = createClientCore({ defaultTransport })
 
 export const createClient = (config?: Parameters<typeof client.createClient>[0]) => client.createClient(config)
